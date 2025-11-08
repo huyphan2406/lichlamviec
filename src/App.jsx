@@ -8,23 +8,30 @@ import {
 } from 'react-icons/fi';
 import './App.css'; 
 
-// --- SETTINGS ---
-const CACHE_DURATION = 3600 * 1000; // 1 hour
+// --- CÀI ĐẶT ---
+const CACHE_DURATION = 3600 * 1000; // 1 giờ
 
-// --- LOGIC: DARK MODE (Ý 4) ---
+// ⚠️ BƯỚC 1: THÊM HÀM LOẠI BỎ DẤU
+const removeAccents = (str) => {
+  if (!str) return '';
+  return str
+    .normalize("NFD") // Tách chữ và dấu
+    .replace(/[\u0300-\u036f]/g, "") // Xóa các dấu
+    .replace(/đ/g, "d").replace(/Đ/g, "D"); // Chuyển đổi Đ/đ
+};
+
+// --- LOGIC: DARK MODE (Không đổi) ---
 function useDarkMode() {
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
   const toggleTheme = () => setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
-
   useEffect(() => {
     localStorage.setItem('theme', theme);
     document.body.setAttribute('data-theme', theme);
   }, [theme]);
-
   return [theme, toggleTheme];
 }
 
-// --- LOGIC: LOAD DATA (TỪ CSV) ---
+// --- LOGIC: TẢI DỮ LIỆU (Không đổi) ---
 function useJobData() {
   const [allJobs, setAllJobs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -42,7 +49,6 @@ function useJobData() {
       Papa.parse(dataUrl, {
         download: true, header: true, skipEmptyLines: true, dynamicTyping: true,
         complete: (results) => {
-          // CẬP NHẬT LOGIC (Tiếng Anh): Đọc cột "Date" và "StartTime"
           const sortedData = results.data.sort((a, b) => {
             const dtA = new Date(`${a.Date} ${a.StartTime}`);
             const dtB = new Date(`${b.Date} ${b.StartTime}`);
@@ -61,33 +67,25 @@ function useJobData() {
     }
   }, []);
 
-  // CẬP NHẬT LOGIC (Tiếng Anh): Đọc cột "Date"
   const uniqueDates = useMemo(() => [...new Set(allJobs.map(job => job.Date))], [allJobs]);
   return { jobs: allJobs, isLoading, uniqueDates };
 }
 
-// --- UI COMPONENTS ---
+// --- UI COMPONENTS (Không đổi) ---
 
-// 1. Header (Heading & Dark Mode)
-// ⚠️ SỬA LỖI: Đã di chuyển 'toggleTheme' vào đúng 'onChange' của input
 const Header = ({ theme, toggleTheme }) => (
   <header className="app-header">
     <h1>Work Schedule</h1>
     <label className="theme-toggle" title="Toggle Light/Dark Mode">
       {theme === 'light' ? <FiMoon size={18} /> : <FiSun size={18} />}
       <div className="theme-toggle-switch">
-        <input 
-          type="checkbox" 
-          checked={theme === 'dark'} 
-          onChange={toggleTheme} // Sửa lỗi ở đây
-        />
+        <input type="checkbox" checked={theme === 'dark'} onChange={toggleTheme} />
         <span className="theme-toggle-slider"></span>
       </div>
     </label>
   </header>
 );
 
-// 2. Filter Bar (Dịch sang Tiếng Anh)
 const FilterBar = ({ dateFilter, setDateFilter, inputValue, setInputValue, uniqueDates }) => (
   <div className="filter-container">
     <div className="form-group">
@@ -102,7 +100,7 @@ const FilterBar = ({ dateFilter, setDateFilter, inputValue, setInputValue, uniqu
       <input 
         type="text" 
         id="nameInput" 
-        placeholder="e.g., Your Name" 
+        placeholder="e.g., Quoc Huy" 
         value={inputValue} 
         onChange={(e) => setInputValue(e.target.value)} 
       />
@@ -110,7 +108,6 @@ const FilterBar = ({ dateFilter, setDateFilter, inputValue, setInputValue, uniqu
   </div>
 );
 
-// 3. Skeleton Loader (Khung chờ tải)
 const SkeletonLoader = () => (
   <div className="skeleton-container">
     {[...Array(3)].map((_, i) => (
@@ -124,7 +121,6 @@ const SkeletonLoader = () => (
   </div>
 );
 
-// 4. Empty State (Dịch sang Tiếng Anh)
 const EmptyState = () => (
   <motion.div className="empty-state" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}>
     <FiSearch className="empty-state-icon" />
@@ -133,10 +129,8 @@ const EmptyState = () => (
   </motion.div>
 );
 
-// 5. Job Item (Cập nhật logic Tiếng Anh)
 const JobItem = ({ job }) => {
   const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } };
-  // CẬP NHẬT LOGIC (Tiếng Anh): Đọc cột "StartTime" và "EndTime"
   const timeGroup = `${job.StartTime}–${job.EndTime}`;
   
   return (
@@ -159,10 +153,11 @@ function App() {
 
   // --- STATE (Filters) ---
   const [dateFilter, setDateFilter] = useState(() => localStorage.getItem('lastViewedDate') || '');
-  const [inputValue, setInputValue] = useState('Quốc Huy'); // Đã dịch
-  const [nameFilter, setNameFilter] = useState('Quốc Huy'); 
+  // Đặt giá trị mặc định không dấu (ASCII)
+  const [inputValue, setInputValue] = useState('Quoc Huy'); 
+  const [nameFilter, setNameFilter] = useState('Quoc Huy'); 
 
-  // --- EFFECTS (Debounce & Cache Filter) ---
+  // --- EFFECTS (Debounce & Cache Filter) (Không đổi) ---
   useEffect(() => {
     const timerId = setTimeout(() => setNameFilter(inputValue), 300);
     return () => clearTimeout(timerId);
@@ -172,29 +167,43 @@ function App() {
     localStorage.setItem('lastViewedDate', dateFilter);
   }, [dateFilter]);
 
-  // --- LOGIC LỌC & GOM NHÓM (Cập nhật logic Tiếng Anh) ---
+  // --- ⚠️ BƯỚC 1 (SỬA LOGIC LỌC): Áp dụng hàm removeAccents ---
   const filteredJobs = useMemo(() => {
     let jobsToFilter = jobs;
-    const normNameFilter = nameFilter.toLowerCase().trim();
+    
+    // 1. Chuyển đổi input tìm kiếm (không dấu, chữ thường)
+    // Ví dụ: "Quoc Huy" -> "quoc huy"
+    const normNameFilter = removeAccents(nameFilter.toLowerCase().trim());
+
     if (normNameFilter) {
       jobsToFilter = jobsToFilter.filter(job => {
-        const mc = (job.MC || '').toLowerCase().includes(normNameFilter);
-        const standby = (job.Standby || '').toLowerCase().includes(normNameFilter);
-        // CẬP NHẬT LOGIC (Tiếng Anh): Đọc cột "JobName"
-        const jobName = (job.JobName || '').toLowerCase().includes(normNameFilter);
-        return mc || standby || jobName;
+        // 2. Chuyển đổi dữ liệu (có dấu) sang (không dấu, chữ thường) trước khi so sánh
+        
+        // Ví dụ: "Dương Kiều" -> "duong kieu"
+        const mc = removeAccents((job.MC || '').toLowerCase()).includes(normNameFilter);
+        
+        // Ví dụ: "Standby... Quốc Huy" -> "standby... quoc huy"
+        const standby = removeAccents((job.Standby || '').toLowerCase()).includes(normNameFilter);
+        
+        const jobName = removeAccents((job.JobName || '').toLowerCase()).includes(normNameFilter);
+        
+        // (Thêm cho yêu cầu "địa điểm nữa")
+        const location = removeAccents((job.Location || '').toLowerCase()).includes(normNameFilter);
+
+        return mc || standby || jobName || location;
       });
     }
+
+    // Lọc ngày (vẫn hoạt động bình thường)
     if (dateFilter) { 
-      // CẬP NHẬT LOGIC (Tiếng Anh): Đọc cột "Date"
       jobsToFilter = jobsToFilter.filter(job => (job.Date || '').toString() === dateFilter);
     }
     return jobsToFilter;
   }, [jobs, dateFilter, nameFilter]); 
 
+  // --- Logic Gom Nhóm (Không đổi) ---
   const groupedJobs = useMemo(() => {
     return filteredJobs.reduce((acc, job) => {
-      // CẬP NHẬT LOGIC (Tiếng Anh): Đọc cột "StartTime" và "EndTime"
       const timeGroup = `${job.StartTime}–${job.EndTime}`;
       if (!acc[timeGroup]) acc[timeGroup] = [];
       acc[timeGroup].push(job);
@@ -204,7 +213,7 @@ function App() {
 
   const jobGroups = Object.keys(groupedJobs);
 
-  // --- GIAO DIỆN (JSX) ---
+  // --- GIAO DIỆN (JSX) (Không đổi) ---
   return (
     <div className="App">
       <Header theme={theme} toggleTheme={toggleTheme} />
