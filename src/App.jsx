@@ -167,11 +167,14 @@ const JobItem = ({ job }) => {
   const talentDisplay = combineNames(job['Talent 1'], job['Talent 2']);
   const coordDisplay = combineNames(job['Coordinator 1'], job['Coordinator 2']);
 
-  // 🛠️ TỐI GIẢN HÓA ĐỊA CHỈ (THEO YÊU CẦU CỦA BẠN)
-  // Chỉ lấy Studio/Room và Address
-  const locationDisplay = [job['Studio/Room'], job.Address]
+  // 🛠️ TỐI GIẢN HÓA ĐỊA CHỈ (THEO YÊU CẦU MỚI)
+  // Chỉ lấy Address và Studio/Room
+  const addressName = job.Address || '';
+  const roomName = job['Studio/Room'] || '';
+
+  const locationDisplay = [addressName, roomName]
     .filter(part => part && part !== 'nan') // Lọc bỏ các giá trị rỗng hoặc 'nan'
-    .join(', '); // Nối chúng lại bằng dấu phẩy
+    .join(' | '); // Nối chúng lại bằng dấu '|'
 
   return (
     <motion.div className="schedule-item" variants={itemVariants}>
@@ -217,7 +220,7 @@ function App() {
         const coord2 = removeAccents((job['Coordinator 2'] || '').toLowerCase()).includes(normNameFilter);
         const jobName = removeAccents((job.Store || '').toLowerCase()).includes(normNameFilter);
         
-        // ⚠️ LOGIC TÌM KIẾM VẪN GIỮ NGUYÊN (Tìm cả 3 cột)
+        // Logic tìm kiếm vẫn tìm cả 3 cột
         const location = removeAccents((job.Address || '').toLowerCase()).includes(normNameFilter);
         const studio = removeAccents((job.Studio || '').toLowerCase()).includes(normNameFilter);
         const room = removeAccents((job['Studio/Room'] || '').toLowerCase()).includes(normNameFilter);
