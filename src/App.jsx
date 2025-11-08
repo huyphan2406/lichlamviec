@@ -20,6 +20,21 @@ const removeAccents = (str) => {
     .replace(/đ/g, "d").replace(/Đ/g, "D");
 };
 
+// --- ⚠️ BƯỚC 1: THÊM HÀM HỖ TRỢ ĐỌC NGÀY (DD/MM/YYYY) ---
+// Hàm này sẽ đọc "11/11/2025" và "16:00"
+const parseDate = (dateStr, timeStr) => {
+  try {
+    const [day, month, year] = dateStr.split('/');
+    const [hour, minute] = timeStr.split(':');
+    // new Date(Năm, Tháng (0-11), Ngày, Giờ, Phút)
+    // Chú ý: tháng trong JavaScript bắt đầu từ 0 (tháng 1 là 0)
+    return new Date(year, month - 1, day, hour, minute);
+  } catch (e) {
+    // Nếu dữ liệu bị lỗi, trả về một ngày mặc định
+    return new Date(0); 
+  }
+};
+
 // --- LOGIC: DARK MODE (Không đổi) ---
 function useDarkMode() {
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
@@ -31,7 +46,7 @@ function useDarkMode() {
   return [theme, toggleTheme];
 }
 
-// --- ⚠️ BƯỚC 1: SỬA LỖI LOGIC TẢI DỮ LIỆU ---
+// --- LOGIC: TẢI DỮ LIỆU (Sử dụng hàm parseDate) ---
 function useJobData() {
   const [allJobs, setAllJobs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -50,14 +65,12 @@ function useJobData() {
         download: true, 
         header: true, 
         skipEmptyLines: true, 
-        // ⚠️ SỬA LỖI Ở ĐÂY: Tắt dynamicTyping
-        // Bằng cách này, "11/11/2025" sẽ luôn là dạng chuỗi (string)
-        dynamicTyping: false, 
+        dynamicTyping: false, // Vẫn tắt để đảm bảo Date là string
         complete: (results) => {
           const sortedData = results.data.sort((a, b) => {
-            // Giờ chúng ta phải parse thủ công vì đã tắt dynamicTyping
-            const dtA = new Date(`${a.Date} ${a.StartTime}`);
-            const dtB = new Date(`${b.Date} ${b.StartTime}`);
+            // ⚠️ BƯỚC 1 (SỬA LỖI): Dùng hàm parseDate an toàn
+            const dtA = parseDate(a.Date, a.StartTime);
+            const dtB = parseDate(b.Date, b.StartTime);
             return dtA - dtB;
           });
           setAllJobs(sortedData);
@@ -73,7 +86,12 @@ function useJobData() {
     }
   }, []);
 
-  const uniqueDates = useMemo(() => [...new Set(allJobs.map(job => job.Date))], [allJobs]);
+  const uniqueDates = useMemo(() => {
+    // Lọc ra các ngày hợp lệ (không rỗng)
+    const dates = allJobs.map(job => job.Date).filter(Boolean);
+    return [...new Set(dates)];
+  }, [allJobs]);
+
   return { jobs: allJobs, isLoading, uniqueDates };
 }
 
@@ -183,8 +201,7 @@ function App() {
       });
     }
 
-    // Logic lọc ngày (BÂY GIỜ SẼ ĐÚNG)
-    // "11/11/2025" (string) === "11/11/2025" (string) -> TRUE
+    // Logic lọc ngày (ĐÃ ĐƯỢC SỬA)
     if (dateFilter) { 
       jobsToFilter = jobsToFilter.filter(job => (job.Date || '').toString() === dateFilter);
     }
