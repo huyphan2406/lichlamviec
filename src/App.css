@@ -120,7 +120,6 @@ input:checked + .theme-toggle-slider:before { transform: translateX(20px); }
   transition: background-color var(--transition-speed), box-shadow var(--transition-speed);
 }
 .form-group { margin-bottom: 15px; }
-/* 🌟 BỎ margin-bottom cho form-group cuối cùng để nút Download căn sát hơn */
 .form-group:last-of-type { margin-bottom: 0; }
 
 .form-group label {
@@ -151,7 +150,7 @@ input:checked + .theme-toggle-slider:before { transform: translateX(20px); }
   box-shadow: 0 0 0 3px var(--color-brand-light);
 }
 
-/* 🌟 CSS CHO NÚT EXPORT (ĐÃ SỬA) */
+/* CSS CHO NÚT EXPORT (ĐÃ SỬA) */
 .download-button {
   display: flex;
   align-items: center;
@@ -309,12 +308,11 @@ input:checked + .theme-toggle-slider:before { transform: translateX(20px); }
   top: 50%;
   left: 50%;
   
-  /* 🌟 SỬA LỖI: Thêm dòng này để căn giữa.
-    Nó di chuyển box về bên trái 50% chiều rộng CỦA CHÍNH NÓ, 
-    và đi lên trên 50% chiều cao CỦA CHÍNH NÓ.
-    Kết hợp với top: 50% và left: 50% sẽ tạo ra căn giữa tuyệt đối.
+  /* QUAN TRỌNG: ĐÃ XÓA DÒNG `transform` ở đây.
+    Việc căn giữa (transform) giờ đây được xử lý 100% 
+    bởi `framer-motion` trong file `App.jsx` 
+    để tránh xung đột animation.
   */
-  transform: translate(-50%, -50%); 
 
   background-color: var(--color-card);
   border-radius: 16px;
@@ -345,7 +343,7 @@ input:checked + .theme-toggle-slider:before { transform: translateX(20px); }
 }
 
 .popup-icon-zap {
-  color: var(--color-brand); /* Màu cam cho 'zap' */
+  color: var(--color-brand);
   margin-right: 12px;
   flex-shrink: 0;
 }
@@ -384,7 +382,7 @@ input:checked + .theme-toggle-slider:before { transform: translateX(20px); }
   color: var(--color-text-primary);
 }
 
-/* 🌟 Highlight màu mè như yêu cầu */
+/* Highlight màu mè như yêu cầu */
 .popup-content p strong.highlight-date {
   color: var(--color-brand);
   background-color: var(--color-brand-light);

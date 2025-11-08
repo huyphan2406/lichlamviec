@@ -123,11 +123,18 @@ const combineLocation = (job) => {
 
 // 🌟 COMPONENT POPUP THÔNG BÁO (ĐÃ HOÀN THIỆN)
 const NotificationPopup = () => {
+    // Luôn hiển thị để test
     const [isVisible, setIsVisible] = useState(true);
+
+    /*
+    // Dòng code gốc, hãy dùng lại khi test xong:
+    const [isVisible, setIsVisible] = useState(() => {
+        return localStorage.getItem('dismissed_popup_15nov') !== 'true';
+    });
+    */
 
     const handleDismiss = () => {
         setIsVisible(false);
-        // Lưu vào localStorage để popup không hiện lại
         localStorage.setItem('dismissed_popup_15nov', 'true');
     };
 
@@ -147,9 +154,31 @@ const NotificationPopup = () => {
                     {/* Nội dung Popup */}
                     <motion.div 
                         className="popup-modal"
-                        initial={{ y: 50, opacity: 0 }}
-                        animate={{ y: 0, opacity: 1 }}
-                        exit={{ y: 50, opacity: 0 }}
+                        
+                        // 🌟 SỬA LỖI TẠI ĐÂY:
+                        // Chuyển toàn bộ logic căn giữa và animation vào framer-motion
+                        
+                        // 1. Trạng thái ban đầu:
+                        initial={{ 
+                            opacity: 0,
+                            x: "-50%", // Căn giữa theo chiều ngang
+                            y: "calc(-50% + 50px)" // Căn giữa (y: -50%) VÀ đẩy xuống 50px
+                        }}
+                        
+                        // 2. Trạng thái khi hiển thị (vị trí cuối):
+                        animate={{ 
+                            opacity: 1,
+                            x: "-50%", // Giữ căn giữa
+                            y: "-50%"  // Vị trí cuối cùng là căn giữa tuyệt đối
+                        }}
+                        
+                        // 3. Trạng thái khi tắt:
+                        exit={{ 
+                            opacity: 0,
+                            x: "-50%", // Giữ căn giữa
+                            y: "calc(-50% + 50px)" // Quay về vị trí bị đẩy xuống
+                        }}
+                        
                         transition={{ type: 'spring', stiffness: 100, damping: 20 }}
                     >
                         <div className="popup-header">
