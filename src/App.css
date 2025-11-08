@@ -1,10 +1,16 @@
-/* Thiết lập cơ bản */
+/* BƯỚC 4: IMPORT FONT "INTER" TỪ GOOGLE */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* Thiết lập cơ bản với font mới */
 body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background-color: #f0f2f5;
+    /* Dùng font Inter, nếu không có thì dùng font hệ thống */
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: #f7f8fa; /* Màu nền xám nhẹ hơn */
     margin: 0;
     padding: 20px;
     color: #333;
+    -webkit-font-smoothing: antialiased; /* Làm font mượt hơn trên Mac */
+    -moz-osx-font-smoothing: grayscale;
 }
 
 /* Đặt App vào giữa và giới hạn chiều rộng */
@@ -13,159 +19,165 @@ body {
     margin: 0 auto;
 }
 
-header, .filter-container, .schedule-item {
-    background-color: #ffffff;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    margin-bottom: 20px;
-}
-
 header {
-    padding: 20px;
+    padding: 10px 0; /* Giảm padding header */
+    background-color: transparent; /* Xóa nền trắng của header */
+    box-shadow: none; /* Xóa đổ bóng */
 }
 
 h1 {
     margin: 0 0 15px 0;
-    color: #1c1e21;
-    font-size: 1.8em;
+    color: #1a1a1a; /* Màu đen đậm hơn */
+    font-size: 2em; /* Tăng kích thước tiêu đề chính */
+    font-weight: 700;
 }
 
-/* Form lọc */
+/* Form lọc được làm đẹp */
 .filter-container {
     padding: 20px;
+    background-color: #ffffff;
+    border-radius: 12px; /* Bo góc nhiều hơn */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+    margin-bottom: 25px;
 }
 
 .form-group {
     margin-bottom: 15px;
 }
+.form-group:last-child {
+    margin-bottom: 0;
+}
 
 .form-group label {
     display: block;
     font-weight: 600;
-    margin-bottom: 5px;
+    margin-bottom: 8px;
+    font-size: 0.9em;
+    color: #444;
 }
 
 .form-group input,
-.form-group select { /* Áp dụng cho cả input và select */
+.form-group select {
     width: 100%;
-    padding: 10px;
+    padding: 12px;
     font-size: 1em;
     border: 1px solid #ddd;
-    border-radius: 6px;
+    border-radius: 8px; /* Bo góc nhiều hơn */
     box-sizing: border-box; 
-    font-family: inherit; /* Đảm bảo select dùng font giống input */
+    font-family: 'Inter', sans-serif; /* Đảm bảo dùng font Inter */
+    background-color: #fdfdfd;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Thêm hiệu ứng focus đẹp */
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #007bff; /* Màu xanh dương khi chọn */
+    box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
 }
 
 /* Danh sách lịch */
 .schedule-list {
-    padding: 0 10px;
+    padding: 0; /* Xóa padding cũ */
 }
 
 .schedule-group-title {
-    font-size: 1.2em; 
-    font-weight: 700;
-    color: #1c1e21;
-    padding: 10px 0 5px 0;
+    font-size: 1.1em; 
+    font-weight: 600;
+    color: #007bff; /* Màu xanh dương cho tiêu đề nhóm */
+    padding: 15px 0 10px 0;
     border-top: 1px solid #eee;
     margin-top: 20px;
+    text-transform: uppercase; /* VIẾT HOA */
+    letter-spacing: 0.5px; /* Giãn cách chữ */
 }
 
-/* Xóa gạch đầu tiên của nhóm đầu tiên */
 .time-group-container:first-child .schedule-group-title {
     border-top: none;
     margin-top: 0;
 }
 
+/* CSS cho thẻ lịch (Job Item) */
 .schedule-item {
-    padding: 15px 20px;
-    margin: 10px 0; 
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+    padding: 20px;
+    margin: 15px 0; 
+    transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+}
+
+/* Thêm hiệu ứng hover đẹp */
+.schedule-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.07);
 }
 
 .schedule-item h4 {
-    margin: 0 0 10px 0;
-    font-size: 1.2em;
-    color: #1c1e21;
+    margin: 0 0 15px 0; /* Tăng khoảng cách */
+    font-size: 1.25em; /* Tăng kích thước */
+    color: #1a1a1a;
     font-weight: 600; 
 }
 
+/* --- BƯỚC 4: CSS CHO CÁC ICON MỚI --- */
 .schedule-item p {
-    margin: 8px 0;
+    margin: 10px 0; /* Tăng khoảng cách giữa các dòng */
     display: flex;
     align-items: center;
-    color: #555;
+    color: #555; /* Màu chữ xám */
     font-size: 0.95em;
+    font-weight: 500; /* Hơi đậm (medium) */
 }
 
-/* --- CẬP NHẬT ICON GIỐNG ẢNH MẪU --- */
-.schedule-item p::before {
-    font-family: "Arial", sans-serif; 
-    margin-right: 12px;
-    font-size: 1.1em;
-    width: 20px;
-    text-align: center;
+/* CSS cho các icon SVG từ react-icons */
+.schedule-item p svg {
+    margin-right: 12px; /* Khoảng cách từ icon đến chữ */
+    font-size: 1.2em; /* Kích thước icon */
+    color: #007bff; /* Cho tất cả icon màu xanh */
+    flex-shrink: 0; /* Đảm bảo icon không bị bóp méo */
 }
 
-.schedule-item p.time::before {
-    content: '⏰';
+/* Tùy chỉnh màu cho một số icon nếu muốn */
+.schedule-item p.location svg {
+    color: #dc3545; /* Màu đỏ cho địa điểm */
 }
-
-.schedule-item p.location::before {
-    content: '📍';
-}
-
-.schedule-item p.session::before {
-    content: '🎤';
-}
-
-.schedule-item p.mc::before {
-    content: '🎙️'; /* Icon Micro giống 'Dương Kiều' */
-}
-
-.schedule-item p.standby::before {
-    content: '💻'; /* Icon Laptop/Standby giống 'Quốc Huy' */
+.schedule-item p.time svg {
+    color: #6c757d; /* Màu xám cho thời gian */
 }
 
 
-/* --- TỐI ƯU #4: CSS CHO SKELETON LOADING --- */
-
+/* --- SKELETON LOADING (Giữ nguyên) --- */
 @keyframes pulse {
-  0% {
-    background-color: #eee;
-  }
-  50% {
-    background-color: #e0e0e0;
-  }
-  100% {
-    background-color: #eee;
-  }
+  0% { background-color: #eee; }
+  50% { background-color: #e0e0e0; }
+  100% { background-color: #eee; }
 }
 
 .skeleton-item {
   background-color: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  margin: 10px 0;
-  padding: 15px 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  margin: 15px 0;
+  padding: 20px;
 }
 
 .skeleton-line {
   background-color: #eee;
   border-radius: 4px;
   animation: pulse 1.5s ease-in-out infinite;
-  margin: 8px 0;
+  margin: 10px 0;
 }
-
 .skeleton-line.h4 {
   width: 60%;
-  height: 20px;
+  height: 22px;
   margin-bottom: 15px;
 }
-
 .skeleton-line.p {
   width: 90%;
   height: 16px;
 }
-
 .skeleton-line.p:last-child {
   width: 70%;
 }
