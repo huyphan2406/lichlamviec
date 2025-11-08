@@ -123,10 +123,7 @@ const combineLocation = (job) => {
 
 // 🌟 COMPONENT POPUP THÔNG BÁO (ĐÃ HOÀN THIỆN)
 const NotificationPopup = () => {
-    const [isVisible, setIsVisible] = useState(() => {
-        // Kiểm tra localStorage để xem popup đã bị tắt chưa
-        return localStorage.getItem('dismissed_popup_15nov') !== 'true';
-    });
+    const [isVisible, setIsVisible] = useState(true);
 
     const handleDismiss = () => {
         setIsVisible(false);
