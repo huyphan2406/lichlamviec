@@ -200,7 +200,7 @@ const Header = ({ theme, toggleTheme }) => {
             
             // Tìm mã code mà activeUID khớp với UID của người dùng hiện tại
             const q = query(
-                collection(db, 'access_codes'), 
+                collection(db, 'code'), 
                 where('activeUID', '==', userUID)
             );
             

@@ -1,7 +1,6 @@
-// src/CodeLogin.jsx (ĐÃ FIX LỖI CẤU TRÚC VÀ LÔGIC MỘT PHIÊN)
+// src/CodeLogin.jsx (ĐÃ SỬA COLLECTION TỪ 'access_codes' thành 'code')
 
 import { useState } from 'react';
-// Đảm bảo các file này export đúng: { db, auth, signInAnonymously, doc, getDoc, updateDoc }
 import { db, auth } from './firebase.js'; 
 import { doc, getDoc, updateDoc } from 'firebase/firestore'; 
 import { signInAnonymously } from 'firebase/auth'; 
@@ -19,15 +18,15 @@ function CodeLogin() {
         setIsLoading(true);
         
         try {
-            const code = accessCode.trim().toUpperCase(); 
-            if (!code) {
+            const inputCode = accessCode.trim().toUpperCase(); 
+            if (!inputCode) {
                 setError('Vui lòng nhập Mã Kích Hoạt.');
                 setIsLoading(false);
                 return;
             }
 
-            // 1. ĐỌC: Tìm tài liệu (Document) theo mã code
-            const codeRef = doc(db, 'access_codes', code);
+            // 1. ĐỌC: Tìm tài liệu (Document) theo mã code trong collection "code"
+            const codeRef = doc(db, 'code', inputCode); // 👈 ĐÃ ĐỔI TÊN COLLECTION THÀNH 'code'
             const codeSnap = await getDoc(codeRef); 
 
             if (!codeSnap.exists()) {
@@ -40,8 +39,8 @@ function CodeLogin() {
             const now = new Date();
             const expiryDate = new Date(data.expiryDate); 
 
-            // 2. KIỂM TRA PHIÊN HOẠT ĐỘNG (Active Session)
-            // Kiểm tra nếu activeUID tồn tại và độ dài chuỗi > 1 (nghĩa là đã có UID đang sử dụng)
+            // 2. KIỂM TRA PHIÊN HOẠT ĐỘNG (Dùng Chuỗi Rỗng "")
+            // Nếu activeUID tồn tại và độ dài chuỗi > 1 (nghĩa là đã có UID đang sử dụng)
             if (data.activeUID && data.activeUID.length > 1) { 
                 setError('Mã này hiện đang được sử dụng trên một thiết bị khác. Vui lòng đăng xuất thiết bị đó trước khi đăng nhập tại đây.');
                 setIsLoading(false);
@@ -71,12 +70,10 @@ function CodeLogin() {
         } catch (err) {
             console.error("Lỗi gốc Firebase:", err);
             
-            // Xử lý lỗi quyền truy cập/kết nối
             if (err.code === 'permission-denied') {
                 setError('Lỗi quyền truy cập Database. Vui lòng kiểm tra lại Quy tắc bảo mật Firestore (Security Rules).');
             } else {
-                // Lỗi mạng, timeout, hoặc lỗi Auth khác
-                setError('Có lỗi hệ thống xảy ra, không thể xác thực mã. Vui lòng thử lại.');
+                setError('Có lỗi hệ thống xảy ra, không thể xác thực mã.');
             }
         } finally {
             setIsLoading(false);
