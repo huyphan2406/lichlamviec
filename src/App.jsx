@@ -1,13 +1,14 @@
 import { useState, useMemo, useEffect } from 'react';
 import Papa from 'papaparse';
+// ⚠️ LỖI ĐÃ ĐƯỢC SỬA: Import đúng tên thư viện (không có ./ ở đầu)
 import { 
   FiClock, 
   FiMapPin, 
   FiMic, 
   FiUser, 
   FiMonitor 
-} from 'react-icons/fi'; // Feather Icons
-import './App.css'; // File CSS chúng ta sẽ làm ở bước 5
+} from 'react-icons/fi';
+import './App.css'; 
 
 // Đặt thời gian cache (ví dụ: 1 giờ)
 const CACHE_DURATION = 3600 * 1000;
@@ -16,28 +17,21 @@ function App() {
   // --- STATE ---
   const [allJobs, setAllJobs] = useState([]);
   const [dateFilter, setDateFilter] = useState('');
-  
-  // Tối ưu Debounce:
-  const [nameFilter, setNameFilter] = useState('Quốc Huy'); // State đã trì hoãn
-  const [inputValue, setInputValue] = useState('Quốc Huy'); // State gõ ngay lập tức
-  
-  // Tối ưu Loading:
+  const [nameFilter, setNameFilter] = useState('Quốc Huy'); 
+  const [inputValue, setInputValue] = useState('Quốc Huy'); 
   const [isLoading, setIsLoading] = useState(true);
 
   // --- TẢI DỮ LIỆU TỰ ĐỘNG + CACHING ---
   useEffect(() => {
-    const dataUrl = '/data.csv'; // Trỏ đến file trong /public/data.csv
+    const dataUrl = '/data.csv'; 
     const now = new Date().getTime();
-
     const cachedData = localStorage.getItem("cachedJobs");
     const cacheTime = localStorage.getItem("cachedJobsTime");
 
-    // Kiểm tra cache
     if (cachedData && cacheTime && (now - parseInt(cacheTime) < CACHE_DURATION)) {
       setAllJobs(JSON.parse(cachedData));
       setIsLoading(false);
     } else {
-      // Nếu không có cache, tải mới
       Papa.parse(dataUrl, {
         download: true,
         header: true,
@@ -49,11 +43,8 @@ function App() {
             const dateTimeB = new Date(`${b.Ngay} ${b.ThoiGianBatDau}`);
             return dateTimeA - dateTimeB;
           });
-          
           setAllJobs(sortedData);
           setIsLoading(false); 
-          
-          // Lưu vào cache
           localStorage.setItem("cachedJobs", JSON.stringify(sortedData));
           localStorage.setItem("cachedJobsTime", now.toString());
         },
@@ -63,26 +54,23 @@ function App() {
         }
       });
     }
-  }, []); // Mảng rỗng [] đảm bảo nó chỉ chạy 1 lần
+  }, []); 
 
-  
   // --- DEBOUNCE EFFECT (TRÌ HOÃN TÌM KIẾM) ---
   useEffect(() => {
     const timerId = setTimeout(() => {
-      setNameFilter(inputValue); // Cập nhật state filter chính
-    }, 300); // 300 mili-giây
+      setNameFilter(inputValue); 
+    }, 300); 
 
     return () => {
-      clearTimeout(timerId); // Hủy bộ đếm nếu gõ tiếp
+      clearTimeout(timerId); 
     };
-  }, [inputValue]); // Chỉ chạy lại khi inputValue thay đổi
+  }, [inputValue]); 
 
-  
   // --- LOGIC LỌC (DÙNG useMemo) ---
   const filteredJobs = useMemo(() => {
     let jobs = allJobs;
     const normNameFilter = nameFilter.toLowerCase().trim();
-
     if (normNameFilter) {
       jobs = jobs.filter(job => {
         const mcMatch = job.MC ? job.MC.toLowerCase().includes(normNameFilter) : false;
@@ -91,22 +79,18 @@ function App() {
         return mcMatch || standbyMatch || jobNameMatch;
       });
     }
-
     if (dateFilter) { 
       jobs = jobs.filter(job => (job.Ngay ? job.Ngay.toString() : '') === dateFilter);
     }
-
     return jobs;
-  }, [allJobs, dateFilter, nameFilter]); // Chỉ lọc lại khi các state chính này thay đổi
+  }, [allJobs, dateFilter, nameFilter]); 
 
-  
   // --- TÍNH TOÁN DANH SÁCH NGÀY (DÙNG useMemo) ---
   const uniqueDates = useMemo(() => {
     const dates = allJobs.map(job => job.Ngay);
     return [...new Set(dates)];
   }, [allJobs]);
 
-  
   // --- LOGIC GOM NHÓM (DÙNG reduce) ---
   const groupedJobs = filteredJobs.reduce((acc, job) => {
     const timeGroup = `${job.ThoiGianBatDau}–${job.ThoiGianKetThuc}`;
@@ -123,7 +107,6 @@ function App() {
       <header>
         <h1>Lịch Làm Việc</h1>
       </header>
-
       <main>
         <div className="filter-container">
           <div className="form-group">
@@ -139,22 +122,19 @@ function App() {
               ))}
             </select>
           </div>
-
           <div className="form-group">
             <label htmlFor="nameInput">Tìm</label>
             <input 
               type="text" 
               id="nameInput" 
               placeholder="VD: Quốc Huy"
-              value={inputValue} // Hiển thị giá trị đang gõ
-              onChange={(e) => setInputValue(e.target.value)} // Cập nhật state đang gõ
+              value={inputValue} 
+              onChange={(e) => setInputValue(e.target.value)}
             />
           </div>
         </div>
-
         <div id="schedule-list" className="schedule-list">
           {isLoading ? (
-            // Hiển thị khung chờ
             <div className="skeleton-container">
               {[...Array(3)].map((_, i) => (
                 <div className="skeleton-item" key={i}>
@@ -166,10 +146,8 @@ function App() {
               ))}
             </div>
           ) : filteredJobs.length === 0 ? (
-            // Tải xong nhưng không có kết quả
             <p className='empty-state'>Không tìm thấy kết quả phù hợp.</p>
           ) : (
-            // Tải xong và có kết quả
             Object.keys(groupedJobs).map(timeGroup => (
               <div key={timeGroup} className="time-group-container"> 
                 <h3 className="schedule-group-title">{timeGroup}</h3>
