@@ -20,17 +20,13 @@ const removeAccents = (str) => {
     .replace(/đ/g, "d").replace(/Đ/g, "D");
 };
 
-// --- ⚠️ BƯỚC 1: THÊM HÀM HỖ TRỢ ĐỌC NGÀY (DD/MM/YYYY) ---
-// Hàm này sẽ đọc "11/11/2025" và "16:00"
+// Hàm đọc ngày (Không đổi)
 const parseDate = (dateStr, timeStr) => {
   try {
     const [day, month, year] = dateStr.split('/');
     const [hour, minute] = timeStr.split(':');
-    // new Date(Năm, Tháng (0-11), Ngày, Giờ, Phút)
-    // Chú ý: tháng trong JavaScript bắt đầu từ 0 (tháng 1 là 0)
     return new Date(year, month - 1, day, hour, minute);
   } catch (e) {
-    // Nếu dữ liệu bị lỗi, trả về một ngày mặc định
     return new Date(0); 
   }
 };
@@ -46,7 +42,7 @@ function useDarkMode() {
   return [theme, toggleTheme];
 }
 
-// --- LOGIC: TẢI DỮ LIỆU (Sử dụng hàm parseDate) ---
+// --- ⚠️ BƯỚC 1: SỬA LỖI LOGIC TẢI DỮ LIỆU (FIX LỖI HEADER) ---
 function useJobData() {
   const [allJobs, setAllJobs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -65,10 +61,15 @@ function useJobData() {
         download: true, 
         header: true, 
         skipEmptyLines: true, 
-        dynamicTyping: false, // Vẫn tắt để đảm bảo Date là string
+        dynamicTyping: false, 
+        
+        // ⚠️ FIX LỖI Ở ĐÂY: Thêm 'transformHeader'
+        // Dọn dẹp header (xóa ký tự BOM ẩn và khoảng trắng)
+        transformHeader: (header) => header.replace(/\ufeff/g, '').trim(),
+
         complete: (results) => {
+          // 'results.data' bây giờ sẽ sạch
           const sortedData = results.data.sort((a, b) => {
-            // ⚠️ BƯỚC 1 (SỬA LỖI): Dùng hàm parseDate an toàn
             const dtA = parseDate(a.Date, a.StartTime);
             const dtB = parseDate(b.Date, b.StartTime);
             return dtA - dtB;
@@ -87,7 +88,6 @@ function useJobData() {
   }, []);
 
   const uniqueDates = useMemo(() => {
-    // Lọc ra các ngày hợp lệ (không rỗng)
     const dates = allJobs.map(job => job.Date).filter(Boolean);
     return [...new Set(dates)];
   }, [allJobs]);
@@ -155,13 +155,15 @@ const EmptyState = () => (
 
 const JobItem = ({ job }) => {
   const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } };
-  const timeGroup = `${job.StartTime}–${job.EndTime}`;
+  // ⚠️ FIX LỖI: Đảm bảo TimeGroup không bị "undefined-undefined"
+  const timeGroup = `${job.StartTime || 'N/A'}–${job.EndTime || 'N/A'}`;
   
   return (
     <motion.div className="schedule-item" variants={itemVariants}>
-      <h4>{job.JobName || '...'}</h4>
+      {/* ⚠️ FIX LỖI: Đảm bảo JobName không bị "..." */}
+      <h4>{job.JobName || 'Unnamed Job'}</h4>
       <p className="time"><FiClock /> {timeGroup}</p>
-      <p className="location"><FiMapPin /> {job.Location || '...'}</p>
+      <p className="location"><FiMapPin /> {job.Location || 'No location'}</p>
       <p className="session"><FiMic /> Session type: {job.SessionType || '—'}</p>
       <p className="mc"><FiUser /> {job.MC || '...'}</p>
       <p className="standby"><FiMonitor /> {job.Standby || '...'}</p>
@@ -201,16 +203,18 @@ function App() {
       });
     }
 
-    // Logic lọc ngày (ĐÃ ĐƯỢC SỬA)
+    // Logic lọc ngày (Không đổi)
     if (dateFilter) { 
       jobsToFilter = jobsToFilter.filter(job => (job.Date || '').toString() === dateFilter);
     }
     return jobsToFilter;
   }, [jobs, dateFilter, nameFilter]); 
 
+  // Logic gom nhóm (SỬA LỖI)
   const groupedJobs = useMemo(() => {
     return filteredJobs.reduce((acc, job) => {
-      const timeGroup = `${job.StartTime}–${job.EndTime}`;
+      // ⚠️ FIX LỖI: Đảm bảo TimeGroup không bị "undefined-undefined"
+      const timeGroup = `${job.StartTime || 'N/A'}–${job.EndTime || 'N/A'}`;
       if (!acc[timeGroup]) acc[timeGroup] = [];
       acc[timeGroup].push(job);
       return acc;
@@ -247,7 +251,7 @@ function App() {
                 > 
                   <h3 className="schedule-group-title">{timeGroup}</h3>
                   {groupedJobs[timeGroup].map((job, index) => (
-                    <JobItem key={`${timeGroup}-${index}`} job={job} />
+                    <JobItem key={`${timeGroup}-${index}`} job={job} timeGroup={timeGroup} />
                   ))}
                 </motion.div>
               ))}
