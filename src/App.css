@@ -155,22 +155,22 @@ input:checked + .theme-toggle-slider:before { transform: translateX(20px); }
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px; /* Khoảng cách giữa icon và text */
+  gap: 10px;
   width: 100%;
   padding: 14px;
   font-size: 1rem;
   font-weight: 600;
   font-family: var(--font-main);
-  background-color: var(--color-brand); /* Thêm màu xanh */
-  color: #ffffff; /* Thêm màu chữ trắng */
+  background-color: var(--color-brand);
+  color: #ffffff;
   border: none;
   border-radius: 8px;
   cursor: pointer;
   transition: background-color 0.2s ease, box-shadow 0.2s ease;
-  margin-top: 15px; /* Tạo khoảng cách với trường input bên trên */
+  margin-top: 15px;
 }
 .download-button:hover {
-  background-color: #0069d9; /* Màu xanh đậm hơn khi hover */
+  background-color: #0069d9;
   box-shadow: 0 4px 12px rgba(0,123,255,0.3);
 }
 .download-button:disabled {
@@ -298,7 +298,7 @@ input:checked + .theme-toggle-slider:before { transform: translateX(20px); }
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5); /* Nền mờ 50% */
+  background-color: rgba(0, 0, 0, 0.5);
   z-index: 1000;
   cursor: pointer;
 }
@@ -307,21 +307,14 @@ input:checked + .theme-toggle-slider:before { transform: translateX(20px); }
   position: fixed;
   top: 50%;
   left: 50%;
-  
-  /* QUAN TRỌNG: ĐÃ XÓA DÒNG `transform` ở đây.
-    Việc căn giữa (transform) giờ đây được xử lý 100% 
-    bởi `framer-motion` trong file `App.jsx` 
-    để tránh xung đột animation.
-  */
-
   background-color: var(--color-card);
   border-radius: 16px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-  width: 90%; /* Responsive: luôn rộng 90% màn hình */
-  max-width: 450px; /* Nhưng không bao giờ rộng quá 450px */
+  width: 90%;
+  max-width: 450px;
   z-index: 1001;
-  overflow: hidden; /* Để bo góc header */
-  box-sizing: border-box; /* Đảm bảo padding không làm vỡ layout */
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .popup-header {
@@ -330,7 +323,7 @@ input:checked + .theme-toggle-slider:before { transform: translateX(20px); }
   padding: 16px 20px;
   border-bottom: 1px solid var(--color-border);
   position: relative;
-  background-color: var(--color-brand-light); /* Nền xanh nhạt cho header */
+  background-color: var(--color-brand-light);
 }
 
 .popup-header h3 {
@@ -338,7 +331,6 @@ input:checked + .theme-toggle-slider:before { transform: translateX(20px); }
   font-size: 1.15rem;
   font-weight: 600;
   color: var(--color-text-primary);
-  /* Cho phép xuống dòng nếu tiêu đề quá dài trên mobile */
   word-break: break-word; 
 }
 
@@ -366,22 +358,40 @@ input:checked + .theme-toggle-slider:before { transform: translateX(20px); }
   color: var(--color-text-primary);
 }
 
+
+/* ================================================== */
+/* 🌟 CSS MỚI CHO NỘI DUNG POPUP (ĐÃ SỬA LẠI CHO ĐẸP) */
+/* ================================================== */
+
 .popup-content {
-  padding: 20px 24px;
+  padding: 24px; /* Padding tổng thể cho nội dung */
   line-height: 1.6;
 }
 
+/* Tùy chỉnh các thẻ <p> bên trong */
 .popup-content p {
-  margin: 0;
+  margin: 0 0 15px 0; /* Khoảng cách giữa các đoạn */
   color: var(--color-text-secondary);
   font-size: 0.95rem;
 }
+.popup-content p:last-child {
+  margin-bottom: 0; /* Đoạn cuối cùng không cần margin-bottom */
+}
 
+/* Tiêu đề chính của thông báo */
+.popup-content .popup-main-title {
+  font-size: 1.1em;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+/* Phần chữ in đậm (Talent, Host) */
 .popup-content p strong {
   font-weight: 600;
   color: var(--color-text-primary);
 }
 
+/* Phần ngày highlight (15/11) */
 .popup-content p strong.highlight-date {
   color: var(--color-brand);
   background-color: var(--color-brand-light);
@@ -390,29 +400,24 @@ input:checked + .theme-toggle-slider:before { transform: translateX(20px); }
   font-weight: 700;
 }
 
-.popup-content .popup-list {
-    list-style: none; /* Xóa dấu chấm mặc định */
-    padding: 0;
-    margin: 15px 0;
-    border-left: 3px solid var(--color-brand); /* Đường kẻ đẹp mắt */
+/* Đường kẻ ngang phân chia */
+.popup-divider {
+  border: none; /* Xóa viền mặc định */
+  border-top: 1px solid var(--color-border); /* Thay bằng viền mỏng, đẹp */
+  margin: 20px 0; /* Khoảng cách trên dưới */
 }
 
-.popup-content .popup-list li {
-    padding: 8px 15px;
-    margin-bottom: 5px;
-    font-size: 0.9em;
-    color: var(--color-text-primary);
-    background-color: var(--color-input-bg); /* Nền nhẹ cho mỗi dòng */
-    border-bottom: 1px solid var(--color-border);
+/* Phần thông tin chân (footer) của popup */
+.popup-footer-info {
+  font-size: 0.9em;
+  color: var(--color-text-secondary);
 }
 
-.popup-content .popup-list li:last-child {
-    border-bottom: none;
-}
-
-.popup-content .popup-author {
-    margin-top: 15px !important;
-    font-size: 0.8em;
-    color: var(--color-grey) !important;
-    text-align: right; /* Căn phải tên tác giả */
+/* Tên tác giả */
+.popup-author {
+  display: block; 
+  text-align: right; 
+  margin-top: 15px;
+  font-style: italic;
+  color: var(--color-grey); /* Màu xám nhạt hơn */
 }

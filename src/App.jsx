@@ -182,48 +182,34 @@ const NotificationPopup = () => {
                         transition={{ type: 'spring', stiffness: 100, damping: 20 }}
                     >
                         <div className="popup-content">
-                        <p>
-                            {/* Dòng tiêu đề chính, in đậm */}
-                            <strong style={{ 
-                                fontSize: '1.05em', 
-                                color: 'var(--color-text-primary)' 
-                            }}>
-                                Lịch Livestream Nhanh & Chính Xác!
-                            </strong>
-                            <br />
-                            
-                            {/* Nội dung mô tả */}
-                            Web dùng để tra cứu lịch làm việc của <strong>Standby</strong> và <strong>Host</strong>.
-                            
-                            {/* Thêm khoảng cách rõ ràng */}
-                            <br />
-                            <br />
-                            
-                            {/* Thông báo chính với ngày được highlight */}
-                            Dùng miễn phí tới <strong className="highlight-date">15/11</strong>.
-                            <br />
-                            Sau ngày 15, bạn cần đăng kí tài khoản để sử dụng.
-                            
-                            <br />
-                            <br />
-                            
-                            {/* Thông tin thêm */}
-                            Nhiều chức năng mới sẽ ra mắt sớm...
-                            <br />
-                            
-                            {/* Tên tác giả, căn phải, in nghiêng và nhỏ hơn */}
-                            <span style={{ 
-                                display: 'block', 
-                                textAlign: 'right', 
-                                marginTop: '15px',
-                                fontSize: '0.9em', 
-                                fontStyle: 'italic',
-                                color: 'var(--color-text-secondary)'
-                            }}>
-                                Tác giả: Quốc Huy
-                            </span>
-                        </p>
-                    </div>
+
+    {/* Tiêu đề chính */}
+    <p className="popup-main-title">
+        Lịch Livestream Nhanh & Chính Xác!
+    </p>
+
+    {/* Nội dung mô tả */}
+    <p>
+        Web dùng để tra cứu lịch làm việc của <strong>Standby</strong> và <strong>Host</strong>.
+    </p>
+    
+    {/* Thông báo chính với ngày được highlight */}
+    <p>
+        Dùng miễn phí tới <strong className="highlight-date">15/11</strong>.
+        Sau ngày 15, bạn cần đăng kí tài khoản để sử dụng.
+    </p>
+    
+    {/* Thông tin thêm và tác giả */}
+    <p className="popup-footer-info">
+        Nhiều chức năng mới sẽ sớm được ra mắt...
+        
+        {/* Tên tác giả, căn phải, in nghiêng và nhỏ hơn */}
+        <span className="popup-author">
+            Tác giả: Quốc Huy
+        </span>
+    </p>
+
+</div>
                     </motion.div>
                 </>
             )}
