@@ -255,7 +255,7 @@ input:checked + .theme-toggle-slider:before { transform: translateX(20px); }
   background-color: var(--color-card);
   border-radius: 12px;
   box-shadow: 0 4px 12px var(--color-shadow);
-  transition: all var(--transition-speed); /* 🌟 Đã sửa lỗi cú pháp ở đây */
+  transition: all var(--transition-speed);
 }
 .empty-state-icon {
   font-size: 3em;
@@ -292,7 +292,7 @@ input:checked + .theme-toggle-slider:before { transform: translateX(20px); }
 }
 
 
-/* 🌟 CSS CHO POPUP THÔNG BÁO (MỚI) */
+/* 🌟 CSS CHO POPUP THÔNG BÁO (ĐÃ SỬA LỖI RESPONSIVE) */
 .popup-overlay {
   position: fixed;
   top: 0;
@@ -308,15 +308,22 @@ input:checked + .theme-toggle-slider:before { transform: translateX(20px); }
   position: fixed;
   top: 50%;
   left: 50%;
-  /* transform: translate(-50%, -50%); 
-     Framer Motion sẽ xử lý transform, ta chỉ cần set y=0 trong animate */
+  
+  /* 🌟 SỬA LỖI: Thêm dòng này để căn giữa.
+    Nó di chuyển box về bên trái 50% chiều rộng CỦA CHÍNH NÓ, 
+    và đi lên trên 50% chiều cao CỦA CHÍNH NÓ.
+    Kết hợp với top: 50% và left: 50% sẽ tạo ra căn giữa tuyệt đối.
+  */
+  transform: translate(-50%, -50%); 
+
   background-color: var(--color-card);
   border-radius: 16px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-  width: 90%;
-  max-width: 450px;
+  width: 90%; /* Responsive: luôn rộng 90% màn hình */
+  max-width: 450px; /* Nhưng không bao giờ rộng quá 450px */
   z-index: 1001;
   overflow: hidden; /* Để bo góc header */
+  box-sizing: border-box; /* Đảm bảo padding không làm vỡ layout */
 }
 
 .popup-header {
@@ -333,6 +340,8 @@ input:checked + .theme-toggle-slider:before { transform: translateX(20px); }
   font-size: 1.15rem;
   font-weight: 600;
   color: var(--color-text-primary);
+  /* Cho phép xuống dòng nếu tiêu đề quá dài trên mobile */
+  word-break: break-word; 
 }
 
 .popup-icon-zap {
