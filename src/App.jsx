@@ -122,7 +122,7 @@ const FilterBar = ({ dateFilter, setDateFilter, inputValue, setInputValue, uniqu
       <input 
         type="text" 
         id="nameInput" 
-        placeholder="e.g., Quốc Huy" 
+        placeholder="e.g., Your Name"
         value={inputValue} 
         onChange={(e) => setInputValue(e.target.value)} 
       />
