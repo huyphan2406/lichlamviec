@@ -1,10 +1,10 @@
-import { useState, useMemo, useEffect } from 'react'; // ⚠️ Đã xóa 'useRef'
+import { useState, useMemo, useEffect } from 'react';
 import Papa from 'papaparse';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   FiClock, FiMapPin, FiMic, FiUser, FiMonitor, // Job Icons
   FiMoon, FiSun, // Dark Mode Icons
-  FiSearch // Empty State Icon (⚠️ Đã xóa 'FiHeart')
+  FiSearch // Empty State Icon
 } from 'react-icons/fi';
 import './App.css'; 
 
@@ -45,6 +45,7 @@ function useDarkMode() {
   return [theme, toggleTheme];
 }
 
+// --- ⚠️ SỬA LỖI LẦN CUỐI Ở ĐÂY ---
 function useJobData() {
   const [allJobs, setAllJobs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -64,14 +65,20 @@ function useJobData() {
         header: true, 
         skipEmptyLines: true, 
         dynamicTyping: false, 
-        // FIX LỖI (UNDEFINED): Dọn dẹp Header (xóa ký tự BOM ẩn)
         transformHeader: (header) => header.replace(/\ufeff/g, '').trim(),
+        
         complete: (results) => {
-          const sortedData = results.data.sort((a, b) => {
+          
+          // ⚠️ FIX LỖI: Lọc bỏ các dòng rỗng (chỉ giữ lại các dòng có "Date")
+          const validData = results.data.filter(row => row.Date && row.Date.includes('/'));
+
+          // Bây giờ mới sắp xếp (sort) trên dữ liệu đã sạch
+          const sortedData = validData.sort((a, b) => {
             const dtA = parseDate(a.Date, a.StartTime);
             const dtB = parseDate(b.Date, b.StartTime);
             return dtA - dtB;
           });
+          
           setAllJobs(sortedData);
           setIsLoading(false);
           localStorage.setItem("cachedJobs", JSON.stringify(sortedData));
@@ -122,8 +129,8 @@ const FilterBar = ({ dateFilter, setDateFilter, inputValue, setInputValue, uniqu
       <input 
         type="text" 
         id="nameInput" 
-        placeholder="e.g., Quốc Huy" // Hiển thị Tiếng Việt
-        value={inputValue} // Giá trị đang gõ (có dấu)
+        placeholder="e.g., Quốc Huy" 
+        value={inputValue} 
         onChange={(e) => setInputValue(e.target.value)} 
       />
     </div>
@@ -172,7 +179,7 @@ function App() {
   const [theme, toggleTheme] = useDarkMode();
   const { jobs, isLoading, uniqueDates } = useJobData();
   const [dateFilter, setDateFilter] = useState(() => localStorage.getItem('lastViewedDate') || '');
-  const [inputValue, setInputValue] = useState('Quốc Huy'); // Hiển thị Tiếng Việt có dấu
+  const [inputValue, setInputValue] = useState('Quốc Huy'); 
   const [nameFilter, setNameFilter] = useState('Quốc Huy'); 
 
   // --- EFFECTS (Debounce & Cache Filter) ---
@@ -231,9 +238,11 @@ function App() {
         <div id="schedule-list" className="schedule-list">
           {isLoading ? (
             <SkeletonLoader />
-          ) : jobGroups.length === 0 ? (
+          ) : (jobs.length > 0 && jobGroups.length === 0) ? (
+            // Nếu có dữ liệu (jobs > 0) nhưng không tìm thấy (jobGroups = 0)
             <EmptyState />
           ) : (
+            // Nếu đang tải, hoặc có kết quả
             <AnimatePresence>
               {jobGroups.map(timeGroup => (
                 <motion.div 
@@ -251,9 +260,6 @@ function App() {
             </AnimatePresence>
           )}
         </div>
-        
-        {/* ⚠️ ĐÃ XÓA PHẦN TỎ TÌNH Ở CUỐI TRANG */}
-
       </main>
     </div>
   );
