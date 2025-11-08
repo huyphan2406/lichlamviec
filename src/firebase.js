@@ -1,8 +1,9 @@
 // src/firebase.js
 import { initializeApp } from "firebase/app";
 import { getAuth, signOut } from "firebase/auth";
+// 🌟 PHẢI CÓ DÒNG NÀY ĐỂ FIRESTORE HOẠT ĐỘNG 🌟
+import { getFirestore } from "firebase/firestore"; 
 
-// ⚠️ THAY THẾ BẰNG CONFIG CỦA BẠN
 const firebaseConfig = {
   apiKey: "AIzaSyCu-5sC_oDXoL5HOjcvyIeSX-jlF87xIwg",
   authDomain: "lichlamviecstandby.firebaseapp.com",
@@ -15,6 +16,7 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app); 
-// 🌟 CHỈ CẦN EXPORT HÀM SIGNOUT GỐC
-export { signOut }; 
+export { signOut };
+// 🌟 PHẢI CÓ DÒNG NÀY 🌟
+export const db = getFirestore(app); 
 export default app;
