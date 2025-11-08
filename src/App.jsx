@@ -1,11 +1,10 @@
-// ⚠️ BƯỚC 1 (SỬA LỖI): Thêm 'useRef' vào danh sách import
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect } from 'react'; // ⚠️ Đã xóa 'useRef'
 import Papa from 'papaparse';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   FiClock, FiMapPin, FiMic, FiUser, FiMonitor, // Job Icons
   FiMoon, FiSun, // Dark Mode Icons
-  FiSearch, FiHeart // Empty State & Love Icons
+  FiSearch // Empty State Icon (⚠️ Đã xóa 'FiHeart')
 } from 'react-icons/fi';
 import './App.css'; 
 
@@ -65,6 +64,7 @@ function useJobData() {
         header: true, 
         skipEmptyLines: true, 
         dynamicTyping: false, 
+        // FIX LỖI (UNDEFINED): Dọn dẹp Header (xóa ký tự BOM ẩn)
         transformHeader: (header) => header.replace(/\ufeff/g, '').trim(),
         complete: (results) => {
           const sortedData = results.data.sort((a, b) => {
@@ -122,8 +122,8 @@ const FilterBar = ({ dateFilter, setDateFilter, inputValue, setInputValue, uniqu
       <input 
         type="text" 
         id="nameInput" 
-        placeholder="e.g., Quốc Huy" 
-        value={inputValue} 
+        placeholder="e.g., Quốc Huy" // Hiển thị Tiếng Việt
+        value={inputValue} // Giá trị đang gõ (có dấu)
         onChange={(e) => setInputValue(e.target.value)} 
       />
     </div>
@@ -167,82 +167,12 @@ const JobItem = ({ job }) => {
   );
 };
 
-// --- MỚI: COMPONENT TỎ TÌNH ---
-const LoveLetter = () => {
-  const [isYesClicked, setIsYesClicked] = useState(false);
-  const [noPosition, setNoPosition] = useState({ top: '50%', left: '60%' });
-  const [yesScale, setYesScale] = useState(1);
-  
-  // ⚠️ BƯỚC 1 (SỬA LỖI): Dùng 'useRef' thay vì 'React.useRef'
-  const containerRef = useRef(null); // Ref cho container
-
-  const handleNoHover = () => {
-    const container = containerRef.current;
-    if (!container) return;
-    const containerRect = container.getBoundingClientRect();
-    
-    setNoPosition({
-      top: `${Math.random() * (containerRect.height - 50)}px`, 
-      left: `${Math.random() * (containerRect.width - 100)}px`,
-    });
-    setYesScale(prev => Math.min(prev + 0.2, 3)); 
-  };
-
-  const handleYesClick = () => {
-    setIsYesClicked(true);
-  };
-
-  if (isYesClicked) {
-    return (
-      <motion.div 
-        className="love-letter-container"
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-      >
-        <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNTJzbjZ5dzB6MWJpYjZkczRucTd0ajB6c3ZkM29nZ3NqZzJjMWE1dCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/UMon0fuimoAN2/giphy.gif" alt="Yayy" className="love-gif" />
-        <h2 className="love-question">Tuyệt vời! Anh/Em biết mà 🥰</h2>
-      </motion.div>
-    );
-  }
-
-  return (
-    <div className="love-letter-container" ref={containerRef}>
-      <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3ZkZ3RxNnFjM3d2eDEybDY2Z2JtZWt4bDM3OHZzM2lqaHN3eDljYSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3o7TDr8hFxE4qNGodq/giphy.gif" alt="Asking..." className="love-gif" />
-      <h2 className="love-question">Làm người yêu anh/em nhé? <FiHeart style={{ color: 'red', fill: 'red' }} /></h2>
-      <div className="love-buttons">
-        <motion.button 
-          className="love-btn love-yes"
-          onClick={handleYesClick}
-          animate={{ scale: yesScale }} 
-          transition={{ type: 'spring', stiffness: 300, damping: 10 }}
-        >
-          Vâng ạ 🥰
-        </motion.button>
-        <motion.button 
-          className="love-btn love-no"
-          style={{ 
-            position: 'absolute', 
-            top: noPosition.top, 
-            left: noPosition.left,
-          }}
-          onMouseOver={handleNoHover}
-          onClick={handleNoHover} 
-          transition={{ type: 'spring', stiffness: 500, damping: 10 }}
-        >
-          Không 😭
-        </motion.button>
-      </div>
-    </div>
-  );
-};
-
-
 // --- COMPONENT APP CHÍNH ---
 function App() {
   const [theme, toggleTheme] = useDarkMode();
   const { jobs, isLoading, uniqueDates } = useJobData();
   const [dateFilter, setDateFilter] = useState(() => localStorage.getItem('lastViewedDate') || '');
-  const [inputValue, setInputValue] = useState('Quốc Huy'); 
+  const [inputValue, setInputValue] = useState('Quốc Huy'); // Hiển thị Tiếng Việt có dấu
   const [nameFilter, setNameFilter] = useState('Quốc Huy'); 
 
   // --- EFFECTS (Debounce & Cache Filter) ---
@@ -322,8 +252,7 @@ function App() {
           )}
         </div>
         
-        <hr className="divider" />
-        <LoveLetter />
+        {/* ⚠️ ĐÃ XÓA PHẦN TỎ TÌNH Ở CUỐI TRANG */}
 
       </main>
     </div>
