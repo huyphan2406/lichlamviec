@@ -1,7 +1,6 @@
-// src/CodeLogin.jsx (ĐĂNG NHẬP BẰNG MÃ CODE)
+// src/CodeLogin.jsx (ĐÃ XÓA TRƯỜNG 'used' - CHO PHÉP DÙNG NHIỀU LẦN)
 
 import { useState } from 'react';
-// 🌟 Đảm bảo đã import đúng db và auth từ firebase.js 🌟
 import { db, auth } from './firebase.js'; 
 import { doc, getDoc, updateDoc } from 'firebase/firestore'; 
 import { signInAnonymously } from 'firebase/auth'; 
@@ -40,38 +39,30 @@ function CodeLogin() {
             const now = new Date();
             const expiryDate = new Date(data.expiryDate); 
 
-            // 2. KIỂM TRA ĐIỀU KIỆN
-            if (data.used === true) {
-                setError('Mã này đã được sử dụng (đã kích hoạt).');
-                setIsLoading(false);
-                return;
-            }
+            // 2. KIỂM TRA HẠN SỬ DỤNG (Đây là kiểm tra duy nhất còn lại)
             if (now > expiryDate) {
                 setError(`Mã đã hết hạn sử dụng (${data.expiryDate}).`);
                 setIsLoading(false);
                 return;
             }
             
-            // 3. ĐĂNG NHẬP VÀ KÍCH HOẠT
-            
-            // Đăng nhập bằng Guest User
+            // 3. ĐĂNG NHẬP (Không kiểm tra 'used')
             await signInAnonymously(auth); 
 
-            // Cập nhật Database: Đánh dấu mã đã sử dụng
+            // 4. Cập nhật Database (Không đánh dấu used, chỉ lưu lại lần sử dụng gần nhất)
             await updateDoc(codeRef, {
-                used: true,
-                usedDate: now.toISOString(),
-                usedByUID: auth.currentUser ? auth.currentUser.uid : 'anonymous' // Lưu UID
+                lastUsedDate: now.toISOString(), // Lưu lại lần sử dụng cuối
+                lastUsedByUID: auth.currentUser ? auth.currentUser.uid : 'anonymous'
             });
 
-            // 4. Chuyển hướng
+            // 5. Chuyển hướng
             navigate('/'); 
 
         } catch (err) {
             console.error("Lỗi gốc Firebase:", err);
-            // Xử lý các lỗi phổ biến (ví dụ: lỗi mạng hoặc lỗi Auth)
+            // Cải thiện thông báo lỗi cho người dùng
             if (err.code === 'permission-denied') {
-                setError('Lỗi kết nối cơ sở dữ liệu. Vui lòng kiểm tra quy tắc bảo mật Firestore.');
+                setError('Lỗi quyền truy cập. Kiểm tra Rules hoặc kết nối.');
             } else {
                 setError('Có lỗi hệ thống xảy ra, không thể xác thực mã.');
             }
