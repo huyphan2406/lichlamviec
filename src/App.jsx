@@ -183,29 +183,45 @@ const NotificationPopup = () => {
                     >
                         <div className="popup-content">
                         <p>
-                            <strong style={{ fontSize: '1.1em', color: 'var(--color-brand)' }}>
-                                LỊCH LIVESTREAM NHANH & CHÍNH XÁC!
+                            {/* Dòng tiêu đề chính, in đậm */}
+                            <strong style={{ 
+                                fontSize: '1.05em', 
+                                color: 'var(--color-text-primary)' 
+                            }}>
+                                Lịch Livestream Nhanh & Chính Xác!
                             </strong>
-                        </p>
-
-                        {/* Thêm danh sách gạch đầu dòng để thông tin dễ đọc hơn */}
-                        <ul className="popup-list">
-                            <li>
-                                Ứng dụng dùng để tra cứu lịch làm việc của **Standby** và **Host**.
-                            </li>
-                            <li>
-                                Dùng miễn phí tới ngày <strong className="highlight-date">15/11</strong>.
-                                Sau ngày này, vui lòng đăng kí tài khoản để tiếp tục sử dụng.
-                            </li>
-                            <li>
-                                <strong style={{ color: 'var(--color-danger)' }}>Thông báo:</strong>
-                                Nhiều chức năng mới đang được phát triển và sẽ ra mắt sớm!
-                            </li>
-                        </ul>
-
-                        {/* Thông tin tác giả được căn chỉnh nhỏ và nằm cuối */}
-                        <p className="popup-author">
-                            *Tác giả: Quốc Huy
+                            <br />
+                            
+                            {/* Nội dung mô tả */}
+                            Web dùng để tra cứu lịch làm việc của <strong>Standby</strong> và <strong>Host</strong>.
+                            
+                            {/* Thêm khoảng cách rõ ràng */}
+                            <br />
+                            <br />
+                            
+                            {/* Thông báo chính với ngày được highlight */}
+                            Dùng miễn phí tới <strong className="highlight-date">15/11</strong>.
+                            <br />
+                            Sau ngày 15, bạn cần đăng kí tài khoản để sử dụng.
+                            
+                            <br />
+                            <br />
+                            
+                            {/* Thông tin thêm */}
+                            Nhiều chức năng mới sẽ ra mắt sớm...
+                            <br />
+                            
+                            {/* Tên tác giả, căn phải, in nghiêng và nhỏ hơn */}
+                            <span style={{ 
+                                display: 'block', 
+                                textAlign: 'right', 
+                                marginTop: '15px',
+                                fontSize: '0.9em', 
+                                fontStyle: 'italic',
+                                color: 'var(--color-text-secondary)'
+                            }}>
+                                Tác giả: Quốc Huy
+                            </span>
                         </p>
                     </div>
                     </motion.div>
