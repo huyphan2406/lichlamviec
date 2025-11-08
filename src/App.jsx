@@ -1,3 +1,9 @@
+/*
+=================================================
+  File: App.jsx (React Component)
+=================================================
+*/
+
 import { useState, useMemo, useEffect } from 'react';
 import Papa from 'papaparse';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -8,6 +14,7 @@ import {
   FiMoon, FiSun,
   FiSearch, FiDownload, FiX, FiZap
 } from 'react-icons/fi';
+// ⚠️ HÃY ĐẢM BẢO BẠN ĐÃ IMPORT CSS
 import './App.css'; 
 
 // --- HÀM HỖ TRỢ (ĐÃ FIX LỖI) ---
@@ -114,7 +121,7 @@ const combineLocation = (job) => {
   return locationDisplay || 'No location';
 };
 
-// ⚠️ MỚI: COMPONENT POPUP THÔNG BÁO (THAY THẾ BANNER)
+// 🌟 COMPONENT POPUP THÔNG BÁO (ĐÃ HOÀN THIỆN)
 const NotificationPopup = () => {
     const [isVisible, setIsVisible] = useState(() => {
         // Kiểm tra localStorage để xem popup đã bị tắt chưa
@@ -149,7 +156,7 @@ const NotificationPopup = () => {
                         transition={{ type: 'spring', stiffness: 100, damping: 20 }}
                     >
                         <div className="popup-header">
-                            <FiZap size={20} className="popup-icon-zap" />
+                            <FiZap size={22} className="popup-icon-zap" />
                             <h3>Thông Báo Quan Trọng</h3>
                             <button className="popup-dismiss-btn" onClick={handleDismiss} title="Đóng">
                                 <FiX size={20} />
@@ -157,8 +164,11 @@ const NotificationPopup = () => {
                         </div>
                         <div className="popup-content">
                             <p>
-                                **Lịch Livestream Nhanh & Chính xác!** Web dùng để tra cứu lịch làm việc của standby và host. 
-                                Dùng miễn phí tới **15/11**, sau ngày 15 phải đăng kí tài khoản để được sử dụng.
+                                <strong>Lịch Livestream Nhanh & Chính xác!</strong>
+                                <br />
+                                Web dùng để tra cứu lịch làm việc của standby và host.
+                                <br />
+                                Dùng miễn phí tới <strong className="highlight-date">15/11</strong>, sau ngày 15 phải đăng kí tài khoản để được sử dụng.
                             </p>
                         </div>
                     </motion.div>
@@ -257,6 +267,7 @@ const FilterBar = ({ dateFilter, setDateFilter, inputValue, setInputValue, uniqu
           onChange={(e) => setInputValue(e.target.value)} 
         />
       </div>
+      {/* 🌟 NÚT EXPORT ĐÃ ĐƯỢC SỬA LẠI */}
       <button 
         className="download-button" 
         onClick={handleDownloadICS} 
@@ -315,7 +326,6 @@ function App() {
   const { jobs, isLoading, uniqueDates, error } = useJobData();
   
   const [dateFilter, setDateFilter] = useState(() => getFormattedToday());
-  // ⚠️ FIX LỖI: Khôi phục lại các dòng state bị thiếu
   const [inputValue, setInputValue] = useState(''); 
   const [nameFilter, setNameFilter] = useState(''); 
 
@@ -363,7 +373,7 @@ function App() {
   // Giao diện
   return (
     <div className="App">
-        {/* ⚠️ Đặt Popup ở đây (nó sẽ tự căn giữa) */}
+        {/* 🌟 Đặt Popup ở đây (nó sẽ tự căn giữa) */}
         <NotificationPopup /> 
         
       <Header theme={theme} toggleTheme={toggleTheme} />
@@ -382,7 +392,7 @@ function App() {
                 <FiSearch className="empty-state-icon" style={{color: '#dc3545'}}/>
                 <h3>Error Loading Data</h3>
                 <p>Could not connect to the Google Sheet. Please check the link or sharing permissions.</p>
-            </motion.div>
+             </motion.div>
           ) : isLoading ? (
             <SkeletonLoader />
           ) : (jobs.length > 0 && jobGroups.length === 0) ? (

@@ -1,3 +1,9 @@
+/*
+=================================================
+  File: App.css (Stylesheet)
+=================================================
+*/
+
 /* --- BIẾN MÀU (CSS VARIABLES) --- */
 :root {
   --font-main: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -114,7 +120,9 @@ input:checked + .theme-toggle-slider:before { transform: translateX(20px); }
   transition: background-color var(--transition-speed), box-shadow var(--transition-speed);
 }
 .form-group { margin-bottom: 15px; }
-.form-group:last-child { margin-bottom: 0; }
+/* 🌟 BỎ margin-bottom cho form-group cuối cùng để nút Download căn sát hơn */
+.form-group:last-of-type { margin-bottom: 0; }
+
 .form-group label {
   display: block;
   font-weight: 600;
@@ -142,6 +150,40 @@ input:checked + .theme-toggle-slider:before { transform: translateX(20px); }
   border-color: var(--color-brand);
   box-shadow: 0 0 0 3px var(--color-brand-light);
 }
+
+/* 🌟 CSS CHO NÚT EXPORT (ĐÃ SỬA) */
+.download-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px; /* Khoảng cách giữa icon và text */
+  width: 100%;
+  padding: 14px;
+  font-size: 1rem;
+  font-weight: 600;
+  font-family: var(--font-main);
+  background-color: var(--color-brand); /* Thêm màu xanh */
+  color: #ffffff; /* Thêm màu chữ trắng */
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+  margin-top: 15px; /* Tạo khoảng cách với trường input bên trên */
+}
+.download-button:hover {
+  background-color: #0069d9; /* Màu xanh đậm hơn khi hover */
+  box-shadow: 0 4px 12px rgba(0,123,255,0.3);
+}
+.download-button:disabled {
+  background-color: var(--color-grey);
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+.download-button svg {
+  font-size: 1.1em;
+}
+
 
 /* --- SCHEDULE LIST --- */
 .schedule-list { padding: 0; }
@@ -213,4 +255,131 @@ input:checked + .theme-toggle-slider:before { transform: translateX(20px); }
   background-color: var(--color-card);
   border-radius: 12px;
   box-shadow: 0 4px 12px var(--color-shadow);
-  transition: all var(--transition-
+  transition: all var(--transition-speed); /* 🌟 Đã sửa lỗi cú pháp ở đây */
+}
+.empty-state-icon {
+  font-size: 3em;
+  color: var(--color-brand);
+  margin-bottom: 15px;
+}
+.empty-state h3 {
+  margin: 0 0 10px 0;
+  color: var(--color-text-primary);
+}
+.empty-state p {
+  margin: 0;
+}
+.skeleton-container {
+  padding: 10px 0;
+}
+.skeleton-item {
+  background-color: var(--color-card);
+  border-radius: 12px;
+  padding: 20px;
+  margin: 15px 0;
+}
+.skeleton-line {
+  background-color: var(--color-border);
+  border-radius: 4px;
+  animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+.skeleton-line.h4 { height: 24px; width: 40%; margin-bottom: 15px; }
+.skeleton-line.p { height: 16px; width: 80%; margin-bottom: 10px; }
+.skeleton-line.p:last-child { width: 60%; }
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+
+/* 🌟 CSS CHO POPUP THÔNG BÁO (MỚI) */
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5); /* Nền mờ 50% */
+  z-index: 1000;
+  cursor: pointer;
+}
+
+.popup-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  /* transform: translate(-50%, -50%); 
+     Framer Motion sẽ xử lý transform, ta chỉ cần set y=0 trong animate */
+  background-color: var(--color-card);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  width: 90%;
+  max-width: 450px;
+  z-index: 1001;
+  overflow: hidden; /* Để bo góc header */
+}
+
+.popup-header {
+  display: flex;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--color-border);
+  position: relative;
+  background-color: var(--color-brand-light); /* Nền xanh nhạt cho header */
+}
+
+.popup-header h3 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.popup-icon-zap {
+  color: var(--color-brand); /* Màu cam cho 'zap' */
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
+.popup-dismiss-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  padding: 5px;
+  border-radius: 50%;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.popup-dismiss-btn:hover {
+  background-color: var(--color-border);
+  color: var(--color-text-primary);
+}
+
+.popup-content {
+  padding: 20px 24px;
+  line-height: 1.6;
+}
+
+.popup-content p {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 0.95rem;
+}
+
+.popup-content p strong {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+/* 🌟 Highlight màu mè như yêu cầu */
+.popup-content p strong.highlight-date {
+  color: var(--color-brand);
+  background-color: var(--color-brand-light);
+  padding: 2px 6px;
+  border-radius: 5px;
+  font-weight: 700;
+}
