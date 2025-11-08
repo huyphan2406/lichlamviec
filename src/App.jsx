@@ -6,7 +6,7 @@ import * as ics from 'ics';
 import { 
   FiClock, FiMapPin, FiMic, FiUser, FiMonitor,
   FiMoon, FiSun,
-  FiSearch, FiDownload, FiX, FiZap // Thêm icon X và Zap
+  FiSearch, FiDownload, FiX, FiZap
 } from 'react-icons/fi';
 import './App.css'; 
 
@@ -114,39 +114,57 @@ const combineLocation = (job) => {
   return locationDisplay || 'No location';
 };
 
-// ⚠️ MỚI: COMPONENT THÔNG BÁO NỔI
-const FloatingBanner = () => {
+// ⚠️ MỚI: COMPONENT POPUP THÔNG BÁO (THAY THẾ BANNER)
+const NotificationPopup = () => {
     const [isVisible, setIsVisible] = useState(() => {
-        // Kiểm tra localStorage để xem banner đã bị tắt chưa
-        return localStorage.getItem('dismissed_banner_15nov') !== 'true';
+        // Kiểm tra localStorage để xem popup đã bị tắt chưa
+        return localStorage.getItem('dismissed_popup_15nov') !== 'true';
     });
 
     const handleDismiss = () => {
         setIsVisible(false);
-        // Lưu vào localStorage để banner không hiện lại
-        localStorage.setItem('dismissed_banner_15nov', 'true');
+        // Lưu vào localStorage để popup không hiện lại
+        localStorage.setItem('dismissed_popup_15nov', 'true');
     };
 
-    if (!isVisible) return null;
-
     return (
-        <motion.div 
-            className="floating-banner"
-            initial={{ y: 100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 100, opacity: 0 }}
-            transition={{ type: 'spring', stiffness: 100, damping: 20 }}
-        >
-            <div className="banner-content-inner">
-                <FiZap size={20} className="banner-icon-zap" />
-                <p>
-                    **[🔥 ƯU ĐÃI CUỐI] Tra Cứu Lịch Host & Standby Nhanh Nhất!** Bạn đang dùng phiên bản miễn phí. Tính năng tra cứu tự động sẽ yêu cầu tài khoản sau **15/11**.
-                </p>
-                <button className="banner-dismiss-btn" onClick={handleDismiss}>
-                    <FiX size={18} />
-                </button>
-            </div>
-        </motion.div>
+        <AnimatePresence>
+            {isVisible && (
+                <>
+                    {/* Lớp nền mờ */}
+                    <motion.div
+                        className="popup-overlay"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={handleDismiss} // Click bên ngoài để tắt
+                    />
+                    
+                    {/* Nội dung Popup */}
+                    <motion.div 
+                        className="popup-modal"
+                        initial={{ y: 50, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        exit={{ y: 50, opacity: 0 }}
+                        transition={{ type: 'spring', stiffness: 100, damping: 20 }}
+                    >
+                        <div className="popup-header">
+                            <FiZap size={20} className="popup-icon-zap" />
+                            <h3>Thông Báo Quan Trọng</h3>
+                            <button className="popup-dismiss-btn" onClick={handleDismiss} title="Đóng">
+                                <FiX size={20} />
+                            </button>
+                        </div>
+                        <div className="popup-content">
+                            <p>
+                                **Lịch Livestream Nhanh & Chính xác!** Web dùng để tra cứu lịch làm việc của standby và host. 
+                                Dùng miễn phí tới **15/11**, sau ngày 15 phải đăng kí tài khoản để được sử dụng.
+                            </p>
+                        </div>
+                    </motion.div>
+                </>
+            )}
+        </AnimatePresence>
     );
 };
 
@@ -345,10 +363,8 @@ function App() {
   // Giao diện
   return (
     <div className="App">
-        <AnimatePresence>
-          {/* ⚠️ Đặt FloatingBanner vào AnimatePresence để hiệu ứng tắt hoạt động */}
-          <FloatingBanner /> 
-        </AnimatePresence>
+        {/* ⚠️ Đặt Popup ở đây (nó sẽ tự căn giữa) */}
+        <NotificationPopup /> 
         
       <Header theme={theme} toggleTheme={toggleTheme} />
       <main>
