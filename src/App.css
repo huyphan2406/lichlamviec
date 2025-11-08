@@ -1,181 +1,264 @@
-/* Thiết lập cơ bản với font mới */
+/* --- BIẾN MÀU (CSS VARIABLES) --- */
+:root {
+  --font-main: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  
+  /* Chế độ Sáng (Light Mode) */
+  --color-bg: #f7f8fa;
+  --color-card: #ffffff;
+  --color-text-primary: #1a1a1a;
+  --color-text-secondary: #555;
+  --color-border: #eee;
+  --color-input-bg: #fdfdfd;
+  --color-shadow: rgba(0, 0, 0, 0.04);
+  --color-shadow-hover: rgba(0, 0, 0, 0.07);
+  --color-brand: #007bff;
+  --color-brand-light: rgba(0,123,255,0.1);
+  --color-danger: #dc3545;
+  --color-grey: #6c757d;
+}
+
+/* Chế độ Tối (Dark Mode) - Ý 4 */
+body[data-theme='dark'] {
+  --color-bg: #121212;
+  --color-card: #1e1e1e;
+  --color-text-primary: #f1f1f1;
+  --color-text-secondary: #aaa;
+  --color-border: #333;
+  --color-input-bg: #2a2a2a;
+  --color-shadow: rgba(0, 0, 0, 0.2);
+  --color-shadow-hover: rgba(0, 0, 0, 0.3);
+  --color-brand: #0d8eff;
+  --color-brand-light: rgba(13,142,255,0.1);
+}
+
+/* --- CÀI ĐẶT CƠ BẢN --- */
 body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background-color: #f7f8fa; /* Màu nền xám nhẹ */
-    margin: 0;
-    padding: 20px;
-    color: #333;
-    -webkit-font-smoothing: antialiased; 
-    -moz-osx-font-smoothing: grayscale;
+  font-family: var(--font-main);
+  background-color: var(--color-bg);
+  color: var(--color-text-primary);
+  margin: 0;
+  padding: 20px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .App {
-    max-width: 600px;
-    margin: 0 auto;
+  max-width: 600px;
+  margin: 0 auto;
 }
 
-header {
-    padding: 10px 0; 
-    background-color: transparent; 
-    box-shadow: none; 
+main {
+  padding: 0;
 }
 
-h1 {
-    margin: 0 0 15px 0;
-    color: #1a1a1a; 
-    font-size: 2em; 
-    font-weight: 700;
+/* --- HEADER & DARK MODE TOGGLE (HEADING ĐẸP) --- */
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  margin-bottom: 15px;
 }
 
-/* Form lọc được làm đẹp */
+.app-header h1 {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: 2em;
+  font-weight: 700;
+}
+
+/* Nút gạt Dark Mode */
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  padding: 4px;
+  border-radius: 20px;
+  transition: background-color 0.2s;
+}
+.theme-toggle:hover {
+  background-color: var(--color-border);
+}
+.theme-toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+.theme-toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.theme-toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 24px;
+}
+.theme-toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+input:checked + .theme-toggle-slider {
+  background-color: var(--color-brand);
+}
+input:checked + .theme-toggle-slider:before {
+  transform: translateX(20px);
+}
+
+/* --- FILTER BAR --- */
 .filter-container {
-    padding: 20px;
-    background-color: #ffffff;
-    border-radius: 12px; /* Bo góc */
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
-    margin-bottom: 25px;
+  padding: 20px;
+  background-color: var(--color-card);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px var(--color-shadow);
+  margin-bottom: 25px;
 }
 
 .form-group {
-    margin-bottom: 15px;
+  margin-bottom: 15px;
 }
 .form-group:last-child {
-    margin-bottom: 0;
+  margin-bottom: 0;
 }
-
 .form-group label {
-    display: block;
-    font-weight: 600;
-    margin-bottom: 8px;
-    font-size: 0.9em;
-    color: #444;
+  display: block;
+  font-weight: 600;
+  margin-bottom: 8px;
+  font-size: 0.9em;
+  color: var(--color-text-secondary);
 }
-
 .form-group input,
 .form-group select {
-    width: 100%;
-    padding: 12px;
-    font-size: 1em;
-    border: 1px solid #ddd;
-    border-radius: 8px; 
-    box-sizing: border-box; 
-    font-family: 'Inter', sans-serif; 
-    background-color: #fdfdfd;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  width: 100%;
+  padding: 12px;
+  font-size: 1em;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-sizing: border-box; 
+  font-family: var(--font-main);
+  background-color: var(--color-input-bg);
+  color: var(--color-text-primary);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
-
 .form-group input:focus,
 .form-group select:focus {
-    outline: none;
-    border-color: #007bff; /* Màu xanh dương khi chọn */
-    box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
+  outline: none;
+  border-color: var(--color-brand);
+  box-shadow: 0 0 0 3px var(--color-brand-light);
 }
 
-/* Danh sách lịch */
+/* --- SCHEDULE LIST --- */
 .schedule-list {
-    padding: 0;
+  padding: 0;
 }
-
-.empty-state {
-    text-align: center;
-    color: #777;
-    font-size: 1.1em;
-    padding: 30px 0;
-}
-
 .schedule-group-title {
-    font-size: 1.1em; 
-    font-weight: 600;
-    color: #007bff; /* Màu xanh dương cho tiêu đề nhóm */
-    padding: 15px 0 10px 0;
-    border-top: 1px solid #eee;
-    margin-top: 20px;
-    text-transform: uppercase; 
-    letter-spacing: 0.5px; 
+  font-size: 1.1em; 
+  font-weight: 600;
+  color: var(--color-brand);
+  padding: 15px 0 10px 0;
+  border-top: 1px solid var(--color-border);
+  margin-top: 20px;
+  text-transform: uppercase; 
+  letter-spacing: 0.5px; 
 }
-
 .time-group-container:first-child .schedule-group-title {
-    border-top: none;
-    margin-top: 0;
+  border-top: none;
+  margin-top: 0;
 }
 
-/* CSS cho thẻ lịch (Job Item) */
+/* --- JOB ITEM (Thẻ công việc) --- */
 .schedule-item {
-    background-color: #ffffff;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
-    padding: 20px;
-    margin: 15px 0; 
-    transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
-}
-
-.schedule-item:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.07);
-}
-
-.schedule-item h4 {
-    margin: 0 0 15px 0; 
-    font-size: 1.25em; 
-    color: #1a1a1a;
-    font-weight: 600; 
-}
-
-/* CSS CHO CÁC ICON MỚI (react-icons) */
-.schedule-item p {
-    margin: 10px 0; 
-    display: flex;
-    align-items: center;
-    color: #555; 
-    font-size: 0.95em;
-    font-weight: 500; 
-}
-
-.schedule-item p svg {
-    margin-right: 12px; 
-    font-size: 1.2em; 
-    color: #007bff; 
-    flex-shrink: 0; 
-}
-
-.schedule-item p.location svg {
-    color: #dc3545; /* Màu đỏ cho địa điểm */
-}
-.schedule-item p.time svg {
-    color: #6c757d; /* Màu xám cho thời gian */
-}
-
-
-/* --- SKELETON LOADING (KHUNG CHỜ) --- */
-@keyframes pulse {
-  0% { background-color: #eee; }
-  50% { background-color: #e0e0e0; }
-  100% { background-color: #eee; }
-}
-
-.skeleton-item {
-  background-color: #ffffff;
+  background-color: var(--color-card);
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 4px 12px var(--color-shadow);
+  padding: 20px;
+  margin: 15px 0; 
+  /* Origin bottom để animation đẹp hơn */
+  transform-origin: bottom center; 
+}
+.schedule-item h4 {
+  margin: 0 0 15px 0; 
+  font-size: 1.25em; 
+  color: var(--color-text-primary);
+  font-weight: 600; 
+}
+.schedule-item p {
+  margin: 10px 0; 
+  display: flex;
+  align-items: center;
+  color: var(--color-text-secondary);
+  font-size: 0.95em;
+  font-weight: 500; 
+}
+.schedule-item p svg {
+  margin-right: 12px; 
+  font-size: 1.2em; 
+  color: var(--color-brand);
+  flex-shrink: 0; 
+}
+.schedule-item p.location svg { color: var(--color-danger); }
+.schedule-item p.time svg { color: var(--color-grey); }
+
+/* --- EMPTY STATE (Ý 3) --- */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--color-text-secondary);
+  background-color: var(--color-card);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px var(--color-shadow);
+}
+.empty-state-icon {
+  font-size: 3em;
+  color: var(--color-brand);
+  margin-bottom: 15px;
+}
+.empty-state h3 {
+  margin: 0 0 5px 0;
+  font-size: 1.2em;
+  color: var(--color-text-primary);
+}
+
+/* --- SKELETON LOADING --- */
+@keyframes pulse {
+  0% { background-color: var(--color-border); }
+  50% { background-color: var(--color-input-bg); }
+  100% { background-color: var(--color-border); }
+}
+.skeleton-item {
+  background-color: var(--color-card);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px var(--color-shadow);
   margin: 15px 0;
   padding: 20px;
 }
-
 .skeleton-line {
-  background-color: #eee;
+  background-color: var(--color-border);
   border-radius: 4px;
   animation: pulse 1.5s ease-in-out infinite;
   margin: 10px 0;
 }
-.skeleton-line.h4 {
-  width: 60%;
-  height: 22px;
-  margin-bottom: 15px;
-}
-.skeleton-line.p {
-  width: 90%;
-  height: 16px;
-}
-.skeleton-line.p:last-child {
-  width: 70%;
-}
+.skeleton-line.h4 { width: 60%; height: 22px; margin-bottom: 15px; }
+.skeleton-line.p { width: 90%; height: 16px; }
+.skeleton-line.p:last-child { width: 70%; }
