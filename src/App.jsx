@@ -124,7 +124,7 @@ const FilterBar = ({ dateFilter, setDateFilter, inputValue, setInputValue, uniqu
       <input 
         type="text" 
         id="nameInput" 
-        placeholder="e.g., Quoc Huy" 
+        placeholder="e.g., Your Name" 
         value={inputValue} 
         onChange={(e) => setInputValue(e.target.value)} 
       />
@@ -173,12 +173,9 @@ const JobItem = ({ job }) => {
 
 // --- COMPONENT APP CHÍNH (Không đổi) ---
 function App() {
-  const [theme, toggleTheme] = useDarkMode();
-  const { jobs, isLoading, uniqueDates } = useJobData();
   const [dateFilter, setDateFilter] = useState(() => localStorage.getItem('lastViewedDate') || '');
-  const [inputValue, setInputValue] = useState('Quoc Huy'); 
-  const [nameFilter, setNameFilter] = useState('Quoc Huy'); 
-
+  const [inputValue, setInputValue] = useState('Quốc Huy'); 
+  const [nameFilter, setNameFilter] = useState('Quốc Huy');
   useEffect(() => {
     const timerId = setTimeout(() => setNameFilter(inputValue), 300);
     return () => clearTimeout(timerId);
