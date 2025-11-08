@@ -2,12 +2,11 @@ import { useState, useMemo, useEffect } from 'react';
 import Papa from 'papaparse';
 import { motion, AnimatePresence } from 'framer-motion';
 import useSWR from 'swr';
-// ⚠️ BƯỚC 1: IMPORT THƯ VIỆN 'ics'
 import * as ics from 'ics';
 import { 
   FiClock, FiMapPin, FiMic, FiUser, FiMonitor,
   FiMoon, FiSun,
-  FiSearch, FiDownload // Thêm icon Download
+  FiSearch, FiDownload, FiX, FiZap // Thêm icon X và Zap
 } from 'react-icons/fi';
 import './App.css'; 
 
@@ -26,11 +25,10 @@ const parseDate = (dateStr, timeStr) => {
   } catch (e) { return new Date(0); }
 };
 
-// HÀM LẤY NGÀY HÔM NAY (DD/MM/YYYY)
 const getFormattedToday = () => {
   const today = new Date();
   const day = String(today.getDate()).padStart(2, '0');
-  const month = String(today.getMonth() + 1).padStart(2, '0'); // Tháng 0-11
+  const month = String(today.getMonth() + 1).padStart(2, '0'); 
   const year = today.getFullYear();
   return `${day}/${month}/${year}`;
 };
@@ -116,6 +114,43 @@ const combineLocation = (job) => {
   return locationDisplay || 'No location';
 };
 
+// ⚠️ MỚI: COMPONENT THÔNG BÁO NỔI
+const FloatingBanner = () => {
+    const [isVisible, setIsVisible] = useState(() => {
+        // Kiểm tra localStorage để xem banner đã bị tắt chưa
+        return localStorage.getItem('dismissed_banner_15nov') !== 'true';
+    });
+
+    const handleDismiss = () => {
+        setIsVisible(false);
+        // Lưu vào localStorage để banner không hiện lại
+        localStorage.setItem('dismissed_banner_15nov', 'true');
+    };
+
+    if (!isVisible) return null;
+
+    return (
+        <motion.div 
+            className="floating-banner"
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 100, damping: 20 }}
+        >
+            <div className="banner-content-inner">
+                <FiZap size={20} className="banner-icon-zap" />
+                <p>
+                    **[🔥 ƯU ĐÃI CUỐI] Tra Cứu Lịch Host & Standby Nhanh Nhất!** Bạn đang dùng phiên bản miễn phí. Tính năng tra cứu tự động sẽ yêu cầu tài khoản sau **15/11**.
+                </p>
+                <button className="banner-dismiss-btn" onClick={handleDismiss}>
+                    <FiX size={18} />
+                </button>
+            </div>
+        </motion.div>
+    );
+};
+
+
 // --- UI COMPONENTS ---
 
 const Header = ({ theme, toggleTheme }) => (
@@ -134,7 +169,6 @@ const Header = ({ theme, toggleTheme }) => (
 const FilterBar = ({ dateFilter, setDateFilter, inputValue, setInputValue, uniqueDates, filteredJobs }) => {
   
   const handleDownloadICS = () => {
-    // 1. Chuyển đổi jobs đã lọc thành định dạng sự kiện ics
     const events = filteredJobs.map(job => {
       try {
         const [day, month, year] = job['Date livestream'].split('/');
@@ -143,11 +177,10 @@ const FilterBar = ({ dateFilter, setDateFilter, inputValue, setInputValue, uniqu
         const [startHour, startMinute] = startTimeStr.split(':').map(Number);
         const [endHour, endMinute] = (endTimeStr || startTimeStr).split(':').map(Number); 
 
-        // Tính thời lượng
         const startDate = new Date(0, 0, 0, startHour, startMinute);
         const endDate = new Date(0, 0, 0, endHour, endMinute);
         let diffMs = endDate.getTime() - startDate.getTime();
-        if (diffMs <= 0) diffMs = 60 * 60 * 1000; // Mặc định 1 tiếng nếu lỗi
+        if (diffMs <= 0) diffMs = 60 * 60 * 1000; 
 
         const durationHours = Math.floor(diffMs / (1000 * 60 * 60));
         const durationMinutes = (diffMs / (1000 * 60)) % 60;
@@ -169,21 +202,19 @@ const FilterBar = ({ dateFilter, setDateFilter, inputValue, setInputValue, uniqu
       return;
     }
 
-    // 2. Tạo file ics
     const { error, value } = ics.createEvents(events);
 
     if (error) {
-      console.error(error);
+      console.error("Error creating ICS file:", error);
       alert("Error creating ICS file.");
       return;
     }
 
-    // 3. Kích hoạt tải file
     const blob = new Blob([value], { type: 'text/calendar;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', `schedule_${dateFilter.replace(/\//g, '-') || 'all'}.ics`);
+    link.setAttribute('download', `Google_Calendar_Schedule_${dateFilter.replace(/\//g, '-') || 'all'}.ics`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -203,12 +234,11 @@ const FilterBar = ({ dateFilter, setDateFilter, inputValue, setInputValue, uniqu
         <input 
           type="text" 
           id="nameInput" 
-          placeholder="e.g., Your Name" // Sửa lại placeholder
+          placeholder="e.g., Your Name" 
           value={inputValue} 
           onChange={(e) => setInputValue(e.target.value)} 
         />
       </div>
-      {/* Nút Download Mới */}
       <button 
         className="download-button" 
         onClick={handleDownloadICS} 
@@ -267,8 +297,7 @@ function App() {
   const { jobs, isLoading, uniqueDates, error } = useJobData();
   
   const [dateFilter, setDateFilter] = useState(() => getFormattedToday());
-
-  // ⚠️ FIX LỖI: Thêm 2 dòng state bị thiếu
+  // ⚠️ FIX LỖI: Khôi phục lại các dòng state bị thiếu
   const [inputValue, setInputValue] = useState(''); 
   const [nameFilter, setNameFilter] = useState(''); 
 
@@ -277,9 +306,7 @@ function App() {
     return () => clearTimeout(timerId);
   }, [inputValue]);
 
-  // (Đã xóa useEffect lưu cache ngày xem)
-
-  // Logic lọc (Đã fix lỗi tìm Tiếng Việt)
+  // Logic lọc
   const filteredJobs = useMemo(() => {
     let jobsToFilter = jobs;
     const normNameFilter = removeAccents(nameFilter.toLowerCase().trim());
@@ -318,6 +345,11 @@ function App() {
   // Giao diện
   return (
     <div className="App">
+        <AnimatePresence>
+          {/* ⚠️ Đặt FloatingBanner vào AnimatePresence để hiệu ứng tắt hoạt động */}
+          <FloatingBanner /> 
+        </AnimatePresence>
+        
       <Header theme={theme} toggleTheme={toggleTheme} />
       <main>
         <FilterBar 
