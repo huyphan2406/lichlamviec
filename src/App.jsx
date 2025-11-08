@@ -1,38 +1,43 @@
 import { useState, useMemo, useEffect } from 'react';
 import Papa from 'papaparse';
-// BƯỚC 3: Import các icon chúng ta cần
 import { 
   FiClock, 
   FiMapPin, 
   FiMic, 
   FiUser, 
-  FiMonitor, 
-  FiLoader 
+  FiMonitor 
 } from 'react-icons/fi'; // Feather Icons
-import './App.css';
+import './App.css'; // File CSS chúng ta sẽ làm ở bước 5
 
 // Đặt thời gian cache (ví dụ: 1 giờ)
 const CACHE_DURATION = 3600 * 1000;
 
 function App() {
-  // --- STATE (Không đổi) ---
+  // --- STATE ---
   const [allJobs, setAllJobs] = useState([]);
   const [dateFilter, setDateFilter] = useState('');
-  const [nameFilter, setNameFilter] = useState('Quốc Huy'); 
-  const [inputValue, setInputValue] = useState('Quốc Huy'); 
+  
+  // Tối ưu Debounce:
+  const [nameFilter, setNameFilter] = useState('Quốc Huy'); // State đã trì hoãn
+  const [inputValue, setInputValue] = useState('Quốc Huy'); // State gõ ngay lập tức
+  
+  // Tối ưu Loading:
   const [isLoading, setIsLoading] = useState(true);
 
-  // --- USE EFFECT (Không đổi) ---
+  // --- TẢI DỮ LIỆU TỰ ĐỘNG + CACHING ---
   useEffect(() => {
-    const dataUrl = '/data.csv';
+    const dataUrl = '/data.csv'; // Trỏ đến file trong /public/data.csv
     const now = new Date().getTime();
+
     const cachedData = localStorage.getItem("cachedJobs");
     const cacheTime = localStorage.getItem("cachedJobsTime");
 
+    // Kiểm tra cache
     if (cachedData && cacheTime && (now - parseInt(cacheTime) < CACHE_DURATION)) {
       setAllJobs(JSON.parse(cachedData));
-      setIsLoading(false); 
+      setIsLoading(false);
     } else {
+      // Nếu không có cache, tải mới
       Papa.parse(dataUrl, {
         download: true,
         header: true,
@@ -44,34 +49,40 @@ function App() {
             const dateTimeB = new Date(`${b.Ngay} ${b.ThoiGianBatDau}`);
             return dateTimeA - dateTimeB;
           });
+          
           setAllJobs(sortedData);
           setIsLoading(false); 
+          
+          // Lưu vào cache
           localStorage.setItem("cachedJobs", JSON.stringify(sortedData));
           localStorage.setItem("cachedJobsTime", now.toString());
         },
         error: (err) => {
           console.error("Lỗi khi tải và đọc file CSV:", err);
-          setIsLoading(false);
+          setIsLoading(false); 
         }
       });
     }
-  }, []); 
+  }, []); // Mảng rỗng [] đảm bảo nó chỉ chạy 1 lần
 
-  // --- DEBOUNCE EFFECT (Không đổi) ---
+  
+  // --- DEBOUNCE EFFECT (TRÌ HOÃN TÌM KIẾM) ---
   useEffect(() => {
     const timerId = setTimeout(() => {
-      setNameFilter(inputValue); 
-    }, 300); 
+      setNameFilter(inputValue); // Cập nhật state filter chính
+    }, 300); // 300 mili-giây
 
     return () => {
-      clearTimeout(timerId);
+      clearTimeout(timerId); // Hủy bộ đếm nếu gõ tiếp
     };
-  }, [inputValue]);
+  }, [inputValue]); // Chỉ chạy lại khi inputValue thay đổi
 
-  // --- LOGIC LỌC (Không đổi) ---
+  
+  // --- LOGIC LỌC (DÙNG useMemo) ---
   const filteredJobs = useMemo(() => {
     let jobs = allJobs;
     const normNameFilter = nameFilter.toLowerCase().trim();
+
     if (normNameFilter) {
       jobs = jobs.filter(job => {
         const mcMatch = job.MC ? job.MC.toLowerCase().includes(normNameFilter) : false;
@@ -80,19 +91,23 @@ function App() {
         return mcMatch || standbyMatch || jobNameMatch;
       });
     }
+
     if (dateFilter) { 
       jobs = jobs.filter(job => (job.Ngay ? job.Ngay.toString() : '') === dateFilter);
     }
-    return jobs;
-  }, [allJobs, dateFilter, nameFilter]); 
 
-  // --- TÍNH TOÁN DANH SÁCH NGÀY (Không đổi) ---
+    return jobs;
+  }, [allJobs, dateFilter, nameFilter]); // Chỉ lọc lại khi các state chính này thay đổi
+
+  
+  // --- TÍNH TOÁN DANH SÁCH NGÀY (DÙNG useMemo) ---
   const uniqueDates = useMemo(() => {
     const dates = allJobs.map(job => job.Ngay);
     return [...new Set(dates)];
   }, [allJobs]);
 
-  // --- LOGIC GOM NHÓM (Không đổi) ---
+  
+  // --- LOGIC GOM NHÓM (DÙNG reduce) ---
   const groupedJobs = filteredJobs.reduce((acc, job) => {
     const timeGroup = `${job.ThoiGianBatDau}–${job.ThoiGianKetThuc}`;
     if (!acc[timeGroup]) {
@@ -131,14 +146,15 @@ function App() {
               type="text" 
               id="nameInput" 
               placeholder="VD: Quốc Huy"
-              value={inputValue} 
-              onChange={(e) => setInputValue(e.target.value)}
+              value={inputValue} // Hiển thị giá trị đang gõ
+              onChange={(e) => setInputValue(e.target.value)} // Cập nhật state đang gõ
             />
           </div>
         </div>
 
         <div id="schedule-list" className="schedule-list">
           {isLoading ? (
+            // Hiển thị khung chờ
             <div className="skeleton-container">
               {[...Array(3)].map((_, i) => (
                 <div className="skeleton-item" key={i}>
@@ -150,16 +166,16 @@ function App() {
               ))}
             </div>
           ) : filteredJobs.length === 0 ? (
+            // Tải xong nhưng không có kết quả
             <p className='empty-state'>Không tìm thấy kết quả phù hợp.</p>
           ) : (
+            // Tải xong và có kết quả
             Object.keys(groupedJobs).map(timeGroup => (
               <div key={timeGroup} className="time-group-container"> 
                 <h3 className="schedule-group-title">{timeGroup}</h3>
                 {groupedJobs[timeGroup].map((job, index) => (
-                  // BƯỚC 3: Thay thế các <p> bằng component Icon
                   <div className="schedule-item" key={`${timeGroup}-${index}`}>
                     <h4>{job.TenCongViec || '...'}</h4>
-                    {/* Dùng <FiClock/> thay cho emoji ⏰ */}
                     <p className="time"><FiClock /> {timeGroup}</p>
                     <p className="location"><FiMapPin /> {job.DiaDiem || '...'}</p>
                     <p className="session"><FiMic /> Session type: {job.SessionType || '—'}</p>

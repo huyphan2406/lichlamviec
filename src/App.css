@@ -1,34 +1,29 @@
-/* BƯỚC 4: IMPORT FONT "INTER" TỪ GOOGLE */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
 /* Thiết lập cơ bản với font mới */
 body {
-    /* Dùng font Inter, nếu không có thì dùng font hệ thống */
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background-color: #f7f8fa; /* Màu nền xám nhẹ hơn */
+    background-color: #f7f8fa; /* Màu nền xám nhẹ */
     margin: 0;
     padding: 20px;
     color: #333;
-    -webkit-font-smoothing: antialiased; /* Làm font mượt hơn trên Mac */
+    -webkit-font-smoothing: antialiased; 
     -moz-osx-font-smoothing: grayscale;
 }
 
-/* Đặt App vào giữa và giới hạn chiều rộng */
 .App {
     max-width: 600px;
     margin: 0 auto;
 }
 
 header {
-    padding: 10px 0; /* Giảm padding header */
-    background-color: transparent; /* Xóa nền trắng của header */
-    box-shadow: none; /* Xóa đổ bóng */
+    padding: 10px 0; 
+    background-color: transparent; 
+    box-shadow: none; 
 }
 
 h1 {
     margin: 0 0 15px 0;
-    color: #1a1a1a; /* Màu đen đậm hơn */
-    font-size: 2em; /* Tăng kích thước tiêu đề chính */
+    color: #1a1a1a; 
+    font-size: 2em; 
     font-weight: 700;
 }
 
@@ -36,7 +31,7 @@ h1 {
 .filter-container {
     padding: 20px;
     background-color: #ffffff;
-    border-radius: 12px; /* Bo góc nhiều hơn */
+    border-radius: 12px; /* Bo góc */
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
     margin-bottom: 25px;
 }
@@ -62,14 +57,13 @@ h1 {
     padding: 12px;
     font-size: 1em;
     border: 1px solid #ddd;
-    border-radius: 8px; /* Bo góc nhiều hơn */
+    border-radius: 8px; 
     box-sizing: border-box; 
-    font-family: 'Inter', sans-serif; /* Đảm bảo dùng font Inter */
+    font-family: 'Inter', sans-serif; 
     background-color: #fdfdfd;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-/* Thêm hiệu ứng focus đẹp */
 .form-group input:focus,
 .form-group select:focus {
     outline: none;
@@ -79,7 +73,14 @@ h1 {
 
 /* Danh sách lịch */
 .schedule-list {
-    padding: 0; /* Xóa padding cũ */
+    padding: 0;
+}
+
+.empty-state {
+    text-align: center;
+    color: #777;
+    font-size: 1.1em;
+    padding: 30px 0;
 }
 
 .schedule-group-title {
@@ -89,8 +90,8 @@ h1 {
     padding: 15px 0 10px 0;
     border-top: 1px solid #eee;
     margin-top: 20px;
-    text-transform: uppercase; /* VIẾT HOA */
-    letter-spacing: 0.5px; /* Giãn cách chữ */
+    text-transform: uppercase; 
+    letter-spacing: 0.5px; 
 }
 
 .time-group-container:first-child .schedule-group-title {
@@ -108,38 +109,35 @@ h1 {
     transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
 }
 
-/* Thêm hiệu ứng hover đẹp */
 .schedule-item:hover {
     transform: translateY(-3px);
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.07);
 }
 
 .schedule-item h4 {
-    margin: 0 0 15px 0; /* Tăng khoảng cách */
-    font-size: 1.25em; /* Tăng kích thước */
+    margin: 0 0 15px 0; 
+    font-size: 1.25em; 
     color: #1a1a1a;
     font-weight: 600; 
 }
 
-/* --- BƯỚC 4: CSS CHO CÁC ICON MỚI --- */
+/* CSS CHO CÁC ICON MỚI (react-icons) */
 .schedule-item p {
-    margin: 10px 0; /* Tăng khoảng cách giữa các dòng */
+    margin: 10px 0; 
     display: flex;
     align-items: center;
-    color: #555; /* Màu chữ xám */
+    color: #555; 
     font-size: 0.95em;
-    font-weight: 500; /* Hơi đậm (medium) */
+    font-weight: 500; 
 }
 
-/* CSS cho các icon SVG từ react-icons */
 .schedule-item p svg {
-    margin-right: 12px; /* Khoảng cách từ icon đến chữ */
-    font-size: 1.2em; /* Kích thước icon */
-    color: #007bff; /* Cho tất cả icon màu xanh */
-    flex-shrink: 0; /* Đảm bảo icon không bị bóp méo */
+    margin-right: 12px; 
+    font-size: 1.2em; 
+    color: #007bff; 
+    flex-shrink: 0; 
 }
 
-/* Tùy chỉnh màu cho một số icon nếu muốn */
 .schedule-item p.location svg {
     color: #dc3545; /* Màu đỏ cho địa điểm */
 }
@@ -148,7 +146,7 @@ h1 {
 }
 
 
-/* --- SKELETON LOADING (Giữ nguyên) --- */
+/* --- SKELETON LOADING (KHUNG CHỜ) --- */
 @keyframes pulse {
   0% { background-color: #eee; }
   50% { background-color: #e0e0e0; }
