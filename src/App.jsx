@@ -11,13 +11,13 @@ import './App.css';
 // --- CÀI ĐẶT ---
 const CACHE_DURATION = 3600 * 1000; // 1 giờ
 
-// ⚠️ BƯỚC 1: THÊM HÀM LOẠI BỎ DẤU
+// Hàm loại bỏ dấu (Không đổi)
 const removeAccents = (str) => {
   if (!str) return '';
   return str
-    .normalize("NFD") // Tách chữ và dấu
-    .replace(/[\u0300-\u036f]/g, "") // Xóa các dấu
-    .replace(/đ/g, "d").replace(/Đ/g, "D"); // Chuyển đổi Đ/đ
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/g, "d").replace(/Đ/g, "D");
 };
 
 // --- LOGIC: DARK MODE (Không đổi) ---
@@ -31,7 +31,7 @@ function useDarkMode() {
   return [theme, toggleTheme];
 }
 
-// --- LOGIC: TẢI DỮ LIỆU (Không đổi) ---
+// --- ⚠️ BƯỚC 1: SỬA LỖI LOGIC TẢI DỮ LIỆU ---
 function useJobData() {
   const [allJobs, setAllJobs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -47,9 +47,15 @@ function useJobData() {
       setIsLoading(false);
     } else {
       Papa.parse(dataUrl, {
-        download: true, header: true, skipEmptyLines: true, dynamicTyping: true,
+        download: true, 
+        header: true, 
+        skipEmptyLines: true, 
+        // ⚠️ SỬA LỖI Ở ĐÂY: Tắt dynamicTyping
+        // Bằng cách này, "11/11/2025" sẽ luôn là dạng chuỗi (string)
+        dynamicTyping: false, 
         complete: (results) => {
           const sortedData = results.data.sort((a, b) => {
+            // Giờ chúng ta phải parse thủ công vì đã tắt dynamicTyping
             const dtA = new Date(`${a.Date} ${a.StartTime}`);
             const dtB = new Date(`${b.Date} ${b.StartTime}`);
             return dtA - dtB;
@@ -145,19 +151,14 @@ const JobItem = ({ job }) => {
   );
 };
 
-// --- COMPONENT APP CHÍNH ---
+// --- COMPONENT APP CHÍNH (Không đổi) ---
 function App() {
-  // --- LOGIC (Hooks) ---
   const [theme, toggleTheme] = useDarkMode();
   const { jobs, isLoading, uniqueDates } = useJobData();
-
-  // --- STATE (Filters) ---
   const [dateFilter, setDateFilter] = useState(() => localStorage.getItem('lastViewedDate') || '');
-  // Đặt giá trị mặc định không dấu (ASCII)
   const [inputValue, setInputValue] = useState('Quoc Huy'); 
   const [nameFilter, setNameFilter] = useState('Quoc Huy'); 
 
-  // --- EFFECTS (Debounce & Cache Filter) (Không đổi) ---
   useEffect(() => {
     const timerId = setTimeout(() => setNameFilter(inputValue), 300);
     return () => clearTimeout(timerId);
@@ -167,41 +168,29 @@ function App() {
     localStorage.setItem('lastViewedDate', dateFilter);
   }, [dateFilter]);
 
-  // --- ⚠️ BƯỚC 1 (SỬA LOGIC LỌC): Áp dụng hàm removeAccents ---
+  // Logic lọc (Không đổi - Vẫn hoạt động tốt)
   const filteredJobs = useMemo(() => {
     let jobsToFilter = jobs;
-    
-    // 1. Chuyển đổi input tìm kiếm (không dấu, chữ thường)
-    // Ví dụ: "Quoc Huy" -> "quoc huy"
     const normNameFilter = removeAccents(nameFilter.toLowerCase().trim());
 
     if (normNameFilter) {
       jobsToFilter = jobsToFilter.filter(job => {
-        // 2. Chuyển đổi dữ liệu (có dấu) sang (không dấu, chữ thường) trước khi so sánh
-        
-        // Ví dụ: "Dương Kiều" -> "duong kieu"
         const mc = removeAccents((job.MC || '').toLowerCase()).includes(normNameFilter);
-        
-        // Ví dụ: "Standby... Quốc Huy" -> "standby... quoc huy"
         const standby = removeAccents((job.Standby || '').toLowerCase()).includes(normNameFilter);
-        
         const jobName = removeAccents((job.JobName || '').toLowerCase()).includes(normNameFilter);
-        
-        // (Thêm cho yêu cầu "địa điểm nữa")
         const location = removeAccents((job.Location || '').toLowerCase()).includes(normNameFilter);
-
         return mc || standby || jobName || location;
       });
     }
 
-    // Lọc ngày (vẫn hoạt động bình thường)
+    // Logic lọc ngày (BÂY GIỜ SẼ ĐÚNG)
+    // "11/11/2025" (string) === "11/11/2025" (string) -> TRUE
     if (dateFilter) { 
       jobsToFilter = jobsToFilter.filter(job => (job.Date || '').toString() === dateFilter);
     }
     return jobsToFilter;
   }, [jobs, dateFilter, nameFilter]); 
 
-  // --- Logic Gom Nhóm (Không đổi) ---
   const groupedJobs = useMemo(() => {
     return filteredJobs.reduce((acc, job) => {
       const timeGroup = `${job.StartTime}–${job.EndTime}`;
@@ -213,7 +202,7 @@ function App() {
 
   const jobGroups = Object.keys(groupedJobs);
 
-  // --- GIAO DIỆN (JSX) (Không đổi) ---
+  // Giao diện (Không đổi)
   return (
     <div className="App">
       <Header theme={theme} toggleTheme={toggleTheme} />
