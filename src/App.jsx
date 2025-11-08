@@ -1,7 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import Papa from 'papaparse';
 import { motion, AnimatePresence } from 'framer-motion';
-// ⚠️ QUAN TRỌNG: Đảm bảo bạn đã cài SWR
 import useSWR from 'swr';
 import { 
   FiClock, FiMapPin, FiMic, FiUser, FiMonitor,
@@ -11,7 +10,6 @@ import {
 import './App.css'; 
 
 // --- HÀM HỖ TRỢ (ĐÃ FIX LỖI) ---
-
 const removeAccents = (str) => {
   if (!str) return '';
   return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D");
@@ -20,7 +18,9 @@ const removeAccents = (str) => {
 const parseDate = (dateStr, timeStr) => {
   try {
     const [day, month, year] = dateStr.split('/');
-    const [hour, minute] = timeStr.split(':');
+    // ⚠️ FIX LỖI: Lấy giờ bắt đầu từ "08:00 - 10:00"
+    const startTime = timeStr.split(' - ')[0] || '00:00';
+    const [hour, minute] = startTime.split(':');
     return new Date(year, month - 1, day, hour, minute);
   } catch (e) { return new Date(0); }
 };
@@ -58,7 +58,7 @@ function useDarkMode() {
 }
 
 function useJobData() {
-  // ⚠️ ĐÃ DÁN LINK EXPORT CSV MỚI CỦA BẠN VÀO ĐÂY
+  // ⚠️ DÁN LINK CSV (đã export) CỦA BẠN VÀO ĐÂY
   const dataUrl = 'https://docs.google.com/spreadsheets/d/1716aQ1XqHDiHB4LHSClVYglY0Cgf60TVJ7RYjqlwsOM/export?format=csv&gid=2068764011';
 
   const { data: rawData, error, isLoading } = useSWR(
@@ -73,13 +73,14 @@ function useJobData() {
   const processedData = useMemo(() => {
     if (!rawData || error) return { jobs: [], dates: [] };
 
-    // Lọc bỏ dòng rỗng (dựa trên cột 'Date livestream')
+    // Lọc bỏ dòng rỗng
     const validData = rawData.filter(row => row['Date livestream'] && row['Date livestream'].includes('/'));
     
-    // Sắp xếp (dựa trên cột 'Date livestream' và 'StartTime')
+    // Sắp xếp
     const sortedData = validData.sort((a, b) => {
-      const dtA = parseDate(a['Date livestream'], a.StartTime);
-      const dtB = parseDate(b['Date livestream'], b.StartTime);
+      // ⚠️ FIX LỖI: Sắp xếp bằng 'Time slot'
+      const dtA = parseDate(a['Date livestream'], a['Time slot']);
+      const dtB = parseDate(b['Date livestream'], b['Time slot']);
       return dtA - dtB;
     });
 
@@ -156,19 +157,15 @@ const EmptyState = () => (
 
 const JobItem = ({ job }) => {
   const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } };
-  const timeGroup = `${job.StartTime || 'N/A'}–${job.EndTime || 'N/A'}`;
   
   return (
     <motion.div className="schedule-item" variants={itemVariants}>
-      {/* ⚠️ GIẢ ĐỊNH TÊN CỘT: Sửa 'job.JobName' thành 'job.Store' */}
+      {/* ⚠️ FIX LỖI: Đọc đúng tên cột */}
       <h4>{job.Store || 'Unnamed Job'}</h4>
-      <p className="time"><FiClock /> {timeGroup}</p>
-      {/* ⚠️ GIẢ ĐỊNH TÊN CỘT: Sửa 'job.Location' thành 'job.Address' */}
+      <p className="time"><FiClock /> {job['Time slot'] || 'N/A'}</p>
       <p className="location"><FiMapPin /> {job.Address || 'No location'}</p>
       <p className="session"><FiMic /> Session type: {job['Type of session'] || '—'}</p>
-      {/* ⚠️ GIẢ ĐỊNH TÊN CỘT: Sửa 'job.MC' thành 'job.Talent 1' */}
       <p className="mc"><FiUser /> {job['Talent 1'] || '...'}</p>
-      {/* ⚠️ GIẢ ĐỊNH TÊN CỘT: Sửa 'job.Standby' thành 'job.Coordinator 1' */}
       <p className="standby"><FiMonitor /> {job['Coordinator 1'] || '...'}</p>
     </motion.div>
   );
@@ -198,11 +195,13 @@ function App() {
     const normNameFilter = removeAccents(nameFilter.toLowerCase().trim());
     if (normNameFilter) {
       jobsToFilter = jobsToFilter.filter(job => {
-        // ⚠️ GIẢ ĐỊNH TÊN CỘT: Sửa logic lọc
+        
+        // ⚠️ FIX LỖI: Đọc đúng tên cột
         const mc = removeAccents((job['Talent 1'] || '').toLowerCase()).includes(normNameFilter);
         const standby = removeAccents((job['Coordinator 1'] || '').toLowerCase()).includes(normNameFilter);
         const jobName = removeAccents((job.Store || '').toLowerCase()).includes(normNameFilter);
         const location = removeAccents((job.Address || '').toLowerCase()).includes(normNameFilter);
+        
         return mc || standby || jobName || location;
       });
     }
@@ -216,7 +215,8 @@ function App() {
   // Logic Gom Nhóm
   const groupedJobs = useMemo(() => {
     return filteredJobs.reduce((acc, job) => {
-      const timeGroup = `${job.StartTime || 'N/A'}–${job.EndTime || 'N/A'}`;
+      // ⚠️ FIX LỖI: Đọc đúng tên cột
+      const timeGroup = job['Time slot'] || 'N/A';
       if (!acc[timeGroup]) acc[timeGroup] = [];
       acc[timeGroup].push(job);
       return acc;
