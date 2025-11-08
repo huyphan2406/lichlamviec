@@ -1,7 +1,7 @@
 /*
 =================================================
   File: App.jsx (Nội dung chính của ứng dụng Lịch)
-  ✅ ĐÃ KHẮC PHỤC: Lỗi Circular Dependency/Auth Import
+  ✅ LOGIC MỚI: Đăng xuất sẽ giải phóng activeUID trong Firestore.
 =================================================
 */
 
@@ -10,7 +10,7 @@ import Papa from 'papaparse';
 import { motion, AnimatePresence } from 'framer-motion';
 import useSWR from 'swr';
 import * as ics from 'ics';
-import { Link } from 'react-router-dom'; // Dùng cho nút Đăng nhập/Đăng ký
+import { Link } from 'react-router-dom'; 
 import { 
   // Icons chính
   FiClock, FiMapPin, FiMic, FiUser, FiMonitor,
@@ -21,9 +21,10 @@ import {
 } from 'react-icons/fi';
 import './App.css'; 
 
-// 🌟 IMPORT LOGIC AUTH 🌟
-// Chỉ cần import useAuth. Hàm logout() được cung cấp qua Context.
+// 🌟 IMPORT LOGIC AUTH VÀ FIRESTORE 🌟
 import { useAuth } from './AuthContext.jsx'; 
+import { auth, signOut, db } from './firebase.js'; // Cần auth, signOut, và db
+import { collection, query, where, getDocs, updateDoc } from 'firebase/firestore'; // Firestore functions
 
 
 // --- HÀM HỖ TRỢ (GIỮ NGUYÊN) ---
@@ -189,15 +190,41 @@ const NotificationPopup = () => {
 
 const Header = ({ theme, toggleTheme }) => {
   // 🌟 LẤY currentUser VÀ HÀM LOGOUT TỪ CONTEXT 🌟
-  const { currentUser, logout } = useAuth(); 
+  const { currentUser } = useAuth(); 
 
   const handleLogout = async () => {
     try {
-      // GỌI HÀM LOGOUT ĐƯỢC CUNG CẤP TỪ CONTEXT
-      await logout(); 
+        // 1. TÌM VÀ GIẢI PHÓNG MÃ CODE ĐANG ĐƯỢC SỬ DỤNG
+        if (currentUser) {
+            const userUID = currentUser.uid;
+            
+            // Tìm mã code mà activeUID khớp với UID của người dùng hiện tại
+            const q = query(
+                collection(db, 'access_codes'), 
+                where('activeUID', '==', userUID)
+            );
+            
+            // ⚠️ CHÚ Ý: getDocs là thao tác bất đồng bộ
+            const querySnapshot = await getDocs(q);
+            
+            if (!querySnapshot.empty) {
+                // Chỉ lấy document đầu tiên (giả sử 1 UID chỉ dùng 1 mã)
+                const docToUpdate = querySnapshot.docs[0]; 
+                
+                // 2. ĐẶT activeUID = null ĐỂ GIẢI PHÓNG MÃ
+                await updateDoc(docToUpdate.ref, {
+                    activeUID: null 
+                });
+                console.log(`Mã code ${docToUpdate.id} đã được giải phóng.`);
+            }
+        }
+        
+        // 3. Thực hiện Đăng xuất Firebase Auth
+        await signOut(auth); 
+
     } catch (error) {
-      console.error("Lỗi đăng xuất:", error);
-      alert("Đăng xuất thất bại!");
+      console.error("Lỗi đăng xuất/giải phóng code:", error);
+      alert("Đăng xuất thất bại! Vui lòng thử lại.");
     }
   };
 
