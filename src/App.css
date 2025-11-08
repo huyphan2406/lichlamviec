@@ -239,3 +239,32 @@ input:checked + .theme-toggle-slider:before { transform: translateX(20px); }
 .skeleton-line.h4 { width: 60%; height: 22px; margin-bottom: 15px; }
 .skeleton-line.p { width: 90%; height: 16px; }
 .skeleton-line.p:last-child { width: 70%; }
+
+.download-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px;
+  font-size: 1em;
+  font-weight: 600;
+  color: #fff;
+  background-color: var(--color-brand);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, opacity 0.2s ease;
+  margin-top: 10px; /* Khoảng cách với ô tìm kiếm */
+}
+.download-button:hover {
+  background-color: #0056b3;
+}
+body[data-theme='dark'] .download-button:hover {
+  background-color: #005cbf;
+}
+.download-button:disabled {
+  background-color: var(--color-grey);
+  opacity: 0.7;
+  cursor: not-allowed;
+}
