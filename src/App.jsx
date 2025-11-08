@@ -1,17 +1,20 @@
-import { useState, useMemo, useEffect } from 'react';
+// ⚠️ BƯỚC 1 (SỬA LỖI): Thêm 'useRef' vào danh sách import
+import { useState, useMemo, useEffect, useRef } from 'react';
 import Papa from 'papaparse';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   FiClock, FiMapPin, FiMic, FiUser, FiMonitor, // Job Icons
   FiMoon, FiSun, // Dark Mode Icons
-  FiSearch // Empty State Icon
+  FiSearch, FiHeart // Empty State & Love Icons
 } from 'react-icons/fi';
 import './App.css'; 
 
 // --- CÀI ĐẶT ---
 const CACHE_DURATION = 3600 * 1000; // 1 giờ
 
-// Hàm loại bỏ dấu (Không đổi)
+// --- HÀM HỖ TRỢ ---
+
+// Hàm loại bỏ dấu (Fix lỗi tìm Tiếng Việt)
 const removeAccents = (str) => {
   if (!str) return '';
   return str
@@ -20,7 +23,7 @@ const removeAccents = (str) => {
     .replace(/đ/g, "d").replace(/Đ/g, "D");
 };
 
-// Hàm đọc ngày (Không đổi)
+// Hàm đọc ngày (Fix lỗi sort DD/MM/YYYY)
 const parseDate = (dateStr, timeStr) => {
   try {
     const [day, month, year] = dateStr.split('/');
@@ -31,7 +34,8 @@ const parseDate = (dateStr, timeStr) => {
   }
 };
 
-// --- LOGIC: DARK MODE (Không đổi) ---
+// --- LOGIC (HOOKS) ---
+
 function useDarkMode() {
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
   const toggleTheme = () => setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
@@ -42,7 +46,6 @@ function useDarkMode() {
   return [theme, toggleTheme];
 }
 
-// --- ⚠️ BƯỚC 1: SỬA LỖI LOGIC TẢI DỮ LIỆU (FIX LỖI HEADER) ---
 function useJobData() {
   const [allJobs, setAllJobs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -62,13 +65,8 @@ function useJobData() {
         header: true, 
         skipEmptyLines: true, 
         dynamicTyping: false, 
-        
-        // ⚠️ FIX LỖI Ở ĐÂY: Thêm 'transformHeader'
-        // Dọn dẹp header (xóa ký tự BOM ẩn và khoảng trắng)
         transformHeader: (header) => header.replace(/\ufeff/g, '').trim(),
-
         complete: (results) => {
-          // 'results.data' bây giờ sẽ sạch
           const sortedData = results.data.sort((a, b) => {
             const dtA = parseDate(a.Date, a.StartTime);
             const dtB = parseDate(b.Date, b.StartTime);
@@ -95,7 +93,7 @@ function useJobData() {
   return { jobs: allJobs, isLoading, uniqueDates };
 }
 
-// --- UI COMPONENTS (Không đổi) ---
+// --- UI COMPONENTS (GỘP CHUNG) ---
 
 const Header = ({ theme, toggleTheme }) => (
   <header className="app-header">
@@ -124,7 +122,7 @@ const FilterBar = ({ dateFilter, setDateFilter, inputValue, setInputValue, uniqu
       <input 
         type="text" 
         id="nameInput" 
-        placeholder="e.g., Your Name" 
+        placeholder="e.g., Quốc Huy" 
         value={inputValue} 
         onChange={(e) => setInputValue(e.target.value)} 
       />
@@ -155,12 +153,10 @@ const EmptyState = () => (
 
 const JobItem = ({ job }) => {
   const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } };
-  // ⚠️ FIX LỖI: Đảm bảo TimeGroup không bị "undefined-undefined"
   const timeGroup = `${job.StartTime || 'N/A'}–${job.EndTime || 'N/A'}`;
   
   return (
     <motion.div className="schedule-item" variants={itemVariants}>
-      {/* ⚠️ FIX LỖI: Đảm bảo JobName không bị "..." */}
       <h4>{job.JobName || 'Unnamed Job'}</h4>
       <p className="time"><FiClock /> {timeGroup}</p>
       <p className="location"><FiMapPin /> {job.Location || 'No location'}</p>
@@ -171,11 +167,85 @@ const JobItem = ({ job }) => {
   );
 };
 
-// --- COMPONENT APP CHÍNH (Không đổi) ---
+// --- MỚI: COMPONENT TỎ TÌNH ---
+const LoveLetter = () => {
+  const [isYesClicked, setIsYesClicked] = useState(false);
+  const [noPosition, setNoPosition] = useState({ top: '50%', left: '60%' });
+  const [yesScale, setYesScale] = useState(1);
+  
+  // ⚠️ BƯỚC 1 (SỬA LỖI): Dùng 'useRef' thay vì 'React.useRef'
+  const containerRef = useRef(null); // Ref cho container
+
+  const handleNoHover = () => {
+    const container = containerRef.current;
+    if (!container) return;
+    const containerRect = container.getBoundingClientRect();
+    
+    setNoPosition({
+      top: `${Math.random() * (containerRect.height - 50)}px`, 
+      left: `${Math.random() * (containerRect.width - 100)}px`,
+    });
+    setYesScale(prev => Math.min(prev + 0.2, 3)); 
+  };
+
+  const handleYesClick = () => {
+    setIsYesClicked(true);
+  };
+
+  if (isYesClicked) {
+    return (
+      <motion.div 
+        className="love-letter-container"
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+      >
+        <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNTJzbjZ5dzB6MWJpYjZkczRucTd0ajB6c3ZkM29nZ3NqZzJjMWE1dCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/UMon0fuimoAN2/giphy.gif" alt="Yayy" className="love-gif" />
+        <h2 className="love-question">Tuyệt vời! Anh/Em biết mà 🥰</h2>
+      </motion.div>
+    );
+  }
+
+  return (
+    <div className="love-letter-container" ref={containerRef}>
+      <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3ZkZ3RxNnFjM3d2eDEybDY2Z2JtZWt4bDM3OHZzM2lqaHN3eDljYSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3o7TDr8hFxE4qNGodq/giphy.gif" alt="Asking..." className="love-gif" />
+      <h2 className="love-question">Làm người yêu anh/em nhé? <FiHeart style={{ color: 'red', fill: 'red' }} /></h2>
+      <div className="love-buttons">
+        <motion.button 
+          className="love-btn love-yes"
+          onClick={handleYesClick}
+          animate={{ scale: yesScale }} 
+          transition={{ type: 'spring', stiffness: 300, damping: 10 }}
+        >
+          Vâng ạ 🥰
+        </motion.button>
+        <motion.button 
+          className="love-btn love-no"
+          style={{ 
+            position: 'absolute', 
+            top: noPosition.top, 
+            left: noPosition.left,
+          }}
+          onMouseOver={handleNoHover}
+          onClick={handleNoHover} 
+          transition={{ type: 'spring', stiffness: 500, damping: 10 }}
+        >
+          Không 😭
+        </motion.button>
+      </div>
+    </div>
+  );
+};
+
+
+// --- COMPONENT APP CHÍNH ---
 function App() {
+  const [theme, toggleTheme] = useDarkMode();
+  const { jobs, isLoading, uniqueDates } = useJobData();
   const [dateFilter, setDateFilter] = useState(() => localStorage.getItem('lastViewedDate') || '');
   const [inputValue, setInputValue] = useState('Quốc Huy'); 
-  const [nameFilter, setNameFilter] = useState('Quốc Huy');
+  const [nameFilter, setNameFilter] = useState('Quốc Huy'); 
+
+  // --- EFFECTS (Debounce & Cache Filter) ---
   useEffect(() => {
     const timerId = setTimeout(() => setNameFilter(inputValue), 300);
     return () => clearTimeout(timerId);
@@ -185,11 +255,10 @@ function App() {
     localStorage.setItem('lastViewedDate', dateFilter);
   }, [dateFilter]);
 
-  // Logic lọc (Không đổi - Vẫn hoạt động tốt)
+  // --- LOGIC LỌC (ĐÃ FIX LỖI TÌM TIẾNG VIỆT) ---
   const filteredJobs = useMemo(() => {
     let jobsToFilter = jobs;
     const normNameFilter = removeAccents(nameFilter.toLowerCase().trim());
-
     if (normNameFilter) {
       jobsToFilter = jobsToFilter.filter(job => {
         const mc = removeAccents((job.MC || '').toLowerCase()).includes(normNameFilter);
@@ -199,18 +268,15 @@ function App() {
         return mc || standby || jobName || location;
       });
     }
-
-    // Logic lọc ngày (Không đổi)
     if (dateFilter) { 
       jobsToFilter = jobsToFilter.filter(job => (job.Date || '').toString() === dateFilter);
     }
     return jobsToFilter;
   }, [jobs, dateFilter, nameFilter]); 
 
-  // Logic gom nhóm (SỬA LỖI)
+  // --- Logic Gom Nhóm (Đã fix lỗi undefined) ---
   const groupedJobs = useMemo(() => {
     return filteredJobs.reduce((acc, job) => {
-      // ⚠️ FIX LỖI: Đảm bảo TimeGroup không bị "undefined-undefined"
       const timeGroup = `${job.StartTime || 'N/A'}–${job.EndTime || 'N/A'}`;
       if (!acc[timeGroup]) acc[timeGroup] = [];
       acc[timeGroup].push(job);
@@ -220,7 +286,7 @@ function App() {
 
   const jobGroups = Object.keys(groupedJobs);
 
-  // Giao diện (Không đổi)
+  // --- GIAO DIỆN (JSX) ---
   return (
     <div className="App">
       <Header theme={theme} toggleTheme={toggleTheme} />
@@ -248,13 +314,17 @@ function App() {
                 > 
                   <h3 className="schedule-group-title">{timeGroup}</h3>
                   {groupedJobs[timeGroup].map((job, index) => (
-                    <JobItem key={`${timeGroup}-${index}`} job={job} timeGroup={timeGroup} />
+                    <JobItem key={`${timeGroup}-${index}`} job={job} />
                   ))}
                 </motion.div>
               ))}
             </AnimatePresence>
           )}
         </div>
+        
+        <hr className="divider" />
+        <LoveLetter />
+
       </main>
     </div>
   );
