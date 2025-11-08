@@ -1,7 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import Papa from 'papaparse';
 import { motion, AnimatePresence } from 'framer-motion';
-// ⚠️ QUAN TRỌNG: Đảm bảo bạn đã cài SWR
 import useSWR from 'swr';
 import { 
   FiClock, FiMapPin, FiMic, FiUser, FiMonitor,
@@ -11,18 +10,14 @@ import {
 import './App.css'; 
 
 // --- HÀM HỖ TRỢ (ĐÃ FIX LỖI) ---
-
-// Hàm loại bỏ dấu (Fix lỗi tìm Tiếng Việt)
 const removeAccents = (str) => {
   if (!str) return '';
   return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D");
 };
 
-// Hàm đọc ngày (Fix lỗi sort DD/MM/YYYY từ Time slot)
 const parseDate = (dateStr, timeStr) => {
   try {
     const [day, month, year] = dateStr.split('/');
-    // Lấy giờ bắt đầu từ "08:00 - 10:00"
     const startTime = (timeStr || '00:00').split(' - ')[0];
     const [hour, minute] = startTime.split(':');
     return new Date(year, month - 1, day, hour, minute);
@@ -37,7 +32,7 @@ const csvFetcher = (url) => {
       header: true,
       skipEmptyLines: true,
       dynamicTyping: false,
-      transformHeader: (header) => header.replace(/\ufeff/g, '').trim(), // FIX lỗi BOM
+      transformHeader: (header) => header.replace(/\ufeff/g, '').trim(),
       complete: (results) => {
         resolve(results.data);
       },
@@ -62,7 +57,7 @@ function useDarkMode() {
 }
 
 function useJobData() {
-  // ⚠️ DÁN LINK CSV (đã export) CỦA BẠN VÀO ĐÂY
+  // Dán link export CSV của bạn vào đây
   const dataUrl = 'https://docs.google.com/spreadsheets/d/1716aQ1XqHDiHB4LHSClVYglY0Cgf60TVJ7RYjqlwsOM/export?format=csv&gid=2068764011';
 
   const { data: rawData, error, isLoading } = useSWR(
@@ -77,10 +72,8 @@ function useJobData() {
   const processedData = useMemo(() => {
     if (!rawData || error) return { jobs: [], dates: [] };
 
-    // Lọc bỏ dòng rỗng
     const validData = rawData.filter(row => row['Date livestream'] && row['Date livestream'].includes('/'));
     
-    // Sắp xếp
     const sortedData = validData.sort((a, b) => {
       const dtA = parseDate(a['Date livestream'], a['Time slot']);
       const dtB = parseDate(b['Date livestream'], b['Time slot']);
@@ -170,15 +163,20 @@ const JobItem = ({ job }) => {
   const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } };
   const timeGroup = `${job['Time slot'] || 'N/A'}`;
 
-  // ⚠️ FIX LỖI: Hiển thị cả 2 cột Talent và 2 cột Coordinator
   const talentDisplay = combineNames(job['Talent 1'], job['Talent 2']);
   const coordDisplay = combineNames(job['Coordinator 1'], job['Coordinator 2']);
+
+  // ⚠️ FIX LỖI Ở ĐÂY: Gộp 3 cột địa chỉ
+  const locationDisplay = [job.Studio, job['Studio/Room'], job.Address]
+    .filter(part => part && part !== 'nan') // Lọc bỏ các giá trị rỗng hoặc 'nan'
+    .join(' - '); // Nối chúng lại bằng dấu ' - '
 
   return (
     <motion.div className="schedule-item" variants={itemVariants}>
       <h4>{job.Store || 'Unnamed Job'}</h4>
       <p className="time"><FiClock /> {timeGroup}</p>
-      <p className="location"><FiMapPin /> {job.Address || 'No location'}</p>
+      {/* Hiển thị địa chỉ đã gộp */}
+      <p className="location"><FiMapPin /> {locationDisplay || 'No location'}</p>
       <p className="session"><FiMic /> Session type: {job['Type of session'] || '—'}</p>
       <p className="mc"><FiUser /> {talentDisplay}</p>
       <p className="standby"><FiMonitor /> {coordDisplay}</p>
@@ -211,15 +209,19 @@ function App() {
     if (normNameFilter) {
       jobsToFilter = jobsToFilter.filter(job => {
         
-        // ⚠️ FIX LỖI: Tìm kiếm trên cả 4 cột
+        // Tìm kiếm trên cả 4 cột talent/coord
         const talent1 = removeAccents((job['Talent 1'] || '').toLowerCase()).includes(normNameFilter);
         const talent2 = removeAccents((job['Talent 2'] || '').toLowerCase()).includes(normNameFilter);
         const coord1 = removeAccents((job['Coordinator 1'] || '').toLowerCase()).includes(normNameFilter);
         const coord2 = removeAccents((job['Coordinator 2'] || '').toLowerCase()).includes(normNameFilter);
         const jobName = removeAccents((job.Store || '').toLowerCase()).includes(normNameFilter);
-        const location = removeAccents((job.Address || '').toLowerCase()).includes(normNameFilter);
         
-        return talent1 || talent2 || coord1 || coord2 || jobName || location;
+        // ⚠️ FIX LỖI Ở ĐÂY: Tìm kiếm trên cả 3 cột địa chỉ
+        const location = removeAccents((job.Address || '').toLowerCase()).includes(normNameFilter);
+        const studio = removeAccents((job.Studio || '').toLowerCase()).includes(normNameFilter);
+        const room = removeAccents((job['Studio/Room'] || '').toLowerCase()).includes(normNameFilter);
+        
+        return talent1 || talent2 || coord1 || coord2 || jobName || location || studio || room;
       });
     }
     
