@@ -181,22 +181,33 @@ const NotificationPopup = () => {
                         
                         transition={{ type: 'spring', stiffness: 100, damping: 20 }}
                     >
-                        <div className="popup-header">
-                            <FiZap size={22} className="popup-icon-zap" />
-                            <h3>Thông Báo Quan Trọng</h3>
-                            <button className="popup-dismiss-btn" onClick={handleDismiss} title="Đóng">
-                                <FiX size={20} />
-                            </button>
-                        </div>
                         <div className="popup-content">
-                            <p>
-                                <strong>Lịch Livestream Nhanh & Chính xác!</strong>
-                                <br />
-                                Web dùng để tra cứu lịch làm việc của standby và host.
-                                <br />
-                                Dùng miễn phí tới <strong className="highlight-date">15/11</strong>, sau ngày 15 phải đăng kí tài khoản để được sử dụng.
-                            </p>
-                        </div>
+                        <p>
+                            <strong style={{ fontSize: '1.1em', color: 'var(--color-brand)' }}>
+                                LỊCH LIVESTREAM NHANH & CHÍNH XÁC!
+                            </strong>
+                        </p>
+
+                        {/* Thêm danh sách gạch đầu dòng để thông tin dễ đọc hơn */}
+                        <ul className="popup-list">
+                            <li>
+                                Ứng dụng dùng để tra cứu lịch làm việc của **Standby** và **Host**.
+                            </li>
+                            <li>
+                                Dùng miễn phí tới ngày <strong className="highlight-date">15/11</strong>.
+                                Sau ngày này, vui lòng đăng kí tài khoản để tiếp tục sử dụng.
+                            </li>
+                            <li>
+                                <strong style={{ color: 'var(--color-danger)' }}>Thông báo:</strong>
+                                Nhiều chức năng mới đang được phát triển và sẽ ra mắt sớm!
+                            </li>
+                        </ul>
+
+                        {/* Thông tin tác giả được căn chỉnh nhỏ và nằm cuối */}
+                        <p className="popup-author">
+                            *Tác giả: Quốc Huy
+                        </p>
+                    </div>
                     </motion.div>
                 </>
             )}
