@@ -64,6 +64,7 @@ main {
   align-items: center;
   padding: 10px 0;
   margin-bottom: 15px;
+  flex-wrap: wrap; /* Cho phép rớt dòng nếu cần */
 }
 .app-header h1 {
   margin: 0;
@@ -72,6 +73,64 @@ main {
   font-weight: 700;
   transition: color var(--transition-speed);
 }
+
+/* Khối bao quanh các nút điều khiển bên phải */
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: 20px; /* Khoảng cách giữa cụm nút Auth và nút Dark Mode */
+    flex-wrap: wrap; /* Cho phép rớt dòng trên màn hình hẹp */
+    justify-content: flex-end; /* Căn phải */
+}
+
+/* Cụm nút Đăng nhập / Đăng ký */
+.auth-buttons {
+    display: flex;
+    gap: 10px; /* Khoảng cách giữa 2 nút */
+}
+
+/* Nút bấm chung */
+.auth-button {
+    display: flex;
+    align-items: center;
+    gap: 6px; /* Khoảng cách giữa icon và chữ */
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    font-family: var(--font-main);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.auth-button svg {
+    flex-shrink: 0;
+}
+
+/* Nút Đăng nhập */
+.auth-button.login {
+    background-color: var(--color-input-bg);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-secondary);
+}
+.auth-button.login:hover {
+    background-color: var(--color-border);
+    color: var(--color-text-primary);
+}
+
+/* Nút Đăng ký */
+.auth-button.register {
+    background-color: var(--color-brand);
+    color: #ffffff;
+    border: 1px solid var(--color-brand);
+}
+.auth-button.register:hover {
+    background-color: #0069d9; /* Màu đậm hơn */
+    border-color: #0069d9;
+}
+
+
+/* CSS CŨ CỦA NÚT DARK MODE (Vẫn giữ nguyên) */
 .theme-toggle {
   display: flex;
   align-items: center;
@@ -150,7 +209,7 @@ input:checked + .theme-toggle-slider:before { transform: translateX(20px); }
   box-shadow: 0 0 0 3px var(--color-brand-light);
 }
 
-/* CSS CHO NÚT EXPORT (ĐÃ SỬA) */
+/* CSS CHO NÚT EXPORT */
 .download-button {
   display: flex;
   align-items: center;
@@ -280,7 +339,7 @@ input:checked + .theme-toggle-slider:before { transform: translateX(20px); }
 .skeleton-line {
   background-color: var(--color-border);
   border-radius: 4px;
-  animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  animation: pulse 1.5s cubic-bezier(0.4, 0.6, 1) infinite;
 }
 .skeleton-line.h4 { height: 24px; width: 40%; margin-bottom: 15px; }
 .skeleton-line.p { height: 16px; width: 80%; margin-bottom: 10px; }
@@ -291,7 +350,7 @@ input:checked + .theme-toggle-slider:before { transform: translateX(20px); }
 }
 
 
-/* 🌟 CSS CHO POPUP THÔNG BÁO (ĐÃ SỬA LỖI RESPONSIVE) */
+/* 🌟 CSS CHO POPUP THÔNG BÁO (ĐÃ SỬA LỖI RESPONSIVE VÀ LÀM ĐẸP NHẤT) */
 .popup-overlay {
   position: fixed;
   top: 0;
@@ -358,148 +417,134 @@ input:checked + .theme-toggle-slider:before { transform: translateX(20px); }
   color: var(--color-text-primary);
 }
 
-
-/* ================================================== */
-/* 🌟 CSS MỚI CHO NỘI DUNG POPUP (ĐÃ SỬA LẠI CHO ĐẸP) */
-/* ================================================== */
-
 .popup-content {
-  padding: 24px; /* Padding tổng thể cho nội dung */
+  padding: 24px;
   line-height: 1.6;
 }
 
-/* Tùy chỉnh các thẻ <p> bên trong */
-.popup-content p {
-  margin: 0 0 15px 0; /* Khoảng cách giữa các đoạn */
-  color: var(--color-text-secondary);
-  font-size: 0.95rem;
-}
-.popup-content p:last-child {
-  margin-bottom: 0; /* Đoạn cuối cùng không cần margin-bottom */
-}
-
-/* Tiêu đề chính của thông báo */
-.popup-content .popup-main-title {
-  font-size: 1.1em;
-  font-weight: 600;
-  color: var(--color-text-primary);
+/* --- Thẻ thông tin riêng biệt trong popup --- */
+.popup-item-card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    background-color: var(--color-input-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    transition: all var(--transition-speed);
 }
 
-/* Phần chữ in đậm (Talent, Host) */
-.popup-content p strong {
-  font-weight: 600;
-  color: var(--color-text-primary);
+.popup-item-card:last-child {
+    margin-bottom: 0;
 }
 
-/* Phần ngày highlight (15/11) */
-.popup-content p strong.highlight-date {
+.popup-item-card .card-icon {
+    color: var(--color-brand);
+    margin-bottom: 10px;
+    flex-shrink: 0;
+}
+
+.popup-item-card .card-title {
+    font-size: 1.05em;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 0 0 8px 0;
+}
+
+.popup-item-card .card-description {
+    font-size: 0.9em;
+    color: var(--color-text-secondary);
+    margin: 0;
+}
+
+/* Các tùy chỉnh riêng cho từng loại thẻ */
+.popup-item-primary {
+    border-color: var(--color-brand);
+    background-color: var(--color-brand-light);
+}
+.popup-item-primary .card-title {
+    color: var(--color-brand);
+}
+.popup-item-primary .card-icon {
+    color: var(--color-brand);
+}
+
+.popup-item-highlight .card-description strong.highlight-date {
   color: var(--color-brand);
-  background-color: var(--color-brand-light);
+  background-color: rgba(0,123,255,0.15);
   padding: 2px 6px;
   border-radius: 5px;
   font-weight: 700;
 }
 
-/* Đường kẻ ngang phân chia */
-.popup-divider {
-  border: none; /* Xóa viền mặc định */
-  border-top: 1px solid var(--color-border); /* Thay bằng viền mỏng, đẹp */
-  margin: 20px 0; /* Khoảng cách trên dưới */
+.popup-item-info {
+    border-style: dashed;
+    border-color: var(--color-border);
+    background-color: transparent;
+    padding-top: 12px;
 }
-
-/* Phần thông tin chân (footer) của popup */
-.popup-footer-info {
-  font-size: 0.9em;
-  color: var(--color-text-secondary);
+.popup-item-info .card-icon {
+    color: var(--color-grey);
 }
-
-/* Tên tác giả */
-.popup-author {
-  display: block; 
-  text-align: right; 
-  margin-top: 15px;
-  font-style: italic;
-  color: var(--color-grey); /* Màu xám nhạt hơn */
-}
-
-/* --- HEADER & DARK MODE TOGGLE --- */
-.app-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 0;
-  margin-bottom: 15px;
-}
-.app-header h1 {
-  margin: 0;
-  color: var(--color-text-primary);
-  font-size: 1.8rem; 
-  font-weight: 700;
-  transition: color var(--transition-speed);
-}
-
-/* 🌟 CSS MỚI: Khối bao quanh các nút điều khiển bên phải */
-.header-controls {
-    display: flex;
-    align-items: center;
-    gap: 20px; /* Khoảng cách giữa cụm nút Auth và nút Dark Mode */
-}
-
-/* 🌟 CSS MỚI: Cụm nút Đăng nhập / Đăng ký */
-.auth-buttons {
-    display: flex;
-    gap: 10px; /* Khoảng cách giữa 2 nút */
-}
-
-/* 🌟 CSS MỚI: Nút bấm chung */
-.auth-button {
-    display: flex;
-    align-items: center;
-    gap: 6px; /* Khoảng cách giữa icon và chữ */
-    padding: 8px 12px;
-    border: none;
-    border-radius: 6px;
-    font-size: 0.9rem;
-    font-weight: 500;
-    font-family: var(--font-main);
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-.auth-button svg {
-    flex-shrink: 0;
-}
-
-/* 🌟 CSS MỚI: Nút Đăng nhập */
-.auth-button.login {
-    background-color: var(--color-input-bg);
-    border: 1px solid var(--color-border);
+.popup-item-info .card-description {
+    font-size: 0.85em;
     color: var(--color-text-secondary);
+    margin-bottom: 10px;
 }
-.auth-button.login:hover {
-    background-color: var(--color-border);
-    color: var(--color-text-primary);
+.popup-item-info .card-author {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    width: 100%;
+    text-align: right;
+    font-size: 0.8em;
+    font-style: italic;
+    color: var(--color-grey);
+    margin-top: 5px;
+}
+.popup-item-info .card-author svg {
+    color: var(--color-grey);
+    font-size: 0.9em;
 }
 
-/* 🌟 CSS MỚI: Nút Đăng ký */
-.auth-button.register {
-    background-color: var(--color-brand);
-    color: #ffffff;
-    border: 1px solid var(--color-brand);
-}
-.auth-button.register:hover {
-    background-color: #0069d9; /* Màu đậm hơn */
-    border-color: #0069d9;
+
+/* ============================================== */
+/* === 🌟 CSS MỚI: RESPONSIVE HEADER === */
+/* ============================================== */
+
+/* Cho máy tính bảng và điện thoại (màn hình < 600px) */
+@media (max-width: 600px) {
+    .app-header {
+        flex-direction: column; /* Xếp theo cột: H1 ở trên, controls ở dưới */
+        align-items: center;    /* Căn giữa H1 và controls */
+        gap: 20px;              /* Khoảng cách giữa H1 và controls */
+    }
+
+    .app-header h1 {
+        margin: 0; /* Xóa margin mặc định của h1 */
+        font-size: 1.6rem; /* Giảm size chữ h1 một chút cho gọn */
+    }
+
+    .header-controls {
+        flex-direction: column; /* Xếp theo cột: Cụm Auth ở trên, Dark Mode ở dưới */
+        align-items: center;    /* Căn giữa */
+        gap: 15px;              /* Khoảng cách giữa 2 cụm nút */
+        justify-content: center; /* Căn giữa thay vì căn phải */
+    }
 }
 
-/* CSS CŨ CỦA NÚT DARK MODE (Vẫn giữ nguyên) */
-.theme-toggle {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
-  color: var(--color-text-secondary);
-  padding: 6px;
-  border-radius: 20px;
-  transition: background-color var(--transition-speed), color var(--transition-speed);
+/* Cho điện thoại rất nhỏ (màn hình < 360px) */
+@media (max-width: 360px) {
+    .auth-buttons {
+        flex-direction: column; /* Xếp 2 nút Đăng nhập / Đăng ký theo cột */
+        width: 100%;            
+    }
+
+    .auth-button {
+        width: 100%;
+        justify-content: center; /* Căn giữa nội dung trong nút */
+        box-sizing: border-box; /* Đảm bảo padding không làm vỡ layout */
+    }
 }
-/* ... (phần còn lại của CSS cho theme-toggle) ... */
