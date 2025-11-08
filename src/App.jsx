@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import Papa from 'papaparse';
 import { motion, AnimatePresence } from 'framer-motion';
+// ⚠️ QUAN TRỌNG: Đảm bảo bạn đã cài SWR
 import useSWR from 'swr';
 import { 
   FiClock, FiMapPin, FiMic, FiUser, FiMonitor,
@@ -10,16 +11,19 @@ import {
 import './App.css'; 
 
 // --- HÀM HỖ TRỢ (ĐÃ FIX LỖI) ---
+
+// Hàm loại bỏ dấu (Fix lỗi tìm Tiếng Việt)
 const removeAccents = (str) => {
   if (!str) return '';
   return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D");
 };
 
+// Hàm đọc ngày (Fix lỗi sort DD/MM/YYYY từ Time slot)
 const parseDate = (dateStr, timeStr) => {
   try {
     const [day, month, year] = dateStr.split('/');
-    // ⚠️ FIX LỖI: Lấy giờ bắt đầu từ "08:00 - 10:00"
-    const startTime = timeStr.split(' - ')[0] || '00:00';
+    // Lấy giờ bắt đầu từ "08:00 - 10:00"
+    const startTime = (timeStr || '00:00').split(' - ')[0];
     const [hour, minute] = startTime.split(':');
     return new Date(year, month - 1, day, hour, minute);
   } catch (e) { return new Date(0); }
@@ -33,7 +37,7 @@ const csvFetcher = (url) => {
       header: true,
       skipEmptyLines: true,
       dynamicTyping: false,
-      transformHeader: (header) => header.replace(/\ufeff/g, '').trim(),
+      transformHeader: (header) => header.replace(/\ufeff/g, '').trim(), // FIX lỗi BOM
       complete: (results) => {
         resolve(results.data);
       },
@@ -78,7 +82,6 @@ function useJobData() {
     
     // Sắp xếp
     const sortedData = validData.sort((a, b) => {
-      // ⚠️ FIX LỖI: Sắp xếp bằng 'Time slot'
       const dtA = parseDate(a['Date livestream'], a['Time slot']);
       const dtB = parseDate(b['Date livestream'], b['Time slot']);
       return dtA - dtB;
@@ -155,18 +158,30 @@ const EmptyState = () => (
   </motion.div>
 );
 
+// Hàm helper để gộp tên (chỉ gộp nếu T2/C2 tồn tại và không phải 'nan')
+const combineNames = (name1, name2) => {
+  const n1 = name1 || '';
+  const n2 = (name2 && name2 !== 'nan') ? name2 : '';
+  if (n1 && n2) return `${n1} | ${n2}`;
+  return n1 || n2 || '...'; // Trả về T1, T2, hoặc '...'
+};
+
 const JobItem = ({ job }) => {
   const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } };
-  
+  const timeGroup = `${job['Time slot'] || 'N/A'}`;
+
+  // ⚠️ FIX LỖI: Hiển thị cả 2 cột Talent và 2 cột Coordinator
+  const talentDisplay = combineNames(job['Talent 1'], job['Talent 2']);
+  const coordDisplay = combineNames(job['Coordinator 1'], job['Coordinator 2']);
+
   return (
     <motion.div className="schedule-item" variants={itemVariants}>
-      {/* ⚠️ FIX LỖI: Đọc đúng tên cột */}
       <h4>{job.Store || 'Unnamed Job'}</h4>
-      <p className="time"><FiClock /> {job['Time slot'] || 'N/A'}</p>
+      <p className="time"><FiClock /> {timeGroup}</p>
       <p className="location"><FiMapPin /> {job.Address || 'No location'}</p>
       <p className="session"><FiMic /> Session type: {job['Type of session'] || '—'}</p>
-      <p className="mc"><FiUser /> {job['Talent 1'] || '...'}</p>
-      <p className="standby"><FiMonitor /> {job['Coordinator 1'] || '...'}</p>
+      <p className="mc"><FiUser /> {talentDisplay}</p>
+      <p className="standby"><FiMonitor /> {coordDisplay}</p>
     </motion.div>
   );
 };
@@ -196,13 +211,15 @@ function App() {
     if (normNameFilter) {
       jobsToFilter = jobsToFilter.filter(job => {
         
-        // ⚠️ FIX LỖI: Đọc đúng tên cột
-        const mc = removeAccents((job['Talent 1'] || '').toLowerCase()).includes(normNameFilter);
-        const standby = removeAccents((job['Coordinator 1'] || '').toLowerCase()).includes(normNameFilter);
+        // ⚠️ FIX LỖI: Tìm kiếm trên cả 4 cột
+        const talent1 = removeAccents((job['Talent 1'] || '').toLowerCase()).includes(normNameFilter);
+        const talent2 = removeAccents((job['Talent 2'] || '').toLowerCase()).includes(normNameFilter);
+        const coord1 = removeAccents((job['Coordinator 1'] || '').toLowerCase()).includes(normNameFilter);
+        const coord2 = removeAccents((job['Coordinator 2'] || '').toLowerCase()).includes(normNameFilter);
         const jobName = removeAccents((job.Store || '').toLowerCase()).includes(normNameFilter);
         const location = removeAccents((job.Address || '').toLowerCase()).includes(normNameFilter);
         
-        return mc || standby || jobName || location;
+        return talent1 || talent2 || coord1 || coord2 || jobName || location;
       });
     }
     
@@ -215,7 +232,6 @@ function App() {
   // Logic Gom Nhóm
   const groupedJobs = useMemo(() => {
     return filteredJobs.reduce((acc, job) => {
-      // ⚠️ FIX LỖI: Đọc đúng tên cột
       const timeGroup = job['Time slot'] || 'N/A';
       if (!acc[timeGroup]) acc[timeGroup] = [];
       acc[timeGroup].push(job);
