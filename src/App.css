@@ -1,127 +1,38 @@
-/* src/App.css */
-
-/* --- Thiết lập cơ bản --- */
+/* Thiết lập cơ bản */
 body {
-    font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
-    background-color: #f8f9fa; /* Nền xám nhạt */
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: #f0f2f5;
     margin: 0;
-    padding: 0;
-    color: #343a40;
-    line-height: 1.6;
-}
-
-/* * 1. KỸ THUẬT RESPONSIVE CĂN BẢN (Fluid Container)
- * - max-width: 700px; 
- * -> Trên màn hình lớn (máy tính), container sẽ rộng tối đa 700px.
- * - margin: 30px auto; 
- * -> Tự động căn giữa container trên màn hình lớn.
- * - Trên màn hình nhỏ hơn 700px, container sẽ tự động co lại
- * bằng 100% chiều rộng màn hình.
- */
-.App-container {
-    max-width: 700px; /* Chiều rộng tối đa */
-    margin: 30px auto; /* Căn giữa và khoảng cách trên/dưới */
-    background-color: #ffffff; /* Nền trắng */
-    border-radius: 12px;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
-    overflow: hidden;
-    padding-bottom: 20px;
-}
-
-/* * 2. KỸ THUẬT MEDIA QUERY (Dành riêng cho Mobile)
- * - @media (max-width: 768px) 
- * -> Áp dụng các quy tắc CSS này KHI màn hình nhỏ hơn 768px (máy tính bảng, điện thoại).
- */
-@media (max-width: 768px) {
-    .App-container {
-        /* Cho container chiếm toàn bộ màn hình, không còn căn giữa */
-        margin: 0; 
-        border-radius: 0; /* Bỏ bo góc */
-        box-shadow: none; /* Bỏ bóng đổ */
-    }
-
-    .app-header {
-        padding: 20px; /* Giảm padding trên header */
-    }
-
-    .app-header h1 {
-        font-size: 1.8em; /* Giảm kích thước chữ tiêu đề */
-    }
-
-    .app-main-content {
-        padding: 15px; /* Giảm padding chính */
-    }
-
-    .job-title {
-        font-size: 1.15em; /* Giảm kích thước chữ tiêu đề công việc */
-    }
-}
-
-/* --- Header --- */
-.app-header {
-    background-color: #f8f9fa;
-    padding: 30px 20px;
-    border-bottom: 1px solid #e9ecef;
-    text-align: center;
-}
-
-.app-header h1 {
-    margin: 0;
-    font-size: 2.2em;
-    color: #212529;
-    font-weight: 700;
-}
-
-/* --- Phần tải CSV --- */
-.csv-upload-section {
-    margin-top: 20px;
-    display: flex;
-    justify-content: center;
-}
-
-.csv-label {
-    display: inline-flex;
-    align-items: center;
-    background-color: #007bff;
-    color: white;
-    padding: 10px 20px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-weight: 500;
-    transition: background-color 0.3s ease;
-}
-
-.csv-label:hover {
-    background-color: #0056b3;
-}
-
-.csv-input {
-    display: none;
-}
-
-/* --- Main Content (bao gồm filter và schedule) --- */
-.app-main-content {
     padding: 20px;
+    color: #333;
 }
 
-/* --- Các thẻ Card chung --- */
-.card {
+/* Đặt App vào giữa và giới hạn chiều rộng */
+.App {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+header, .filter-container, .schedule-item {
     background-color: #ffffff;
     border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     margin-bottom: 20px;
-    padding: 20px;
-    transition: transform 0.2s ease-in-out;
 }
 
-/* --- Phần tìm kiếm --- */
-.filter-section h3 {
-    margin-top: 0;
-    margin-bottom: 20px;
-    font-size: 1.4em;
-    color: #212529;
-    text-align: center;
-    font-weight: 600;
+header {
+    padding: 20px;
+}
+
+h1 {
+    margin: 0 0 15px 0;
+    color: #1c1e21;
+    font-size: 1.8em;
+}
+
+/* Form lọc */
+.filter-container {
+    padding: 20px;
 }
 
 .form-group {
@@ -131,111 +42,130 @@ body {
 .form-group label {
     display: block;
     font-weight: 600;
-    margin-bottom: 8px;
-    color: #495057;
+    margin-bottom: 5px;
 }
 
-.form-group input[type="text"] {
-    width: 100%; /* Đảm bảo input chiếm 100% chiều rộng, tự co dãn */
-    padding: 12px;
-    font-size: 1em;
-    border: 1px solid #ced4da;
-    border-radius: 5px;
-    box-sizing: border-box; /* Quan trọng để padding không làm vỡ layout */
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.form-group input[type="text"]:focus {
-    border-color: #007bff;
-    outline: none;
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-}
-
-.form-group input[type="text"]:disabled {
-    background-color: #e9ecef;
-    cursor: not-allowed;
-}
-
-/* --- Thông báo lỗi và không có dữ liệu --- */
-.error-message {
-    color: #dc3545;
-    background-color: #f8d7da;
-    border: 1px solid #f5c6cb;
+.form-group input,
+.form-group select { /* Áp dụng cho cả input và select */
+    width: 100%;
     padding: 10px;
-    border-radius: 5px;
-    margin-bottom: 15px;
-    text-align: center;
-    font-weight: 500;
+    font-size: 1em;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    box-sizing: border-box; 
+    font-family: inherit; /* Đảm bảo select dùng font giống input */
 }
 
-.no-data-message {
-    color: #6c757d;
-    background-color: #e2e6ea;
-    border: 1px solid #dae0e5;
-    padding: 15px;
-    border-radius: 5px;
-    text-align: center;
-    font-size: 1.1em;
-    margin-top: 30px;
-}
-
-/* --- Hiển thị lịch làm việc --- */
-.schedule-group {
-    margin-bottom: 30px;
+/* Danh sách lịch */
+.schedule-list {
+    padding: 0 10px;
 }
 
 .schedule-group-title {
-    font-size: 1.5em;
+    font-size: 1.2em; 
     font-weight: 700;
-    color: #007bff;
-    margin-top: 30px;
-    margin-bottom: 10px;
-    border-bottom: 2px solid #007bff;
-    padding-bottom: 8px;
-    text-align: center;
+    color: #1c1e21;
+    padding: 10px 0 5px 0;
+    border-top: 1px solid #eee;
+    margin-top: 20px;
 }
 
-.schedule-time-range {
-    font-size: 1.2em;
-    font-weight: 600;
-    color: #495057;
-    background-color: #e9ecef;
-    padding: 8px 15px;
-    border-radius: 5px;
-    margin-bottom: 15px;
-    text-align: center;
-    display: block;
+/* Xóa gạch đầu tiên của nhóm đầu tiên */
+.time-group-container:first-child .schedule-group-title {
+    border-top: none;
+    margin-top: 0;
 }
 
 .schedule-item {
-    margin-bottom: 15px;
     padding: 15px 20px;
-    border-left: 5px solid #007bff;
+    margin: 10px 0; 
 }
 
-.job-title {
-    font-size: 1.3em;
-    font-weight: 700;
-    color: #212529;
-    margin-bottom: 10px;
+.schedule-item h4 {
+    margin: 0 0 10px 0;
+    font-size: 1.2em;
+    color: #1c1e21;
+    font-weight: 600; 
 }
 
-.job-details .detail-row {
+.schedule-item p {
+    margin: 8px 0;
     display: flex;
     align-items: center;
-    margin-bottom: 5px;
-    color: #6c757d;
+    color: #555;
     font-size: 0.95em;
 }
 
-.job-details .icon {
-    margin-right: 10px;
+/* --- CẬP NHẬT ICON GIỐNG ẢNH MẪU --- */
+.schedule-item p::before {
+    font-family: "Arial", sans-serif; 
+    margin-right: 12px;
     font-size: 1.1em;
-    flex-shrink: 0;
-    width: 25px;
+    width: 20px;
     text-align: center;
 }
 
-.job-details .detail-row .icon {
-    font-family: "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", sans-serif;
+.schedule-item p.time::before {
+    content: '⏰';
+}
+
+.schedule-item p.location::before {
+    content: '📍';
+}
+
+.schedule-item p.session::before {
+    content: '🎤';
+}
+
+.schedule-item p.mc::before {
+    content: '🎙️'; /* Icon Micro giống 'Dương Kiều' */
+}
+
+.schedule-item p.standby::before {
+    content: '💻'; /* Icon Laptop/Standby giống 'Quốc Huy' */
+}
+
+
+/* --- TỐI ƯU #4: CSS CHO SKELETON LOADING --- */
+
+@keyframes pulse {
+  0% {
+    background-color: #eee;
+  }
+  50% {
+    background-color: #e0e0e0;
+  }
+  100% {
+    background-color: #eee;
+  }
+}
+
+.skeleton-item {
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin: 10px 0;
+  padding: 15px 20px;
+}
+
+.skeleton-line {
+  background-color: #eee;
+  border-radius: 4px;
+  animation: pulse 1.5s ease-in-out infinite;
+  margin: 8px 0;
+}
+
+.skeleton-line.h4 {
+  width: 60%;
+  height: 20px;
+  margin-bottom: 15px;
+}
+
+.skeleton-line.p {
+  width: 90%;
+  height: 16px;
+}
+
+.skeleton-line.p:last-child {
+  width: 70%;
 }

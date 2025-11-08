@@ -1,207 +1,202 @@
 import { useState, useMemo, useEffect } from 'react';
 import Papa from 'papaparse';
-import './App.css'; // Liên kết với file CSS để tạo kiểu
+import './App.css';
 
-// Danh sách các cột (headers) mà ứng dụng mong đợi từ file CSV
-// Đây là KEY để ứng dụng nhận diện dữ liệu
-const EXPECTED_CSV_HEADERS = {
-  NGAY: 'Ngay', // Ví dụ: 11/11/2025
-  THOIGIANBATDAU: 'ThoiGianBatDau', // Ví dụ: 16:00
-  THOIGIANKETTHUC: 'ThoiGianKetThuc', // Ví dụ: 18:00
-  TENCONGVIEC: 'TenCongViec', // Ví dụ: NEUTROGENA - TIKTOK
-  DIADIEM: 'DiaDiem', // Ví dụ: OP Livestream HUB 2 - H2 - 210
-  SESSIONTYPE: 'SessionType', // Ví dụ: External
-  NGUOITHUCHIEN: 'NguoiThucHien', // Ví dụ: Quốc Huy, Dương Kiều
-  GHICHU: 'GhiChu' // Thêm cột Ghi chú nếu có
-};
+// Đặt thời gian cache (ví dụ: 1 giờ)
+// 1 giờ * 60 phút * 60 giây * 1000 ms
+const CACHE_DURATION = 3600 * 1000;
 
 function App() {
-  // --- STATE QUẢN LÝ DỮ LIỆU VÀ GIAO DIỆN ---
-  const [allJobs, setAllJobs] = useState([]); // Toàn bộ dữ liệu từ CSV
-  const [dateFilter, setDateFilter] = useState(''); // Giá trị ô lọc Ngày
-  const [nameFilter, setNameFilter] = useState(''); // Giá trị ô lọc Tên
-  const [csvError, setCsvError] = useState(''); // Thông báo lỗi CSV
-  const [isCsvLoaded, setIsCsvLoaded] = useState(false); // Đã tải CSV thành công chưa
+  // --- STATE ---
+  const [allJobs, setAllJobs] = useState([]);
+  const [dateFilter, setDateFilter] = useState('');
+  
+  // --- TỐI ƯU #3: DEBOUNCE ---
+  // State cho giá trị filter đã được "debounce" (trì hoãn)
+  const [nameFilter, setNameFilter] = useState('Quốc Huy'); 
+  // State cho giá trị gõ vào ô input ngay lập tức
+  const [inputValue, setInputValue] = useState('Quốc Huy'); 
+  
+  // --- TỐI ƯU #4: LOADING STATE ---
+  // State để theo dõi trạng thái tải dữ liệu
+  const [isLoading, setIsLoading] = useState(true);
 
-  // --- HÀM XỬ LÝ TẢI FILE CSV ---
-  const handleFileSelect = (event) => {
-    const file = event.target.files[0];
-    setCsvError(''); // Reset lỗi
-    setIsCsvLoaded(false); // Đặt lại trạng thái tải CSV
+  
+  // --- TỐI ƯU #4: TẢI DỮ LIỆU TỰ ĐỘNG + CACHING ---
+  useEffect(() => {
+    const dataUrl = '/data.csv';
+    const now = new Date().getTime();
 
-    if (file) {
-      Papa.parse(file, {
-        header: true, // Dòng đầu tiên là tiêu đề cột
+    // 1. Kiểm tra Cache (LocalStorage)
+    const cachedData = localStorage.getItem("cachedJobs");
+    const cacheTime = localStorage.getItem("cachedJobsTime");
+
+    if (cachedData && cacheTime && (now - parseInt(cacheTime) < CACHE_DURATION)) {
+      // Nếu cache còn hạn, dùng dữ liệu cache
+      setAllJobs(JSON.parse(cachedData));
+      setIsLoading(false); // Hoàn tất tải
+    } else {
+      // Nếu cache hết hạn hoặc không có, tải file mới
+      Papa.parse(dataUrl, {
+        download: true,
+        header: true,
         skipEmptyLines: true,
-        dynamicTyping: true, // Tự động nhận diện kiểu dữ liệu (số, boolean)
+        dynamicTyping: true,
         complete: (results) => {
-          const rawData = results.data;
-          const errors = results.errors;
-
-          if (errors.length > 0) {
-            setCsvError("Có lỗi khi đọc file CSV. Vui lòng kiểm tra định dạng.");
-            console.error("PapaParse errors:", errors);
-            setAllJobs([]);
-            return;
-          }
-
-          // Kiểm tra xem các cột cần thiết có tồn tại không
-          const missingHeaders = Object.values(EXPECTED_CSV_HEADERS).filter(header => 
-            !rawData[0] || !Object.keys(rawData[0]).includes(header)
-          );
-
-          if (missingHeaders.length > 0) {
-            setCsvError(`File CSV thiếu các cột quan trọng: ${missingHeaders.join(', ')}. Vui lòng kiểm tra tên cột.`);
-            setAllJobs([]);
-            return;
-          }
-
-          // Chuẩn hóa và sắp xếp dữ liệu
-          const processedData = rawData
-            .filter(job => job[EXPECTED_CSV_HEADERS.NGAY] && job[EXPECTED_CSV_HEADERS.THOIGIANBATDAU]) // Chỉ lấy job có đủ ngày/giờ
-            .map(job => ({
-              ...job,
-              // Tạo một Date object để dễ dàng so sánh và sắp xếp
-              dateTime: new Date(`${job[EXPECTED_CSV_HEADERS.NGAY]} ${job[EXPECTED_CSV_HEADERS.THOIGIANBATDAU]}`)
-            }))
-            .sort((a, b) => a.dateTime - b.dateTime); // Sắp xếp theo ngày giờ tăng dần
+          const sortedData = results.data.sort((a, b) => {
+            const dateTimeA = new Date(`${a.Ngay} ${a.ThoiGianBatDau}`);
+            const dateTimeB = new Date(`${b.Ngay} ${b.ThoiGianBatDau}`);
+            return dateTimeA - dateTimeB;
+          });
           
-          setAllJobs(processedData);
-          setIsCsvLoaded(true);
+          setAllJobs(sortedData);
+          setIsLoading(false); // Hoàn tất tải
+
+          // 2. Lưu cache mới vào LocalStorage
+          localStorage.setItem("cachedJobs", JSON.stringify(sortedData));
+          localStorage.setItem("cachedJobsTime", now.toString());
         },
         error: (err) => {
-          console.error("Lỗi PapaParse:", err);
-          setCsvError("Đã xảy ra lỗi khi đọc file CSV. Vui lòng thử lại.");
-          setAllJobs([]);
+          console.error("Lỗi khi tải và đọc file CSV:", err);
+          setIsLoading(false); // Tải thất bại
         }
       });
-    } else {
-      setAllJobs([]);
-      setIsCsvLoaded(false);
     }
-  };
+  }, []); // Mảng rỗng [] đảm bảo nó chỉ chạy 1 lần
 
-  // --- LOGIC LỌC DỮ LIỆU ---
+  
+  // --- TỐI ƯU #3: DEBOUNCE EFFECT ---
+  // Effect này sẽ theo dõi "inputValue" (người dùng đang gõ)
+  // và chỉ cập nhật "nameFilter" (dùng để lọc) sau khi người dùng ngừng gõ 300ms
+  useEffect(() => {
+    // Đặt một bộ đếm thời gian
+    const timerId = setTimeout(() => {
+      setNameFilter(inputValue); // Cập nhật state filter chính
+    }, 300); // 300 mili-giây
+
+    // Rất quan trọng: Hủy bộ đếm nếu người dùng gõ tiếp
+    return () => {
+      clearTimeout(timerId);
+    };
+  }, [inputValue]); // Chỉ chạy lại khi inputValue thay đổi
+
+  
+  // --- LOGIC LỌC (Không đổi) ---
+  // Nó sẽ tự động được tối ưu vì chỉ chạy khi "nameFilter" (đã debounce) thay đổi
   const filteredJobs = useMemo(() => {
     let jobs = allJobs;
     const normNameFilter = nameFilter.toLowerCase().trim();
-    const normDateFilter = dateFilter.trim();
 
     if (normNameFilter) {
       jobs = jobs.filter(job => {
-        const person = job[EXPECTED_CSV_HEADERS.NGUOITHUCHIEN]?.toLowerCase() || '';
-        const jobName = job[EXPECTED_CSV_HEADERS.TENCONGVIEC]?.toLowerCase() || '';
-        return person.includes(normNameFilter) || jobName.includes(normNameFilter);
+        const mcMatch = job.MC ? job.MC.toLowerCase().includes(normNameFilter) : false;
+        const standbyMatch = job.Standby ? job.Standby.toLowerCase().includes(normNameFilter) : false;
+        const jobNameMatch = job.TenCongViec ? job.TenCongViec.toLowerCase().includes(normNameFilter) : false;
+        return mcMatch || standbyMatch || jobNameMatch;
       });
     }
 
-    if (normDateFilter) {
-      jobs = jobs.filter(job => {
-        // Có thể cần định dạng lại ngày cho khớp với đầu vào
-        // Ví dụ: "11/11/2025" trong CSV khớp "11/11" từ input
-        const jobDateString = job[EXPECTED_CSV_HEADERS.NGAY]?.toString() || '';
-        return jobDateString.includes(normDateFilter);
-      });
+    if (dateFilter) { 
+      jobs = jobs.filter(job => (job.Ngay ? job.Ngay.toString() : '') === dateFilter);
     }
 
     return jobs;
-  }, [allJobs, dateFilter, nameFilter]);
+  }, [allJobs, dateFilter, nameFilter]); // Phụ thuộc vào nameFilter (đã debounce)
 
-  // --- LOGIC GOM NHÓM DỮ LIỆU ĐỂ HIỂN THỊ ---
-  const groupedJobs = useMemo(() => {
-    return filteredJobs.reduce((acc, job) => {
-      const timeGroupKey = `${job[EXPECTED_CSV_HEADERS.NGAY]} ${job[EXPECTED_CSV_HEADERS.THOIGIANBATDAU]}–${job[EXPECTED_CSV_HEADERS.THOIGIANKETTHUC]}`;
-      if (!acc[timeGroupKey]) {
-        acc[timeGroupKey] = [];
-      }
-      acc[timeGroupKey].push(job);
-      return acc;
-    }, {});
-  }, [filteredJobs]);
+  
+  // --- TÍNH TOÁN DANH SÁCH NGÀY (Không đổi) ---
+  const uniqueDates = useMemo(() => {
+    const dates = allJobs.map(job => job.Ngay);
+    return [...new Set(dates)];
+  }, [allJobs]);
 
-  // --- GIAO DIỆN CỦA ỨNG DỤNG ---
+  
+  // --- LOGIC GOM NHÓM (Không đổi) ---
+  const groupedJobs = filteredJobs.reduce((acc, job) => {
+    const timeGroup = `${job.ThoiGianBatDau}–${job.ThoiGianKetThuc}`;
+    if (!acc[timeGroup]) {
+      acc[timeGroup] = [];
+    }
+    acc[timeGroup].push(job);
+    return acc;
+  }, {});
+
+  // --- GIAO DIỆN (JSX) ---
   return (
-    <div className="App-container">
-      <header className="app-header">
+    <div className="App">
+      <header>
         <h1>Lịch Làm Việc</h1>
-        <div className="csv-upload-section">
-          <label htmlFor="csvFileInput" className="csv-label">
-            Tải lên file CSV:
-            <input 
-              type="file" 
-              id="csvFileInput" 
-              accept=".csv" 
-              onChange={handleFileSelect} 
-              className="csv-input"
-            />
-          </label>
-        </div>
       </header>
 
-      <main className="app-main-content">
-        <div className="filter-section card">
+      <main>
+        <div className="filter-container">
           <h3>Tìm kiếm</h3>
-          {/* Thông báo lỗi CSV */}
-          {csvError && <p className="error-message">{csvError}</p>}
-
+          
           <div className="form-group">
             <label htmlFor="dateInput">Ngày</label>
-            <input 
-              type="text" 
-              id="dateInput" 
-              placeholder="VD: 11/11/2025"
+            <select
+              id="dateInput"
               value={dateFilter}
               onChange={(e) => setDateFilter(e.target.value)}
-              disabled={!isCsvLoaded} // Vô hiệu hóa khi chưa tải CSV
-            />
+            >
+              <option value="">Tất cả các ngày</option>
+              {uniqueDates.map(date => (
+                <option key={date} value={date}>{date}</option>
+              ))}
+            </select>
           </div>
+
           <div className="form-group">
-            <label htmlFor="nameInput">Tìm theo tên</label>
+            <label htmlFor="nameInput">Tìm</label>
+            {/* TỐI ƯU #3:
+              - value bây giờ là "inputValue" (hiển thị tức thì)
+              - onChange cập nhật "setInputValue" (state tức thì)
+            */}
             <input 
               type="text" 
               id="nameInput" 
               placeholder="VD: Quốc Huy"
-              value={nameFilter}
-              onChange={(e) => setNameFilter(e.target.value)}
-              disabled={!isCsvLoaded} // Vô hiệu hóa khi chưa tải CSV
+              value={inputValue} 
+              onChange={(e) => setInputValue(e.target.value)}
             />
           </div>
         </div>
 
-        <div className="schedule-display-section">
-          {filteredJobs.length === 0 && !csvError && (
-            <p className="no-data-message">
-              {allJobs.length === 0 && !isCsvLoaded 
-                ? "Vui lòng tải lên file CSV để xem lịch làm việc." 
-                : "Không tìm thấy công việc phù hợp."}
-            </p>
-          )}
-
-          {/* Hiển thị các nhóm công việc */}
-          {Object.entries(groupedJobs).map(([timeGroupKey, jobsInGroup]) => {
-            const [datePart, timePart] = timeGroupKey.split(' '); // Tách Ngày và Thời gian
-            const displayTime = timePart;
-
-            return (
-              <div key={timeGroupKey} className="schedule-group">
-                <h3 className="schedule-group-title">{datePart}</h3> {/* Ngày */}
-                <h4 className="schedule-time-range">{displayTime}</h4> {/* Khoảng thời gian */}
-                {jobsInGroup.map(job => (
-                  <div className="schedule-item card" key={job[EXPECTED_CSV_HEADERS.TENCONGVIEC] + job[EXPECTED_CSV_HEADERS.NGUOITHUCHIEN] + job.dateTime}>
-                    <p className="job-title">{job[EXPECTED_CSV_HEADERS.TENCONGVIEC] || 'Không có tên công việc'}</p>
-                    <div className="job-details">
-                      <p className="detail-row"><span className="icon">📍</span>{job[EXPECTED_CSV_HEADERS.DIADIEM] || 'Không có địa điểm'}</p>
-                      <p className="detail-row"><span className="icon">🎤</span>Session type: {job[EXPECTED_CSV_HEADERS.SESSIONTYPE] || '—'}</p>
-                      <p className="detail-row"><span className="icon">🧑‍💻</span>{job[EXPECTED_CSV_HEADERS.NGUOITHUCHIEN] || 'Chưa gán người'}</p>
-                      {job[EXPECTED_CSV_HEADERS.GHICHU] && (
-                        <p className="detail-row"><span className="icon">📝</span>{job[EXPECTED_CSV_HEADERS.GHICHU]}</p>
-                      )}
-                    </div>
+        <div id="schedule-list" className="schedule-list">
+          {/* --- TỐI ƯU #4: HIỂN THỊ KHUNG LOADING --- */}
+          {isLoading ? (
+            // Hiển thị 3 khung "skeleton" khi đang tải
+            <div className="skeleton-container">
+              {[...Array(3)].map((_, i) => (
+                <div className="skeleton-item" key={i}>
+                  <div className="skeleton-line h4"></div>
+                  <div className="skeleton-line p"></div>
+                  <div className="skeleton-line p"></div>
+                  <div className="skeleton-line p"></div>
+                </div>
+              ))}
+            </div>
+          ) : filteredJobs.length === 0 ? (
+            // Tải xong nhưng không có kết quả
+            <p>Không tìm thấy kết quả phù hợp.</p>
+          ) : (
+            // Tải xong và có kết quả
+            Object.keys(groupedJobs).map(timeGroup => (
+              <div key={timeGroup} className="time-group-container"> 
+                <h3 className="schedule-group-title">{timeGroup}</h3>
+                {groupedJobs[timeGroup].map((job, index) => (
+                  <div className="schedule-item" key={`${timeGroup}-${index}`}>
+                    <h4>{job.TenCongViec || '...'}</h4>
+                    <p className="time">{timeGroup}</p>
+                    <p className="location">{job.DiaDiem || '...'}</p>
+                    <p className="session">Session type: {job.SessionType || '—'}</p>
+                    <p className="mc">{job.MC || '...'}</p>
+                    <p className="standby">{job.Standby || '...'}</p>
                   </div>
                 ))}
               </div>
-            );
-          })}
+            ))
+          )}
         </div>
       </main>
     </div>
