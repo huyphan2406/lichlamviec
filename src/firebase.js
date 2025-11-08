@@ -1,6 +1,6 @@
 // src/firebase.js
 import { initializeApp } from "firebase/app";
-import { getAuth, signOut } from "firebase/auth"; // 👈 IMPORT signOut
+import { getAuth, signOut } from "firebase/auth";
 
 // ⚠️ THAY THẾ BẰNG CONFIG CỦA BẠN
 const firebaseConfig = {
