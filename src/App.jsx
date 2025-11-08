@@ -159,6 +159,7 @@ const combineNames = (name1, name2) => {
   return n1 || n2 || '...'; // Trả về T1, T2, hoặc '...'
 };
 
+// ⚠️ FIX LỖI GIAO DIỆN Ở ĐÂY
 const JobItem = ({ job }) => {
   const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } };
   const timeGroup = `${job['Time slot'] || 'N/A'}`;
@@ -166,16 +167,17 @@ const JobItem = ({ job }) => {
   const talentDisplay = combineNames(job['Talent 1'], job['Talent 2']);
   const coordDisplay = combineNames(job['Coordinator 1'], job['Coordinator 2']);
 
-  // ⚠️ FIX LỖI Ở ĐÂY: Gộp 3 cột địa chỉ
-  const locationDisplay = [job.Studio, job['Studio/Room'], job.Address]
+  // 🛠️ TỐI GIẢN HÓA ĐỊA CHỈ (THEO YÊU CẦU CỦA BẠN)
+  // Chỉ lấy Studio/Room và Address
+  const locationDisplay = [job['Studio/Room'], job.Address]
     .filter(part => part && part !== 'nan') // Lọc bỏ các giá trị rỗng hoặc 'nan'
-    .join(' - '); // Nối chúng lại bằng dấu ' - '
+    .join(', '); // Nối chúng lại bằng dấu phẩy
 
   return (
     <motion.div className="schedule-item" variants={itemVariants}>
       <h4>{job.Store || 'Unnamed Job'}</h4>
       <p className="time"><FiClock /> {timeGroup}</p>
-      {/* Hiển thị địa chỉ đã gộp */}
+      {/* Hiển thị địa chỉ đã tối giản */}
       <p className="location"><FiMapPin /> {locationDisplay || 'No location'}</p>
       <p className="session"><FiMic /> Session type: {job['Type of session'] || '—'}</p>
       <p className="mc"><FiUser /> {talentDisplay}</p>
@@ -209,14 +211,13 @@ function App() {
     if (normNameFilter) {
       jobsToFilter = jobsToFilter.filter(job => {
         
-        // Tìm kiếm trên cả 4 cột talent/coord
         const talent1 = removeAccents((job['Talent 1'] || '').toLowerCase()).includes(normNameFilter);
         const talent2 = removeAccents((job['Talent 2'] || '').toLowerCase()).includes(normNameFilter);
         const coord1 = removeAccents((job['Coordinator 1'] || '').toLowerCase()).includes(normNameFilter);
         const coord2 = removeAccents((job['Coordinator 2'] || '').toLowerCase()).includes(normNameFilter);
         const jobName = removeAccents((job.Store || '').toLowerCase()).includes(normNameFilter);
         
-        // ⚠️ FIX LỖI Ở ĐÂY: Tìm kiếm trên cả 3 cột địa chỉ
+        // ⚠️ LOGIC TÌM KIẾM VẪN GIỮ NGUYÊN (Tìm cả 3 cột)
         const location = removeAccents((job.Address || '').toLowerCase()).includes(normNameFilter);
         const studio = removeAccents((job.Studio || '').toLowerCase()).includes(normNameFilter);
         const room = removeAccents((job['Studio/Room'] || '').toLowerCase()).includes(normNameFilter);
