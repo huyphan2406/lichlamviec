@@ -1,7 +1,7 @@
 /*
 =================================================
   File: App.jsx (Nội dung chính của ứng dụng Lịch)
-  ✅ LOGIC MỚI: Đăng xuất ưu tiên Auth Logout và giải phóng mã code.
+  ✅ ĐÃ FIX: Logic Đăng xuất ưu tiên Auth Logout và giải phóng mã code (activeUID: "").
 =================================================
 */
 
@@ -11,19 +11,17 @@ import { motion, AnimatePresence } from 'framer-motion';
 import useSWR from 'swr';
 import * as ics from 'ics';
 import { Link } from 'react-router-dom'; 
-import { collection, query, where, getDocs, updateDoc } from 'firebase/firestore'; // Firestore functions
+import { collection, query, where, getDocs, updateDoc } from 'firebase/firestore'; 
 import { 
-  // Icons chính
   FiClock, FiMapPin, FiMic, FiUser, FiMonitor,
-  // Icons Auth và Theme
   FiMoon, FiSun, FiLogIn, FiUserPlus,
-  // Icons tiện ích
   FiSearch, FiDownload, FiX, FiZap 
 } from 'react-icons/fi';
 import './App.css'; 
 
 // 🌟 IMPORT LOGIC AUTH VÀ FIRESTORE 🌟
 import { useAuth } from './AuthContext.jsx'; 
+// Đảm bảo file firebase.js có export { auth, signOut, db }
 import { auth, signOut, db } from './firebase.js'; 
 
 
@@ -202,7 +200,6 @@ const Header = ({ theme, toggleTheme }) => {
                 where('activeUID', '==', userUID)
             );
             
-            // Lấy Document Snapshot
             const querySnapshot = await getDocs(q);
             
             if (!querySnapshot.empty) {
@@ -216,7 +213,7 @@ const Header = ({ theme, toggleTheme }) => {
             }
         }
     } catch (error) {
-      // ⚠️ CẢNH BÁO LỖI FIRESTORE nhưng KHÔNG ngăn cản Đăng xuất
+      // Cảnh báo lỗi Firestore nhưng KHÔNG ngăn cản Đăng xuất Auth
       console.error("Lỗi giải phóng code (sẽ tiếp tục đăng xuất):", error);
       alert("Cảnh báo: Không thể giải phóng mã code trong Database. Vui lòng thử đăng nhập lại.");
     } finally {
