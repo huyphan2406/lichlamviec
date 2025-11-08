@@ -26,7 +26,7 @@ const parseDate = (dateStr, timeStr) => {
   } catch (e) { return new Date(0); }
 };
 
-// ⚠️ BƯỚC 1: HÀM LẤY NGÀY HÔM NAY (DD/MM/YYYY)
+// HÀM LẤY NGÀY HÔM NAY (DD/MM/YYYY)
 const getFormattedToday = () => {
   const today = new Date();
   const day = String(today.getDate()).padStart(2, '0');
@@ -59,7 +59,7 @@ const csvFetcher = (url) => {
 
 function useDarkMode() {
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
-  const toggleTheme = () => setTheme(prev => (prev === 'light' ? 'dark : 'light'));
+  const toggleTheme = () => setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
   useEffect(() => {
     localStorage.setItem('theme', theme);
     document.body.setAttribute('data-theme', theme);
@@ -131,7 +131,6 @@ const Header = ({ theme, toggleTheme }) => (
   </header>
 );
 
-// ⚠️ BƯỚC 1: THÊM NÚT DOWNLOAD VÀO FILTERBAR
 const FilterBar = ({ dateFilter, setDateFilter, inputValue, setInputValue, uniqueDates, filteredJobs }) => {
   
   const handleDownloadICS = () => {
@@ -142,7 +141,7 @@ const FilterBar = ({ dateFilter, setDateFilter, inputValue, setInputValue, uniqu
         const [startTimeStr, endTimeStr] = (job['Time slot'] || '00:00 - 00:00').split(' - ');
         
         const [startHour, startMinute] = startTimeStr.split(':').map(Number);
-        const [endHour, endMinute] = (endTimeStr || startTimeStr).split(':').map(Number); // Nếu không có giờ kết thúc, dùng giờ bắt đầu
+        const [endHour, endMinute] = (endTimeStr || startTimeStr).split(':').map(Number); 
 
         // Tính thời lượng
         const startDate = new Date(0, 0, 0, startHour, startMinute);
@@ -161,9 +160,9 @@ const FilterBar = ({ dateFilter, setDateFilter, inputValue, setInputValue, uniqu
           description: `MC: ${combineNames(job['Talent 1'], job['Talent 2'])}\nCoordinator: ${combineNames(job['Coordinator 1'], job['Coordinator 2'])}`
         };
       } catch (e) {
-        return null; // Bỏ qua nếu ngày/giờ bị lỗi
+        return null; 
       }
-    }).filter(Boolean); // Lọc bỏ các sự kiện null
+    }).filter(Boolean); 
 
     if (events.length === 0) {
       alert("No valid events to export.");
@@ -204,7 +203,7 @@ const FilterBar = ({ dateFilter, setDateFilter, inputValue, setInputValue, uniqu
         <input 
           type="text" 
           id="nameInput" 
-          placeholder="e.g., Your Name" 
+          placeholder="e.g., Quốc Huy" // Sửa lại placeholder
           value={inputValue} 
           onChange={(e) => setInputValue(e.target.value)} 
         />
@@ -239,7 +238,6 @@ const EmptyState = ({ dateFilter }) => (
   <motion.div className="empty-state" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}>
     <FiSearch className="empty-state-icon" />
     <h3>No Results Found</h3>
-    {/* ⚠️ BƯỚC 1: Cập nhật EmptyState */}
     <p>No matching schedule found {dateFilter ? `for ${dateFilter}` : ''}. Please try a different name or date.</p>
   </motion.div>
 );
@@ -268,8 +266,11 @@ function App() {
   const [theme, toggleTheme] = useDarkMode();
   const { jobs, isLoading, uniqueDates, error } = useJobData();
   
-  // ⚠️ BƯỚC 1: Mặc định là ngày hôm nay
   const [dateFilter, setDateFilter] = useState(() => getFormattedToday());
+
+  // ⚠️ FIX LỖI: Thêm 2 dòng state bị thiếu
+  const [inputValue, setInputValue] = useState('Quốc Huy'); 
+  const [nameFilter, setNameFilter] = useState('Quốc Huy'); 
 
   useEffect(() => {
     const timerId = setTimeout(() => setNameFilter(inputValue), 300);
@@ -325,7 +326,7 @@ function App() {
           inputValue={inputValue}
           setInputValue={setInputValue}
           uniqueDates={uniqueDates}
-          filteredJobs={filteredJobs} // ⚠️ Truyền jobs đã lọc vào cho nút Download
+          filteredJobs={filteredJobs} 
         />
         <div id="schedule-list" className="schedule-list">
           {error ? (
