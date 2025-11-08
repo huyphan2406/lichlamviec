@@ -1,8 +1,14 @@
 import { defineConfig } from 'vite'
-// ⚠️ Tên đúng phải là @vitejs/plugin-react (dùng gạch chéo '/')
+// 1. Import plugin React (tên chính xác)
 import react from '@vitejs/plugin-react'
+// 2. Import plugin hỗ trợ Node Module (Fix lỗi "react-icons")
+import { nodePolyfills } from 'vite-plugin-node-polyfills';
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(), // Kích hoạt plugin React
+    // Kích hoạt plugin Polyfills để fix lỗi tải icon
+    nodePolyfills(), 
+  ],
 })
