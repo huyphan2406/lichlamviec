@@ -1,8 +1,19 @@
 /*
 =================================================
-  File: App.css (Stylesheet)
+  File: App.css (Hoàn chỉnh)
 =================================================
 */
+
+/* 🌟 --- CĂN GIỮA TOÀN BỘ WEB --- 🌟 */
+#root {
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Ép .App (con) căn giữa theo chiều ngang */
+  width: 100%; /* Đảm bảo #root chiếm 100% chiều rộng */
+  box-sizing: border-box;
+}
+/* 🌟 -------------------------------- 🌟 */
+
 
 /* --- BIẾN MÀU (CSS VARIABLES) --- */
 :root {
@@ -42,15 +53,20 @@ body {
   background-color: var(--color-bg);
   color: var(--color-text-primary);
   margin: 0;
-  padding: 20px;
+  padding: 20px 10px; 
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   transition: background-color var(--transition-speed), color var(--transition-speed);
+  box-sizing: border-box; 
 }
 
 .App {
   max-width: 700px;
-  margin: 0 auto;
+  /* 🌟 BỎ margin: 0 auto; VÌ #root ĐÃ LÀM VIỆC NÀY */
+  /* margin: 0 auto; */ 
+  
+  /* Đảm bảo .App luôn chiếm 100% của max-width */
+  width: 100%; 
 }
 
 main {
@@ -64,7 +80,7 @@ main {
   align-items: center;
   padding: 10px 0;
   margin-bottom: 15px;
-  flex-wrap: wrap; /* Cho phép rớt dòng nếu cần */
+  flex-wrap: wrap; 
 }
 .app-header h1 {
   margin: 0;
@@ -78,22 +94,22 @@ main {
 .header-controls {
     display: flex;
     align-items: center;
-    gap: 20px; /* Khoảng cách giữa cụm nút Auth và nút Dark Mode */
-    flex-wrap: wrap; /* Cho phép rớt dòng trên màn hình hẹp */
-    justify-content: flex-end; /* Căn phải */
+    gap: 20px; 
+    flex-wrap: wrap; 
+    justify-content: flex-end; 
 }
 
 /* Cụm nút Đăng nhập / Đăng ký */
 .auth-buttons {
     display: flex;
-    gap: 10px; /* Khoảng cách giữa 2 nút */
+    gap: 10px; 
 }
 
 /* Nút bấm chung */
 .auth-button {
     display: flex;
     align-items: center;
-    gap: 6px; /* Khoảng cách giữa icon và chữ */
+    gap: 6px; 
     padding: 8px 12px;
     border: none;
     border-radius: 6px;
@@ -125,12 +141,12 @@ main {
     border: 1px solid var(--color-brand);
 }
 .auth-button.register:hover {
-    background-color: #0069d9; /* Màu đậm hơn */
+    background-color: #0069d9; 
     border-color: #0069d9;
 }
 
 
-/* CSS CŨ CỦA NÚT DARK MODE (Vẫn giữ nguyên) */
+/* CSS CỦA NÚT DARK MODE (Vẫn giữ nguyên) */
 .theme-toggle {
   display: flex;
   align-items: center;
@@ -339,7 +355,7 @@ input:checked + .theme-toggle-slider:before { transform: translateX(20px); }
 .skeleton-line {
   background-color: var(--color-border);
   border-radius: 4px;
-  animation: pulse 1.5s cubic-bezier(0.4, 0.6, 1) infinite;
+  animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 .skeleton-line.h4 { height: 24px; width: 40%; margin-bottom: 15px; }
 .skeleton-line.p { height: 16px; width: 80%; margin-bottom: 10px; }
@@ -350,14 +366,17 @@ input:checked + .theme-toggle-slider:before { transform: translateX(20px); }
 }
 
 
-/* 🌟 CSS CHO POPUP THÔNG BÁO (ĐÃ SỬA LỖI RESPONSIVE VÀ LÀM ĐẸP NHẤT) */
+/* ============================================== */
+/* === CSS CHO POPUP (THEO ẢNH) === */
+/* ============================================== */
+
 .popup-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.5); 
   z-index: 1000;
   cursor: pointer;
 }
@@ -365,54 +384,35 @@ input:checked + .theme-toggle-slider:before { transform: translateX(20px); }
 .popup-modal {
   position: fixed;
   top: 50%;
-  left: 50%;
+  left: 50%;  
   background-color: var(--color-card);
-  border-radius: 16px;
+  border-radius: 16px; 
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-  width: 90%;
-  max-width: 450px;
+  width: 90%; 
+  max-width: 450px; 
   z-index: 1001;
-  overflow: hidden;
+  overflow: hidden; 
   box-sizing: border-box;
 }
 
 .popup-header {
-  display: flex;
-  align-items: center;
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--color-border);
-  position: relative;
-  background-color: var(--color-brand-light);
+  display: none; 
 }
 
-.popup-header h3 {
-  margin: 0;
-  font-size: 1.15rem;
-  font-weight: 600;
-  color: var(--color-text-primary);
-  word-break: break-word; 
-}
-
-.popup-icon-zap {
-  color: var(--color-brand);
-  margin-right: 12px;
-  flex-shrink: 0;
-}
-
-.popup-dismiss-btn {
+.popup-dismiss-btn-hidden {
   position: absolute;
-  top: 12px;
-  right: 12px;
+  top: 8px;
+  right: 8px;
   background: none;
   border: none;
   cursor: pointer;
   color: var(--color-text-secondary);
   padding: 5px;
   border-radius: 50%;
-  transition: background-color 0.2s, color 0.2s;
+  transition: all 0.2s;
+  z-index: 1002;
 }
-
-.popup-dismiss-btn:hover {
+.popup-dismiss-btn-hidden:hover {
   background-color: var(--color-border);
   color: var(--color-text-primary);
 }
@@ -422,129 +422,77 @@ input:checked + .theme-toggle-slider:before { transform: translateX(20px); }
   line-height: 1.6;
 }
 
-/* --- Thẻ thông tin riêng biệt trong popup --- */
-.popup-item-card {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    background-color: var(--color-input-bg);
-    border: 1px solid var(--color-border);
-    border-radius: 10px;
-    padding: 15px;
-    margin-bottom: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
-    transition: all var(--transition-speed);
+.popup-content p {
+  margin: 0 0 15px 0; 
+  color: var(--color-text-secondary);
+  font-size: 0.95rem;
+}
+.popup-content p:last-child {
+  margin-bottom: 0; 
 }
 
-.popup-item-card:last-child {
-    margin-bottom: 0;
+.popup-content .popup-title {
+  font-size: 1.2em; 
+  font-weight: 700; 
+  color: var(--color-text-primary);
+  margin-bottom: 18px; 
 }
 
-.popup-item-card .card-icon {
-    color: var(--color-brand);
-    margin-bottom: 10px;
-    flex-shrink: 0;
+.popup-content p strong {
+  font-weight: 700; 
+  color: var(--color-text-primary);
 }
 
-.popup-item-card .card-title {
-    font-size: 1.05em;
-    font-weight: 600;
-    color: var(--color-text-primary);
-    margin: 0 0 8px 0;
-}
-
-.popup-item-card .card-description {
-    font-size: 0.9em;
-    color: var(--color-text-secondary);
-    margin: 0;
-}
-
-/* Các tùy chỉnh riêng cho từng loại thẻ */
-.popup-item-primary {
-    border-color: var(--color-brand);
-    background-color: var(--color-brand-light);
-}
-.popup-item-primary .card-title {
-    color: var(--color-brand);
-}
-.popup-item-primary .card-icon {
-    color: var(--color-brand);
-}
-
-.popup-item-highlight .card-description strong.highlight-date {
+.popup-content p strong.highlight-date {
   color: var(--color-brand);
-  background-color: rgba(0,123,255,0.15);
-  padding: 2px 6px;
-  border-radius: 5px;
+  background-color: transparent; 
+  padding: 0; 
   font-weight: 700;
 }
 
-.popup-item-info {
-    border-style: dashed;
-    border-color: var(--color-border);
-    background-color: transparent;
-    padding-top: 12px;
-}
-.popup-item-info .card-icon {
-    color: var(--color-grey);
-}
-.popup-item-info .card-description {
-    font-size: 0.85em;
-    color: var(--color-text-secondary);
-    margin-bottom: 10px;
-}
-.popup-item-info .card-author {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    width: 100%;
-    text-align: right;
-    font-size: 0.8em;
-    font-style: italic;
-    color: var(--color-grey);
-    margin-top: 5px;
-}
-.popup-item-info .card-author svg {
-    color: var(--color-grey);
-    font-size: 0.9em;
+.popup-content .popup-author {
+  text-align: right; 
+  font-size: 0.9em;
+  font-style: italic;
+  color: var(--color-grey);
+  margin-top: 20px; 
+  margin-bottom: 0;
 }
 
 
 /* ============================================== */
-/* === 🌟 CSS MỚI: RESPONSIVE HEADER === */
+/* === RESPONSIVE HEADER === */
 /* ============================================== */
 
-/* Cho máy tính bảng và điện thoại (màn hình < 600px) */
 @media (max-width: 600px) {
     .app-header {
-        flex-direction: column; /* Xếp theo cột: H1 ở trên, controls ở dưới */
-        align-items: center;    /* Căn giữa H1 và controls */
-        gap: 20px;              /* Khoảng cách giữa H1 và controls */
+        flex-direction: column; 
+        align-items: center;    
+        gap: 20px;              
     }
 
     .app-header h1 {
-        margin: 0; /* Xóa margin mặc định của h1 */
-        font-size: 1.6rem; /* Giảm size chữ h1 một chút cho gọn */
+        margin: 0; 
+        font-size: 1.6rem; 
     }
 
     .header-controls {
-        flex-direction: column; /* Xếp theo cột: Cụm Auth ở trên, Dark Mode ở dưới */
-        align-items: center;    /* Căn giữa */
-        gap: 15px;              /* Khoảng cách giữa 2 cụm nút */
-        justify-content: center; /* Căn giữa thay vì căn phải */
+        flex-direction: column; 
+        align-items: center;    
+        gap: 15px;              
+        justify-content: center; 
     }
 }
 
-/* Cho điện thoại rất nhỏ (màn hình < 360px) */
 @media (max-width: 360px) {
     .auth-buttons {
-        flex-direction: column; /* Xếp 2 nút Đăng nhập / Đăng ký theo cột */
+        flex-direction: column; 
         width: 100%;            
     }
 
     .auth-button {
         width: 100%;
-        justify-content: center; /* Căn giữa nội dung trong nút */
-        box-sizing: border-box; /* Đảm bảo padding không làm vỡ layout */
+        justify-content: center; 
+        box-sizing: border-box; 
     }
 }

@@ -1,6 +1,6 @@
 /*
 =================================================
-  File: App.jsx (React Component)
+  File: App.jsx (Hoàn chỉnh)
 =================================================
 */
 
@@ -10,16 +10,16 @@ import { motion, AnimatePresence } from 'framer-motion';
 import useSWR from 'swr';
 import * as ics from 'ics';
 import { 
+  // Icons cho JobItem
   FiClock, FiMapPin, FiMic, FiUser, FiMonitor,
-  FiMoon, FiSun,
-  FiSearch, FiDownload, FiX, FiZap,
-  FiCalendar, FiInfo, FiTag, FiAward, // Các icon từ lần trước
-  FiLogIn, FiUserPlus // 🌟 THÊM 2 ICON NÀY
+  // Icons cho Header
+  FiMoon, FiSun, FiLogIn, FiUserPlus,
+  // Icons cho Filter & Popup
+  FiSearch, FiDownload, FiX, FiZap 
 } from 'react-icons/fi';
-// ⚠️ HÃY ĐẢM BẢO BẠN ĐÃ IMPORT CSS
 import './App.css'; 
 
-// --- HÀM HỖ TRỢ (ĐÃ FIX LỖI) ---
+// --- HÀM HỖ TRỢ ---
 const removeAccents = (str) => {
   if (!str) return '';
   return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D");
@@ -106,7 +106,7 @@ function useJobData() {
   };
 }
 
-// --- HÀM HELPER CHO GIAO DIỆN (TÁI SỬ DỤNG) ---
+// --- HÀM HELPER CHO GIAO DIỆN ---
 const combineNames = (name1, name2) => {
   const n1 = name1 || '';
   const n2 = (name2 && name2 !== 'nan') ? name2 : '';
@@ -120,10 +120,10 @@ const combineLocation = (job) => {
   const locationDisplay = [addressName, roomName]
     .filter(part => part && part !== 'nan') 
     .join(' | ');
-  return locationDisplay || 'No location';
+  return locationDisplay || 'Không có địa điểm';
 };
 
-// 🌟 COMPONENT POPUP THÔNG BÁO (ĐÃ HOÀN THIỆN)
+// 🌟 COMPONENT POPUP THÔNG BÁO (PHIÊN BẢN GIỐNG ẢNH)
 const NotificationPopup = () => {
     // Luôn hiển thị để test
     const [isVisible, setIsVisible] = useState(true);
@@ -156,62 +156,35 @@ const NotificationPopup = () => {
                     {/* Nội dung Popup */}
                     <motion.div 
                         className="popup-modal"
-                        
-                        // 🌟 SỬA LỖI TẠI ĐÂY:
-                        // Chuyển toàn bộ logic căn giữa và animation vào framer-motion
-                        
-                        // 1. Trạng thái ban đầu:
-                        initial={{ 
-                            opacity: 0,
-                            x: "-50%", // Căn giữa theo chiều ngang
-                            y: "calc(-50% + 50px)" // Căn giữa (y: -50%) VÀ đẩy xuống 50px
-                        }}
-                        
-                        // 2. Trạng thái khi hiển thị (vị trí cuối):
-                        animate={{ 
-                            opacity: 1,
-                            x: "-50%", // Giữ căn giữa
-                            y: "-50%"  // Vị trí cuối cùng là căn giữa tuyệt đối
-                        }}
-                        
-                        // 3. Trạng thái khi tắt:
-                        exit={{ 
-                            opacity: 0,
-                            x: "-50%", // Giữ căn giữa
-                            y: "calc(-50% + 50px)" // Quay về vị trí bị đẩy xuống
-                        }}
-                        
+                        initial={{ opacity: 0, x: "-50%", y: "calc(-50% + 50px)" }}
+                        animate={{ opacity: 1, x: "-50%", y: "-50%" }}
+                        exit={{ opacity: 0, x: "-50%", y: "calc(-50% + 50px)" }}
                         transition={{ type: 'spring', stiffness: 100, damping: 20 }}
                     >
                         <div className="popup-content">
+                            <p className="popup-title">
+                                Lịch Livestream Nhanh & Chính Xác!
+                            </p>
+                            <p>
+                                Web dùng để tra cứu lịch làm việc của <strong>Standby</strong> và <strong>Host</strong>.
+                            </p>
+                            <p>
+                                Dùng miễn phí tới <strong className="highlight-date">15/11</strong>. Sau ngày 15, bạn cần đăng kí tài khoản để sử dụng.
+                            </p>
+                            <p>
+                                Nhiều chức năng mới sẽ sớm được ra mắt...
+                            </p>
+                            
+                            <p className="popup-author">
+                                Tác giả: Quốc Huy
+                            </p>
+                        </div>
 
-    {/* Tiêu đề chính */}
-    <p className="popup-main-title">
-        Lịch Livestream Nhanh & Chính Xác!
-    </p>
+                        {/* Nút X để đóng */}
+                        <button className="popup-dismiss-btn-hidden" onClick={handleDismiss} title="Đóng">
+                            <FiX size={20} />
+                        </button>
 
-    {/* Nội dung mô tả */}
-    <p>
-        Web dùng để tra cứu lịch làm việc của <strong>Standby</strong> và <strong>Host</strong>.
-    </p>
-    
-    {/* Thông báo chính với ngày được highlight */}
-    <p>
-        Dùng miễn phí tới <strong className="highlight-date">15/11</strong>.
-        Sau ngày 15, bạn cần đăng kí tài khoản để sử dụng.
-    </p>
-
-    {/* Thông tin thêm và tác giả */}
-    <p className="popup-footer-info">
-        Nhiều chức năng mới sẽ sớm được ra mắt...
-        
-        {/* Tên tác giả, căn phải, in nghiêng và nhỏ hơn */}
-        <span className="popup-author">
-            Tác giả: Quốc Huy
-        </span>
-    </p>
-
-</div>
                     </motion.div>
                 </>
             )}
@@ -224,12 +197,10 @@ const NotificationPopup = () => {
 
 const Header = ({ theme, toggleTheme }) => (
   <header className="app-header">
-    <h1>Work Schedule</h1>
+    {/* 🌟 ĐÃ SỬA */}
+    <h1>Lịch Làm Việc</h1>
     
-    {/* 🌟 TẠO MỘT KHỐI BAO QUANH 2 NÚT BẤM */}
     <div className="header-controls">
-      
-      {/* Nút Đăng nhập/Đăng ký */}
       <div className="auth-buttons">
         <button className="auth-button login">
           <FiLogIn size={16} />
@@ -241,8 +212,8 @@ const Header = ({ theme, toggleTheme }) => (
         </button>
       </div>
 
-      {/* Nút Sáng/Tối (Code cũ của bạn) */}
-      <label className="theme-toggle" title="Toggle Light/Dark Mode">
+      {/* 🌟 ĐÃ SỬA */}
+      <label className="theme-toggle" title="Chuyển chế độ Sáng/Tối">
         {theme === 'light' ? <FiMoon size={18} /> : <FiSun size={18} />}
         <div className="theme-toggle-switch">
           <input type="checkbox" checked={theme === 'dark'} onChange={toggleTheme} />
@@ -285,7 +256,8 @@ const FilterBar = ({ dateFilter, setDateFilter, inputValue, setInputValue, uniqu
     }).filter(Boolean); 
 
     if (events.length === 0) {
-      alert("No valid events to export.");
+      // 🌟 ĐÃ SỬA
+      alert("Không có lịch hợp lệ để xuất.");
       return;
     }
 
@@ -293,7 +265,8 @@ const FilterBar = ({ dateFilter, setDateFilter, inputValue, setInputValue, uniqu
 
     if (error) {
       console.error("Error creating ICS file:", error);
-      alert("Error creating ICS file.");
+      // 🌟 ĐÃ SỬA
+      alert("Lỗi khi tạo file ICS.");
       return;
     }
 
@@ -310,30 +283,34 @@ const FilterBar = ({ dateFilter, setDateFilter, inputValue, setInputValue, uniqu
   return (
     <div className="filter-container">
       <div className="form-group">
-        <label htmlFor="dateInput">Date</label>
+        {/* 🌟 ĐÃ SỬA */}
+        <label htmlFor="dateInput">Lịch</label>
         <select id="dateInput" value={dateFilter} onChange={(e) => setDateFilter(e.target.value)}>
-          <option value="">All Dates</option>
+          {/* 🌟 ĐÃ SỬA */}
+          <option value="">Tất cả ngày</option>
           {uniqueDates.map(date => <option key={date} value={date}>{date}</option>)}
         </select>
       </div>
       <div className="form-group">
-        <label htmlFor="nameInput">Search</label>
+        {/* 🌟 ĐÃ SỬA */}
+        <label htmlFor="nameInput">Tìm tên</label>
         <input 
           type="text" 
           id="nameInput" 
-          placeholder="e.g., Your Name" 
+          // 🌟 ĐÃ SỬA
+          placeholder="VD: Nguyễn Văn A" 
           value={inputValue} 
           onChange={(e) => setInputValue(e.target.value)} 
         />
       </div>
-      {/* 🌟 NÚT EXPORT ĐÃ ĐƯỢC SỬA LẠI */}
       <button 
         className="download-button" 
         onClick={handleDownloadICS} 
         disabled={filteredJobs.length === 0}
       >
         <FiDownload size={18} />
-        Export To Google Calendar (.ics)
+        {/* 🌟 ĐÃ SỬA */}
+        Xuất ra Google Calendar (.ics)
       </button>
     </div>
   );
@@ -355,24 +332,28 @@ const SkeletonLoader = () => (
 const EmptyState = ({ dateFilter }) => (
   <motion.div className="empty-state" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}>
     <FiSearch className="empty-state-icon" />
-    <h3>No Results Found</h3>
-    <p>No matching schedule found {dateFilter ? `for ${dateFilter}` : ''}. Please try a different name or date.</p>
+    {/* 🌟 ĐÃ SỬA */}
+    <h3>Không tìm thấy kết quả</h3>
+    <p>Không tìm thấy lịch nào {dateFilter ? `cho ngày ${dateFilter}` : ''}. Vui lòng thử tên hoặc ngày khác.</p>
   </motion.div>
 );
 
 const JobItem = ({ job }) => {
   const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } };
-  const timeGroup = `${job['Time slot'] || 'N/A'}`;
+  // 🌟 ĐÃ SỬA
+  const timeGroup = `${job['Time slot'] || 'Chưa rõ'}`;
   const talentDisplay = combineNames(job['Talent 1'], job['Talent 2']);
   const coordDisplay = combineNames(job['Coordinator 1'], job['Coordinator 2']);
   const locationDisplay = combineLocation(job);
 
   return (
     <motion.div className="schedule-item" variants={itemVariants}>
-      <h4>{job.Store || 'Unnamed Job'}</h4>
+      {/* 🌟 ĐÃ SỬA */}
+      <h4>{job.Store || 'Chưa đặt tên'}</h4>
       <p className="time"><FiClock /> {timeGroup}</p>
       <p className="location"><FiMapPin /> {locationDisplay}</p>
-      <p className="session"><FiMic /> Session type: {job['Type of session'] || '—'}</p>
+      {/* 🌟 ĐÃ SỬA */}
+      <p className="session"><FiMic /> Loại phiên: {job['Type of session'] || '—'}</p>
       <p className="mc"><FiUser /> {talentDisplay}</p>
       <p className="standby"><FiMonitor /> {coordDisplay}</p>
     </motion.div>
@@ -420,7 +401,7 @@ function App() {
   // Logic Gom Nhóm
   const groupedJobs = useMemo(() => {
     return filteredJobs.reduce((acc, job) => {
-      const timeGroup = job['Time slot'] || 'N/A';
+      const timeGroup = job['Time slot'] || 'Chưa rõ';
       if (!acc[timeGroup]) acc[timeGroup] = [];
       acc[timeGroup].push(job);
       return acc;
@@ -432,8 +413,7 @@ function App() {
   // Giao diện
   return (
     <div className="App">
-        {/* 🌟 Đặt Popup ở đây (nó sẽ tự căn giữa) */}
-        <NotificationPopup /> 
+      <NotificationPopup /> 
         
       <Header theme={theme} toggleTheme={toggleTheme} />
       <main>
@@ -449,8 +429,9 @@ function App() {
           {error ? (
              <motion.div className="empty-state" initial={{opacity:0}} animate={{opacity:1}}>
                 <FiSearch className="empty-state-icon" style={{color: '#dc3545'}}/>
-                <h3>Error Loading Data</h3>
-                <p>Could not connect to the Google Sheet. Please check the link or sharing permissions.</p>
+                {/* 🌟 ĐÃ SỬA */}
+                <h3>Lỗi Tải Dữ Liệu</h3>
+                <p>Không thể kết nối đến Google Sheet. Vui lòng kiểm tra lại đường dẫn hoặc quyền chia sẻ.</p>
              </motion.div>
           ) : isLoading ? (
             <SkeletonLoader />
