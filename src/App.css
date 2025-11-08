@@ -459,7 +459,6 @@ input:checked + .theme-toggle-slider:before { transform: translateX(20px); }
   margin-bottom: 0;
 }
 
-
 /* ============================================== */
 /* === RESPONSIVE HEADER === */
 /* ============================================== */
@@ -495,4 +494,94 @@ input:checked + .theme-toggle-slider:before { transform: translateX(20px); }
         justify-content: center; 
         box-sizing: border-box; 
     }
+}
+
+/* --- CSS CHO TRANG AUTH --- */
+.auth-container {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start; /* Căn trên một chút */
+  min-height: 100vh; 
+  background-color: var(--color-bg);
+  padding: 50px 10px; /* Thêm padding trên/dưới cho mobile */
+  box-sizing: border-box;
+}
+
+.auth-form {
+  width: 100%;
+  max-width: 400px;
+  padding: 35px;
+  background-color: var(--color-card);
+  border-radius: 16px; /* Bo góc đẹp hơn */
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15); /* Đổ bóng mạnh hơn */
+  box-sizing: border-box;
+  margin-bottom: 50px; 
+}
+
+.auth-form h2 {
+  text-align: center;
+  margin-top: 0;
+  margin-bottom: 30px; /* Khoảng cách lớn hơn */
+  color: var(--color-brand); /* Tiêu đề màu thương hiệu */
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+.auth-form input {
+  width: 100%;
+  padding: 14px; /* Padding lớn hơn */
+  margin-bottom: 18px; 
+  font-size: 1em;
+  border: 1px solid var(--color-border);
+  border-radius: 10px; /* Bo góc đẹp hơn */
+  box-sizing: border-box; 
+  background-color: var(--color-input-bg);
+  transition: border-color 0.2s;
+}
+.auth-form input:focus {
+    border-color: var(--color-brand);
+    outline: none;
+}
+
+.auth-form button {
+  width: 100%;
+  padding: 16px; /* Nút lớn hơn */
+  font-size: 1.1rem;
+  font-weight: 700;
+  background-color: var(--color-brand);
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s;
+}
+.auth-form button:hover {
+  background-color: #0069d9;
+  transform: translateY(-1px);
+}
+.auth-form button:active {
+  transform: translateY(0);
+}
+
+.auth-form p {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 0.9em;
+  color: var(--color-text-secondary);
+}
+.auth-form p a {
+  color: var(--color-brand);
+  text-decoration: none;
+  font-weight: 600;
+}
+.auth-form .auth-error {
+  color: #a00; /* Màu đỏ đậm */
+  background-color: #ffe6e6; /* Nền đỏ nhạt */
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #ffb3b3;
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 0.95em;
+  font-weight: 500;
 }

@@ -1,6 +1,7 @@
 /*
 =================================================
-  File: App.jsx (Hoàn chỉnh)
+  File: App.jsx (Nội dung chính của ứng dụng Lịch)
+  ✅ ĐÃ KHẮC PHỤC: Lỗi Circular Dependency/Auth Import
 =================================================
 */
 
@@ -9,17 +10,23 @@ import Papa from 'papaparse';
 import { motion, AnimatePresence } from 'framer-motion';
 import useSWR from 'swr';
 import * as ics from 'ics';
+import { Link } from 'react-router-dom'; // Dùng cho nút Đăng nhập/Đăng ký
 import { 
-  // Icons cho JobItem
+  // Icons chính
   FiClock, FiMapPin, FiMic, FiUser, FiMonitor,
-  // Icons cho Header
+  // Icons Auth và Theme
   FiMoon, FiSun, FiLogIn, FiUserPlus,
-  // Icons cho Filter & Popup
+  // Icons tiện ích
   FiSearch, FiDownload, FiX, FiZap 
 } from 'react-icons/fi';
 import './App.css'; 
 
-// --- HÀM HỖ TRỢ ---
+// 🌟 IMPORT LOGIC AUTH 🌟
+// Chỉ cần import useAuth. Hàm logout() được cung cấp qua Context.
+import { useAuth } from './AuthContext.jsx'; 
+
+
+// --- HÀM HỖ TRỢ (GIỮ NGUYÊN) ---
 const removeAccents = (str) => {
   if (!str) return '';
   return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D");
@@ -123,17 +130,9 @@ const combineLocation = (job) => {
   return locationDisplay || 'Không có địa điểm';
 };
 
-// 🌟 COMPONENT POPUP THÔNG BÁO (PHIÊN BẢN GIỐNG ẢNH)
+// COMPONENT POPUP THÔNG BÁO
 const NotificationPopup = () => {
-    // Luôn hiển thị để test
-    const [isVisible, setIsVisible] = useState(true);
-
-    /*
-    // Dòng code gốc, hãy dùng lại khi test xong:
-    const [isVisible, setIsVisible] = useState(() => {
-        return localStorage.getItem('dismissed_popup_15nov') !== 'true';
-    });
-    */
+    const [isVisible, setIsVisible] = useState(true); 
 
     const handleDismiss = () => {
         setIsVisible(false);
@@ -144,16 +143,13 @@ const NotificationPopup = () => {
         <AnimatePresence>
             {isVisible && (
                 <>
-                    {/* Lớp nền mờ */}
                     <motion.div
                         className="popup-overlay"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        onClick={handleDismiss} // Click bên ngoài để tắt
+                        onClick={handleDismiss} 
                     />
-                    
-                    {/* Nội dung Popup */}
                     <motion.div 
                         className="popup-modal"
                         initial={{ opacity: 0, x: "-50%", y: "calc(-50% + 50px)" }}
@@ -174,17 +170,13 @@ const NotificationPopup = () => {
                             <p>
                                 Nhiều chức năng mới sẽ sớm được ra mắt...
                             </p>
-                            
                             <p className="popup-author">
                                 Tác giả: Quốc Huy
                             </p>
                         </div>
-
-                        {/* Nút X để đóng */}
                         <button className="popup-dismiss-btn-hidden" onClick={handleDismiss} title="Đóng">
                             <FiX size={20} />
                         </button>
-
                     </motion.div>
                 </>
             )}
@@ -195,34 +187,58 @@ const NotificationPopup = () => {
 
 // --- UI COMPONENTS ---
 
-const Header = ({ theme, toggleTheme }) => (
-  <header className="app-header">
-    {/* 🌟 ĐÃ SỬA */}
-    <h1>Lịch Làm Việc</h1>
-    
-    <div className="header-controls">
-      <div className="auth-buttons">
-        <button className="auth-button login">
-          <FiLogIn size={16} />
-          <span>Đăng nhập</span>
-        </button>
-        <button className="auth-button register">
-          <FiUserPlus size={16} />
-          <span>Đăng ký</span>
-        </button>
-      </div>
+const Header = ({ theme, toggleTheme }) => {
+  // 🌟 LẤY currentUser VÀ HÀM LOGOUT TỪ CONTEXT 🌟
+  const { currentUser, logout } = useAuth(); 
 
-      {/* 🌟 ĐÃ SỬA */}
-      <label className="theme-toggle" title="Chuyển chế độ Sáng/Tối">
-        {theme === 'light' ? <FiMoon size={18} /> : <FiSun size={18} />}
-        <div className="theme-toggle-switch">
-          <input type="checkbox" checked={theme === 'dark'} onChange={toggleTheme} />
-          <span className="theme-toggle-slider"></span>
+  const handleLogout = async () => {
+    try {
+      // GỌI HÀM LOGOUT ĐƯỢC CUNG CẤP TỪ CONTEXT
+      await logout(); 
+    } catch (error) {
+      console.error("Lỗi đăng xuất:", error);
+      alert("Đăng xuất thất bại!");
+    }
+  };
+
+  return (
+    <header className="app-header">
+      <h1>Lịch Làm Việc</h1>
+      <div className="header-controls">
+        
+        <div className="auth-buttons">
+          {currentUser ? (
+            // HIỂN THỊ KHI ĐÃ ĐĂNG NHẬP
+            <button className="auth-button logout" onClick={handleLogout}>
+              <FiLogIn size={16} style={{ transform: 'scaleX(-1)' }} />
+              <span>Đăng xuất</span>
+            </button>
+          ) : (
+            // HIỂN THỊ KHI CHƯA ĐĂNG NHẬP
+            <>
+              <Link to="/login" className="auth-button login">
+                <FiLogIn size={16} />
+                <span>Đăng nhập</span>
+              </Link>
+              <Link to="/register" className="auth-button register">
+                <FiUserPlus size={16} />
+                <span>Đăng ký</span>
+              </Link>
+            </>
+          )}
         </div>
-      </label>
-    </div>
-  </header>
-);
+
+        <label className="theme-toggle" title="Chuyển chế độ Sáng/Tối">
+          {theme === 'light' ? <FiMoon size={18} /> : <FiSun size={18} />}
+          <div className="theme-toggle-switch">
+            <input type="checkbox" checked={theme === 'dark'} onChange={toggleTheme} />
+            <span className="theme-toggle-slider"></span>
+          </div>
+        </label>
+      </div>
+    </header>
+  );
+};
 
 const FilterBar = ({ dateFilter, setDateFilter, inputValue, setInputValue, uniqueDates, filteredJobs }) => {
   
@@ -231,18 +247,14 @@ const FilterBar = ({ dateFilter, setDateFilter, inputValue, setInputValue, uniqu
       try {
         const [day, month, year] = job['Date livestream'].split('/');
         const [startTimeStr, endTimeStr] = (job['Time slot'] || '00:00 - 00:00').split(' - ');
-        
         const [startHour, startMinute] = startTimeStr.split(':').map(Number);
         const [endHour, endMinute] = (endTimeStr || startTimeStr).split(':').map(Number); 
-
         const startDate = new Date(0, 0, 0, startHour, startMinute);
         const endDate = new Date(0, 0, 0, endHour, endMinute);
         let diffMs = endDate.getTime() - startDate.getTime();
         if (diffMs <= 0) diffMs = 60 * 60 * 1000; 
-
         const durationHours = Math.floor(diffMs / (1000 * 60 * 60));
         const durationMinutes = (diffMs / (1000 * 60)) % 60;
-
         return {
           title: job.Store || 'Unnamed Job',
           start: [parseInt(year), parseInt(month), parseInt(day), startHour, startMinute],
@@ -250,26 +262,18 @@ const FilterBar = ({ dateFilter, setDateFilter, inputValue, setInputValue, uniqu
           location: combineLocation(job),
           description: `MC: ${combineNames(job['Talent 1'], job['Talent 2'])}\nCoordinator: ${combineNames(job['Coordinator 1'], job['Coordinator 2'])}`
         };
-      } catch (e) {
-        return null; 
-      }
+      } catch (e) { return null; }
     }).filter(Boolean); 
 
     if (events.length === 0) {
-      // 🌟 ĐÃ SỬA
       alert("Không có lịch hợp lệ để xuất.");
       return;
     }
-
     const { error, value } = ics.createEvents(events);
-
     if (error) {
-      console.error("Error creating ICS file:", error);
-      // 🌟 ĐÃ SỬA
       alert("Lỗi khi tạo file ICS.");
       return;
     }
-
     const blob = new Blob([value], { type: 'text/calendar;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -283,21 +287,17 @@ const FilterBar = ({ dateFilter, setDateFilter, inputValue, setInputValue, uniqu
   return (
     <div className="filter-container">
       <div className="form-group">
-        {/* 🌟 ĐÃ SỬA */}
         <label htmlFor="dateInput">Lịch</label>
         <select id="dateInput" value={dateFilter} onChange={(e) => setDateFilter(e.target.value)}>
-          {/* 🌟 ĐÃ SỬA */}
           <option value="">Tất cả ngày</option>
           {uniqueDates.map(date => <option key={date} value={date}>{date}</option>)}
         </select>
       </div>
       <div className="form-group">
-        {/* 🌟 ĐÃ SỬA */}
         <label htmlFor="nameInput">Tìm tên</label>
         <input 
           type="text" 
           id="nameInput" 
-          // 🌟 ĐÃ SỬA
           placeholder="VD: Nguyễn Văn A" 
           value={inputValue} 
           onChange={(e) => setInputValue(e.target.value)} 
@@ -309,7 +309,6 @@ const FilterBar = ({ dateFilter, setDateFilter, inputValue, setInputValue, uniqu
         disabled={filteredJobs.length === 0}
       >
         <FiDownload size={18} />
-        {/* 🌟 ĐÃ SỬA */}
         Xuất ra Google Calendar (.ics)
       </button>
     </div>
@@ -332,7 +331,6 @@ const SkeletonLoader = () => (
 const EmptyState = ({ dateFilter }) => (
   <motion.div className="empty-state" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}>
     <FiSearch className="empty-state-icon" />
-    {/* 🌟 ĐÃ SỬA */}
     <h3>Không tìm thấy kết quả</h3>
     <p>Không tìm thấy lịch nào {dateFilter ? `cho ngày ${dateFilter}` : ''}. Vui lòng thử tên hoặc ngày khác.</p>
   </motion.div>
@@ -340,7 +338,6 @@ const EmptyState = ({ dateFilter }) => (
 
 const JobItem = ({ job }) => {
   const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } };
-  // 🌟 ĐÃ SỬA
   const timeGroup = `${job['Time slot'] || 'Chưa rõ'}`;
   const talentDisplay = combineNames(job['Talent 1'], job['Talent 2']);
   const coordDisplay = combineNames(job['Coordinator 1'], job['Coordinator 2']);
@@ -348,11 +345,9 @@ const JobItem = ({ job }) => {
 
   return (
     <motion.div className="schedule-item" variants={itemVariants}>
-      {/* 🌟 ĐÃ SỬA */}
       <h4>{job.Store || 'Chưa đặt tên'}</h4>
       <p className="time"><FiClock /> {timeGroup}</p>
       <p className="location"><FiMapPin /> {locationDisplay}</p>
-      {/* 🌟 ĐÃ SỬA */}
       <p className="session"><FiMic /> Loại phiên: {job['Type of session'] || '—'}</p>
       <p className="mc"><FiUser /> {talentDisplay}</p>
       <p className="standby"><FiMonitor /> {coordDisplay}</p>
@@ -360,7 +355,7 @@ const JobItem = ({ job }) => {
   );
 };
 
-// --- COMPONENT APP CHÍNH ---
+// --- COMPONENT CHÍNH ---
 function App() {
   const [theme, toggleTheme] = useDarkMode();
   const { jobs, isLoading, uniqueDates, error } = useJobData();
@@ -429,7 +424,6 @@ function App() {
           {error ? (
              <motion.div className="empty-state" initial={{opacity:0}} animate={{opacity:1}}>
                 <FiSearch className="empty-state-icon" style={{color: '#dc3545'}}/>
-                {/* 🌟 ĐÃ SỬA */}
                 <h3>Lỗi Tải Dữ Liệu</h3>
                 <p>Không thể kết nối đến Google Sheet. Vui lòng kiểm tra lại đường dẫn hoặc quyền chia sẻ.</p>
              </motion.div>
@@ -460,4 +454,5 @@ function App() {
   );
 }
 
+// PHẢI EXPORT DEFAULT NÓ
 export default App;

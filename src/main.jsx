@@ -1,10 +1,16 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App.jsx'
+// src/main.jsx (ĐÃ SỬA)
 
-createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import ScheduleApp from './ScheduleApp.jsx'; // 🌟 IMPORT BỘ ĐIỀU HƯỚNG
+import { AuthProvider } from './AuthContext.jsx'; // Context
+import './App.css'; 
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    {/* 🌟 CẤU TRÚC ĐÚNG: CONTEXT -> BỘ ĐIỀU HƯỚNG (CÓ BROWSERROUTER) 🌟 */}
+    <AuthProvider> 
+      <ScheduleApp /> 
+    </AuthProvider>
+  </React.StrictMode>,
 )
