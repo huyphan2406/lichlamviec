@@ -12,7 +12,9 @@ import * as ics from 'ics';
 import { 
   FiClock, FiMapPin, FiMic, FiUser, FiMonitor,
   FiMoon, FiSun,
-  FiSearch, FiDownload, FiX, FiZap
+  FiSearch, FiDownload, FiX, FiZap,
+  FiCalendar, FiInfo, FiTag, FiAward, // Các icon từ lần trước
+  FiLogIn, FiUserPlus // 🌟 THÊM 2 ICON NÀY
 } from 'react-icons/fi';
 // ⚠️ HÃY ĐẢM BẢO BẠN ĐÃ IMPORT CSS
 import './App.css'; 
@@ -198,7 +200,7 @@ const NotificationPopup = () => {
         Dùng miễn phí tới <strong className="highlight-date">15/11</strong>.
         Sau ngày 15, bạn cần đăng kí tài khoản để sử dụng.
     </p>
-    
+
     {/* Thông tin thêm và tác giả */}
     <p className="popup-footer-info">
         Nhiều chức năng mới sẽ sớm được ra mắt...
@@ -223,13 +225,31 @@ const NotificationPopup = () => {
 const Header = ({ theme, toggleTheme }) => (
   <header className="app-header">
     <h1>Work Schedule</h1>
-    <label className="theme-toggle" title="Toggle Light/Dark Mode">
-      {theme === 'light' ? <FiMoon size={18} /> : <FiSun size={18} />}
-      <div className="theme-toggle-switch">
-        <input type="checkbox" checked={theme === 'dark'} onChange={toggleTheme} />
-        <span className="theme-toggle-slider"></span>
+    
+    {/* 🌟 TẠO MỘT KHỐI BAO QUANH 2 NÚT BẤM */}
+    <div className="header-controls">
+      
+      {/* Nút Đăng nhập/Đăng ký */}
+      <div className="auth-buttons">
+        <button className="auth-button login">
+          <FiLogIn size={16} />
+          <span>Đăng nhập</span>
+        </button>
+        <button className="auth-button register">
+          <FiUserPlus size={16} />
+          <span>Đăng ký</span>
+        </button>
       </div>
-    </label>
+
+      {/* Nút Sáng/Tối (Code cũ của bạn) */}
+      <label className="theme-toggle" title="Toggle Light/Dark Mode">
+        {theme === 'light' ? <FiMoon size={18} /> : <FiSun size={18} />}
+        <div className="theme-toggle-switch">
+          <input type="checkbox" checked={theme === 'dark'} onChange={toggleTheme} />
+          <span className="theme-toggle-slider"></span>
+        </div>
+      </label>
+    </div>
   </header>
 );
 

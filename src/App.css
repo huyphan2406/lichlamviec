@@ -421,3 +421,85 @@ input:checked + .theme-toggle-slider:before { transform: translateX(20px); }
   font-style: italic;
   color: var(--color-grey); /* Màu xám nhạt hơn */
 }
+
+/* --- HEADER & DARK MODE TOGGLE --- */
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  margin-bottom: 15px;
+}
+.app-header h1 {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: 1.8rem; 
+  font-weight: 700;
+  transition: color var(--transition-speed);
+}
+
+/* 🌟 CSS MỚI: Khối bao quanh các nút điều khiển bên phải */
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: 20px; /* Khoảng cách giữa cụm nút Auth và nút Dark Mode */
+}
+
+/* 🌟 CSS MỚI: Cụm nút Đăng nhập / Đăng ký */
+.auth-buttons {
+    display: flex;
+    gap: 10px; /* Khoảng cách giữa 2 nút */
+}
+
+/* 🌟 CSS MỚI: Nút bấm chung */
+.auth-button {
+    display: flex;
+    align-items: center;
+    gap: 6px; /* Khoảng cách giữa icon và chữ */
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    font-family: var(--font-main);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.auth-button svg {
+    flex-shrink: 0;
+}
+
+/* 🌟 CSS MỚI: Nút Đăng nhập */
+.auth-button.login {
+    background-color: var(--color-input-bg);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-secondary);
+}
+.auth-button.login:hover {
+    background-color: var(--color-border);
+    color: var(--color-text-primary);
+}
+
+/* 🌟 CSS MỚI: Nút Đăng ký */
+.auth-button.register {
+    background-color: var(--color-brand);
+    color: #ffffff;
+    border: 1px solid var(--color-brand);
+}
+.auth-button.register:hover {
+    background-color: #0069d9; /* Màu đậm hơn */
+    border-color: #0069d9;
+}
+
+/* CSS CŨ CỦA NÚT DARK MODE (Vẫn giữ nguyên) */
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  padding: 6px;
+  border-radius: 20px;
+  transition: background-color var(--transition-speed), color var(--transition-speed);
+}
+/* ... (phần còn lại của CSS cho theme-toggle) ... */
