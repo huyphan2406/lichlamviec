@@ -15,6 +15,9 @@
   --color-brand-light: rgba(0,123,255,0.1);
   --color-danger: #dc3545;
   --color-grey: #6c757d;
+  
+  /* ⚠️ NÂNG CẤP: Thêm transition cho tất cả màu */
+  --transition-speed: 0.3s ease;
 }
 
 /* Chế độ Tối (Dark Mode) - Ý 4 */
@@ -40,7 +43,8 @@ body {
   padding: 20px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  /* ⚠️ NÂNG CẤP: Hiệu ứng chuyển đổi mượt mà */
+  transition: background-color var(--transition-speed), color var(--transition-speed);
 }
 
 .App {
@@ -66,18 +70,19 @@ main {
   color: var(--color-text-primary);
   font-size: 2em;
   font-weight: 700;
+  transition: color var(--transition-speed);
 }
 
 /* Nút gạt Dark Mode */
 .theme-toggle {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   cursor: pointer;
   color: var(--color-text-secondary);
-  padding: 4px;
+  padding: 6px;
   border-radius: 20px;
-  transition: background-color 0.2s;
+  transition: background-color var(--transition-speed), color var(--transition-speed);
 }
 .theme-toggle:hover {
   background-color: var(--color-border);
@@ -129,6 +134,7 @@ input:checked + .theme-toggle-slider:before {
   border-radius: 12px;
   box-shadow: 0 4px 12px var(--color-shadow);
   margin-bottom: 25px;
+  transition: background-color var(--transition-speed), box-shadow var(--transition-speed);
 }
 
 .form-group {
@@ -143,6 +149,7 @@ input:checked + .theme-toggle-slider:before {
   margin-bottom: 8px;
   font-size: 0.9em;
   color: var(--color-text-secondary);
+  transition: color var(--transition-speed);
 }
 .form-group input,
 .form-group select {
@@ -155,7 +162,7 @@ input:checked + .theme-toggle-slider:before {
   font-family: var(--font-main);
   background-color: var(--color-input-bg);
   color: var(--color-text-primary);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: all var(--transition-speed); /* Nâng cấp transition */
 }
 .form-group input:focus,
 .form-group select:focus {
@@ -177,6 +184,7 @@ input:checked + .theme-toggle-slider:before {
   margin-top: 20px;
   text-transform: uppercase; 
   letter-spacing: 0.5px; 
+  transition: color var(--transition-speed), border-color var(--transition-speed);
 }
 .time-group-container:first-child .schedule-group-title {
   border-top: none;
@@ -190,14 +198,19 @@ input:checked + .theme-toggle-slider:before {
   box-shadow: 0 4px 12px var(--color-shadow);
   padding: 20px;
   margin: 15px 0; 
-  /* Origin bottom để animation đẹp hơn */
   transform-origin: bottom center; 
+  transition: transform 0.2s ease-out, box-shadow var(--transition-speed), background-color var(--transition-speed);
+}
+.schedule-item:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px var(--color-shadow-hover);
 }
 .schedule-item h4 {
   margin: 0 0 15px 0; 
   font-size: 1.25em; 
   color: var(--color-text-primary);
   font-weight: 600; 
+  transition: color var(--transition-speed);
 }
 .schedule-item p {
   margin: 10px 0; 
@@ -206,12 +219,14 @@ input:checked + .theme-toggle-slider:before {
   color: var(--color-text-secondary);
   font-size: 0.95em;
   font-weight: 500; 
+  transition: color var(--transition-speed);
 }
 .schedule-item p svg {
   margin-right: 12px; 
   font-size: 1.2em; 
   color: var(--color-brand);
   flex-shrink: 0; 
+  transition: color var(--transition-speed);
 }
 .schedule-item p.location svg { color: var(--color-danger); }
 .schedule-item p.time svg { color: var(--color-grey); }
@@ -228,16 +243,19 @@ input:checked + .theme-toggle-slider:before {
   background-color: var(--color-card);
   border-radius: 12px;
   box-shadow: 0 4px 12px var(--color-shadow);
+  transition: background-color var(--transition-speed), box-shadow var(--transition-speed), color var(--transition-speed);
 }
 .empty-state-icon {
   font-size: 3em;
   color: var(--color-brand);
   margin-bottom: 15px;
+  transition: color var(--transition-speed);
 }
 .empty-state h3 {
   margin: 0 0 5px 0;
   font-size: 1.2em;
   color: var(--color-text-primary);
+  transition: color var(--transition-speed);
 }
 
 /* --- SKELETON LOADING --- */

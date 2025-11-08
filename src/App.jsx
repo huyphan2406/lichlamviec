@@ -2,16 +2,16 @@ import { useState, useMemo, useEffect } from 'react';
 import Papa from 'papaparse';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  FiClock, FiMapPin, FiMic, FiUser, FiMonitor, // Icons công việc
-  FiMoon, FiSun, // Icons Dark Mode
-  FiSearch // Icon Empty State
+  FiClock, FiMapPin, FiMic, FiUser, FiMonitor, // Job Icons
+  FiMoon, FiSun, // Dark Mode Icons
+  FiSearch // Empty State Icon
 } from 'react-icons/fi';
-import './App.css'; // File CSS ở bước 6
+import './App.css'; 
 
-// --- CÀI ĐẶT ---
-const CACHE_DURATION = 3600 * 1000; // 1 giờ
+// --- SETTINGS ---
+const CACHE_DURATION = 3600 * 1000; // 1 hour
 
-// --- LOGIC CHO DARK MODE (Ý 4) ---
+// --- LOGIC: DARK MODE (Ý 4) ---
 function useDarkMode() {
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
   const toggleTheme = () => setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
@@ -24,7 +24,7 @@ function useDarkMode() {
   return [theme, toggleTheme];
 }
 
-// --- LOGIC TẢI DỮ LIỆU (TỪ CSV) ---
+// --- LOGIC: LOAD DATA (TỪ CSV) ---
 function useJobData() {
   const [allJobs, setAllJobs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -42,9 +42,10 @@ function useJobData() {
       Papa.parse(dataUrl, {
         download: true, header: true, skipEmptyLines: true, dynamicTyping: true,
         complete: (results) => {
+          // CẬP NHẬT LOGIC (Tiếng Anh): Đọc cột "Date" và "StartTime"
           const sortedData = results.data.sort((a, b) => {
-            const dtA = new Date(`${a.Ngay} ${a.ThoiGianBatDau}`);
-            const dtB = new Date(`${b.Ngay} ${b.ThoiGianBatDau}`);
+            const dtA = new Date(`${a.Date} ${a.StartTime}`);
+            const dtB = new Date(`${b.Date} ${b.StartTime}`);
             return dtA - dtB;
           });
           setAllJobs(sortedData);
@@ -53,52 +54,63 @@ function useJobData() {
           localStorage.setItem("cachedJobsTime", now.toString());
         },
         error: (err) => {
-          console.error("Lỗi khi tải CSV:", err);
+          console.error("Error loading CSV:", err);
           setIsLoading(false);
         }
       });
     }
   }, []);
 
-  const uniqueDates = useMemo(() => [...new Set(allJobs.map(job => job.Ngay))], [allJobs]);
+  // CẬP NHẬT LOGIC (Tiếng Anh): Đọc cột "Date"
+  const uniqueDates = useMemo(() => [...new Set(allJobs.map(job => job.Date))], [allJobs]);
   return { jobs: allJobs, isLoading, uniqueDates };
 }
 
-// --- COMPONENT GIAO DIỆN ---
-// (Đã gộp tất cả vào đây để tránh lỗi import)
+// --- UI COMPONENTS ---
 
-// 1. Header (Ý 5 - Heading Đẹp & Dark Mode)
+// 1. Header (Heading & Dark Mode)
+// ⚠️ SỬA LỖI: Đã di chuyển 'toggleTheme' vào đúng 'onChange' của input
 const Header = ({ theme, toggleTheme }) => (
   <header className="app-header">
-    <h1>Lịch Làm Việc</h1>
-    <div className="theme-toggle" onClick={toggleTheme} title="Đổi giao diện Sáng/Tối">
+    <h1>Work Schedule</h1>
+    <label className="theme-toggle" title="Toggle Light/Dark Mode">
       {theme === 'light' ? <FiMoon size={18} /> : <FiSun size={18} />}
-      <label className="theme-toggle-switch">
-        <input type="checkbox" checked={theme === 'dark'} onChange={() => {}} />
+      <div className="theme-toggle-switch">
+        <input 
+          type="checkbox" 
+          checked={theme === 'dark'} 
+          onChange={toggleTheme} // Sửa lỗi ở đây
+        />
         <span className="theme-toggle-slider"></span>
-      </label>
-    </div>
+      </div>
+    </label>
   </header>
 );
 
-// 2. Thanh Filter
+// 2. Filter Bar (Dịch sang Tiếng Anh)
 const FilterBar = ({ dateFilter, setDateFilter, inputValue, setInputValue, uniqueDates }) => (
   <div className="filter-container">
     <div className="form-group">
-      <label htmlFor="dateInput">Ngày</label>
+      <label htmlFor="dateInput">Date</label>
       <select id="dateInput" value={dateFilter} onChange={(e) => setDateFilter(e.target.value)}>
-        <option value="">Tất cả các ngày</option>
+        <option value="">All Dates</option>
         {uniqueDates.map(date => <option key={date} value={date}>{date}</option>)}
       </select>
     </div>
     <div className="form-group">
-      <label htmlFor="nameInput">Tìm</label>
-      <input type="text" id="nameInput" placeholder="VD: Quốc Huy" value={inputValue} onChange={(e) => setInputValue(e.target.value)} />
+      <label htmlFor="nameInput">Search</label>
+      <input 
+        type="text" 
+        id="nameInput" 
+        placeholder="e.g., Your Name" 
+        value={inputValue} 
+        onChange={(e) => setInputValue(e.target.value)} 
+      />
     </div>
   </div>
 );
 
-// 3. Khung Chờ Tải
+// 3. Skeleton Loader (Khung chờ tải)
 const SkeletonLoader = () => (
   <div className="skeleton-container">
     {[...Array(3)].map((_, i) => (
@@ -112,23 +124,26 @@ const SkeletonLoader = () => (
   </div>
 );
 
-// 4. Trạng Thái Rỗng (Ý 3)
+// 4. Empty State (Dịch sang Tiếng Anh)
 const EmptyState = () => (
   <motion.div className="empty-state" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}>
     <FiSearch className="empty-state-icon" />
-    <h3>Không tìm thấy kết quả</h3>
-    <p>Vui lòng thử tìm tên khác hoặc chọn ngày khác.</p>
+    <h3>No Results Found</h3>
+    <p>Please try a different name or select another date.</p>
   </motion.div>
 );
 
-// 5. Thẻ Công Việc (Ý 2 - Animation)
-const JobItem = ({ job, timeGroup }) => {
+// 5. Job Item (Cập nhật logic Tiếng Anh)
+const JobItem = ({ job }) => {
   const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } };
+  // CẬP NHẬT LOGIC (Tiếng Anh): Đọc cột "StartTime" và "EndTime"
+  const timeGroup = `${job.StartTime}–${job.EndTime}`;
+  
   return (
     <motion.div className="schedule-item" variants={itemVariants}>
-      <h4>{job.TenCongViec || '...'}</h4>
+      <h4>{job.JobName || '...'}</h4>
       <p className="time"><FiClock /> {timeGroup}</p>
-      <p className="location"><FiMapPin /> {job.DiaDiem || '...'}</p>
+      <p className="location"><FiMapPin /> {job.Location || '...'}</p>
       <p className="session"><FiMic /> Session type: {job.SessionType || '—'}</p>
       <p className="mc"><FiUser /> {job.MC || '...'}</p>
       <p className="standby"><FiMonitor /> {job.Standby || '...'}</p>
@@ -144,10 +159,10 @@ function App() {
 
   // --- STATE (Filters) ---
   const [dateFilter, setDateFilter] = useState(() => localStorage.getItem('lastViewedDate') || '');
-  const [inputValue, setInputValue] = useState('Quốc Huy'); 
+  const [inputValue, setInputValue] = useState('Quốc Huy'); // Đã dịch
   const [nameFilter, setNameFilter] = useState('Quốc Huy'); 
 
-  // --- EFFECTS (Debounce & Cache Filter - Ý 1) ---
+  // --- EFFECTS (Debounce & Cache Filter) ---
   useEffect(() => {
     const timerId = setTimeout(() => setNameFilter(inputValue), 300);
     return () => clearTimeout(timerId);
@@ -157,7 +172,7 @@ function App() {
     localStorage.setItem('lastViewedDate', dateFilter);
   }, [dateFilter]);
 
-  // --- LOGIC LỌC & GOM NHÓM (Dùng useMemo) ---
+  // --- LOGIC LỌC & GOM NHÓM (Cập nhật logic Tiếng Anh) ---
   const filteredJobs = useMemo(() => {
     let jobsToFilter = jobs;
     const normNameFilter = nameFilter.toLowerCase().trim();
@@ -165,19 +180,22 @@ function App() {
       jobsToFilter = jobsToFilter.filter(job => {
         const mc = (job.MC || '').toLowerCase().includes(normNameFilter);
         const standby = (job.Standby || '').toLowerCase().includes(normNameFilter);
-        const tenCV = (job.TenCongViec || '').toLowerCase().includes(normNameFilter);
-        return mc || standby || tenCV;
+        // CẬP NHẬT LOGIC (Tiếng Anh): Đọc cột "JobName"
+        const jobName = (job.JobName || '').toLowerCase().includes(normNameFilter);
+        return mc || standby || jobName;
       });
     }
     if (dateFilter) { 
-      jobsToFilter = jobsToFilter.filter(job => (job.Ngay || '').toString() === dateFilter);
+      // CẬP NHẬT LOGIC (Tiếng Anh): Đọc cột "Date"
+      jobsToFilter = jobsToFilter.filter(job => (job.Date || '').toString() === dateFilter);
     }
     return jobsToFilter;
   }, [jobs, dateFilter, nameFilter]); 
 
   const groupedJobs = useMemo(() => {
     return filteredJobs.reduce((acc, job) => {
-      const timeGroup = `${job.ThoiGianBatDau}–${job.ThoiGianKetThuc}`;
+      // CẬP NHẬT LOGIC (Tiếng Anh): Đọc cột "StartTime" và "EndTime"
+      const timeGroup = `${job.StartTime}–${job.EndTime}`;
       if (!acc[timeGroup]) acc[timeGroup] = [];
       acc[timeGroup].push(job);
       return acc;
@@ -214,7 +232,7 @@ function App() {
                 > 
                   <h3 className="schedule-group-title">{timeGroup}</h3>
                   {groupedJobs[timeGroup].map((job, index) => (
-                    <JobItem key={`${timeGroup}-${index}`} job={job} timeGroup={timeGroup} />
+                    <JobItem key={`${timeGroup}-${index}`} job={job} />
                   ))}
                 </motion.div>
               ))}
