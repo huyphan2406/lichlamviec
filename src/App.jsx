@@ -2,12 +2,11 @@ import { useState, useMemo, useEffect } from 'react';
 import Papa from 'papaparse';
 import { motion, AnimatePresence } from 'framer-motion';
 import useSWR from 'swr';
-// ⚠️ BƯỚC 1: IMPORT THƯ VIỆN 'ics'
 import * as ics from 'ics';
 import { 
   FiClock, FiMapPin, FiMic, FiUser, FiMonitor,
   FiMoon, FiSun,
-  FiSearch, FiDownload // Thêm icon Download
+  FiSearch, FiDownload
 } from 'react-icons/fi';
 import './App.css'; 
 
@@ -26,11 +25,10 @@ const parseDate = (dateStr, timeStr) => {
   } catch (e) { return new Date(0); }
 };
 
-// HÀM LẤY NGÀY HÔM NAY (DD/MM/YYYY)
 const getFormattedToday = () => {
   const today = new Date();
   const day = String(today.getDate()).padStart(2, '0');
-  const month = String(today.getMonth() + 1).padStart(2, '0'); // Tháng 0-11
+  const month = String(today.getMonth() + 1).padStart(2, '0'); 
   const year = today.getFullYear();
   return `${day}/${month}/${year}`;
 };
@@ -116,6 +114,21 @@ const combineLocation = (job) => {
   return locationDisplay || 'No location';
 };
 
+// ⚠️ MỚI: COMPONENT THÔNG BÁO BANNER
+const InfoBanner = () => (
+    <motion.div 
+        className="info-banner"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+    >
+        <p>
+            **Lịch Livestream Nhanh & Chính xác!** Web dùng để tra cứu lịch làm việc của standby và host. 
+            Dùng miễn phí tới **15/11**, sau ngày 15 phải đăng kí tài khoản để được sử dụng.
+        </p>
+    </motion.div>
+);
+
 // --- UI COMPONENTS ---
 
 const Header = ({ theme, toggleTheme }) => (
@@ -134,7 +147,6 @@ const Header = ({ theme, toggleTheme }) => (
 const FilterBar = ({ dateFilter, setDateFilter, inputValue, setInputValue, uniqueDates, filteredJobs }) => {
   
   const handleDownloadICS = () => {
-    // 1. Chuyển đổi jobs đã lọc thành định dạng sự kiện ics
     const events = filteredJobs.map(job => {
       try {
         const [day, month, year] = job['Date livestream'].split('/');
@@ -143,11 +155,10 @@ const FilterBar = ({ dateFilter, setDateFilter, inputValue, setInputValue, uniqu
         const [startHour, startMinute] = startTimeStr.split(':').map(Number);
         const [endHour, endMinute] = (endTimeStr || startTimeStr).split(':').map(Number); 
 
-        // Tính thời lượng
         const startDate = new Date(0, 0, 0, startHour, startMinute);
         const endDate = new Date(0, 0, 0, endHour, endMinute);
         let diffMs = endDate.getTime() - startDate.getTime();
-        if (diffMs <= 0) diffMs = 60 * 60 * 1000; // Mặc định 1 tiếng nếu lỗi
+        if (diffMs <= 0) diffMs = 60 * 60 * 1000; 
 
         const durationHours = Math.floor(diffMs / (1000 * 60 * 60));
         const durationMinutes = (diffMs / (1000 * 60)) % 60;
@@ -169,21 +180,19 @@ const FilterBar = ({ dateFilter, setDateFilter, inputValue, setInputValue, uniqu
       return;
     }
 
-    // 2. Tạo file ics
     const { error, value } = ics.createEvents(events);
 
     if (error) {
-      console.error(error);
+      console.error("Error creating ICS file:", error);
       alert("Error creating ICS file.");
       return;
     }
 
-    // 3. Kích hoạt tải file
     const blob = new Blob([value], { type: 'text/calendar;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', `schedule_${dateFilter.replace(/\//g, '-') || 'all'}.ics`);
+    link.setAttribute('download', `Google_Calendar_Schedule_${dateFilter.replace(/\//g, '-') || 'all'}.ics`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -203,19 +212,18 @@ const FilterBar = ({ dateFilter, setDateFilter, inputValue, setInputValue, uniqu
         <input 
           type="text" 
           id="nameInput" 
-          placeholder="e.g., Your Name" // Sửa lại placeholder
+          placeholder="e.g., Quốc Huy" 
           value={inputValue} 
           onChange={(e) => setInputValue(e.target.value)} 
         />
       </div>
-      {/* Nút Download Mới */}
       <button 
         className="download-button" 
         onClick={handleDownloadICS} 
         disabled={filteredJobs.length === 0}
       >
         <FiDownload size={18} />
-        Export to Google Calendar (.ics)
+        Export To Google Calendar (.ics)
       </button>
     </div>
   );
@@ -266,20 +274,17 @@ function App() {
   const [theme, toggleTheme] = useDarkMode();
   const { jobs, isLoading, uniqueDates, error } = useJobData();
   
+  // ⚠️ FIX LỖI: Khôi phục lại các dòng state bị thiếu
   const [dateFilter, setDateFilter] = useState(() => getFormattedToday());
-
-  // ⚠️ FIX LỖI: Thêm 2 dòng state bị thiếu
-  const [inputValue, setInputValue] = useState(''); 
-  const [nameFilter, setNameFilter] = useState(''); 
+  const [inputValue, setInputValue] = useState('Quốc Huy'); 
+  const [nameFilter, setNameFilter] = useState('Quốc Huy'); 
 
   useEffect(() => {
     const timerId = setTimeout(() => setNameFilter(inputValue), 300);
     return () => clearTimeout(timerId);
   }, [inputValue]);
 
-  // (Đã xóa useEffect lưu cache ngày xem)
-
-  // Logic lọc (Đã fix lỗi tìm Tiếng Việt)
+  // Logic lọc
   const filteredJobs = useMemo(() => {
     let jobsToFilter = jobs;
     const normNameFilter = removeAccents(nameFilter.toLowerCase().trim());
@@ -318,6 +323,7 @@ function App() {
   // Giao diện
   return (
     <div className="App">
+      <InfoBanner /> {/* ⚠️ THÊM BANNER Ở ĐÂY */}
       <Header theme={theme} toggleTheme={toggleTheme} />
       <main>
         <FilterBar 
