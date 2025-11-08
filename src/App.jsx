@@ -1,36 +1,48 @@
 import { useState, useMemo, useEffect } from 'react';
 import Papa from 'papaparse';
 import { motion, AnimatePresence } from 'framer-motion';
+// ⚠️ QUAN TRỌNG: Đảm bảo bạn đã cài SWR
+import useSWR from 'swr';
 import { 
-  FiClock, FiMapPin, FiMic, FiUser, FiMonitor, // Job Icons
-  FiMoon, FiSun, // Dark Mode Icons
-  FiSearch // Empty State Icon
+  FiClock, FiMapPin, FiMic, FiUser, FiMonitor,
+  FiMoon, FiSun,
+  FiSearch
 } from 'react-icons/fi';
 import './App.css'; 
 
-// --- CÀI ĐẶT ---
-const CACHE_DURATION = 3600 * 1000; // 1 giờ
+// --- HÀM HỖ TRỢ (ĐÃ FIX LỖI) ---
 
-// --- HÀM HỖ TRỢ ---
-
-// Hàm loại bỏ dấu (Fix lỗi tìm Tiếng Việt)
 const removeAccents = (str) => {
   if (!str) return '';
-  return str
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/đ/g, "d").replace(/Đ/g, "D");
+  return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D");
 };
 
-// Hàm đọc ngày (Fix lỗi sort DD/MM/YYYY)
 const parseDate = (dateStr, timeStr) => {
   try {
     const [day, month, year] = dateStr.split('/');
     const [hour, minute] = timeStr.split(':');
     return new Date(year, month - 1, day, hour, minute);
-  } catch (e) {
-    return new Date(0); 
-  }
+  } catch (e) { return new Date(0); }
+};
+
+// HÀM TẢI DỮ LIỆU (FETCHER) CHO SWR
+const csvFetcher = (url) => {
+  return new Promise((resolve, reject) => {
+    Papa.parse(url, {
+      download: true,
+      header: true,
+      skipEmptyLines: true,
+      dynamicTyping: false,
+      transformHeader: (header) => header.replace(/\ufeff/g, '').trim(),
+      complete: (results) => {
+        resolve(results.data);
+      },
+      error: (err) => {
+        console.error("Lỗi Papa.parse:", err);
+        reject(err);
+      }
+    });
+  });
 };
 
 // --- LOGIC (HOOKS) ---
@@ -45,59 +57,43 @@ function useDarkMode() {
   return [theme, toggleTheme];
 }
 
-// --- ⚠️ SỬA LỖI LẦN CUỐI Ở ĐÂY ---
 function useJobData() {
-  const [allJobs, setAllJobs] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  // ⚠️ ĐÃ DÁN LINK EXPORT CSV MỚI CỦA BẠN VÀO ĐÂY
+  const dataUrl = 'https://docs.google.com/spreadsheets/d/1716aQ1XqHDiHB4LHSClVYglY0Cgf60TVJ7RYjqlwsOM/export?format=csv&gid=2068764011';
 
-  useEffect(() => {
-    const dataUrl = '/data.csv';
-    const now = new Date().getTime();
-    const cachedData = localStorage.getItem("cachedJobs");
-    const cacheTime = localStorage.getItem("cachedJobsTime");
-
-    if (cachedData && cacheTime && (now - parseInt(cacheTime) < CACHE_DURATION)) {
-      setAllJobs(JSON.parse(cachedData));
-      setIsLoading(false);
-    } else {
-      Papa.parse(dataUrl, {
-        download: true, 
-        header: true, 
-        skipEmptyLines: true, 
-        dynamicTyping: false, 
-        transformHeader: (header) => header.replace(/\ufeff/g, '').trim(),
-        
-        complete: (results) => {
-          
-          // ⚠️ FIX LỖI: Lọc bỏ các dòng rỗng (chỉ giữ lại các dòng có "Date")
-          const validData = results.data.filter(row => row.Date && row.Date.includes('/'));
-
-          // Bây giờ mới sắp xếp (sort) trên dữ liệu đã sạch
-          const sortedData = validData.sort((a, b) => {
-            const dtA = parseDate(a.Date, a.StartTime);
-            const dtB = parseDate(b.Date, b.StartTime);
-            return dtA - dtB;
-          });
-          
-          setAllJobs(sortedData);
-          setIsLoading(false);
-          localStorage.setItem("cachedJobs", JSON.stringify(sortedData));
-          localStorage.setItem("cachedJobsTime", now.toString());
-        },
-        error: (err) => {
-          console.error("Error loading CSV:", err);
-          setIsLoading(false);
-        }
-      });
+  const { data: rawData, error, isLoading } = useSWR(
+    dataUrl,
+    csvFetcher,
+    {
+      refreshInterval: 60000, // Tự động cập nhật mỗi 60 giây
+      revalidateOnFocus: true
     }
-  }, []);
+  );
 
-  const uniqueDates = useMemo(() => {
-    const dates = allJobs.map(job => job.Date).filter(Boolean);
-    return [...new Set(dates)];
-  }, [allJobs]);
+  const processedData = useMemo(() => {
+    if (!rawData || error) return { jobs: [], dates: [] };
 
-  return { jobs: allJobs, isLoading, uniqueDates };
+    // Lọc bỏ dòng rỗng (dựa trên cột 'Date livestream')
+    const validData = rawData.filter(row => row['Date livestream'] && row['Date livestream'].includes('/'));
+    
+    // Sắp xếp (dựa trên cột 'Date livestream' và 'StartTime')
+    const sortedData = validData.sort((a, b) => {
+      const dtA = parseDate(a['Date livestream'], a.StartTime);
+      const dtB = parseDate(b['Date livestream'], b.StartTime);
+      return dtA - dtB;
+    });
+
+    const uniqueDates = [...new Set(sortedData.map(job => job['Date livestream']).filter(Boolean))];
+
+    return { jobs: sortedData, dates: uniqueDates };
+  }, [rawData, error]);
+
+  return { 
+    jobs: processedData.jobs, 
+    uniqueDates: processedData.dates,
+    isLoading: isLoading && !rawData, 
+    error 
+  };
 }
 
 // --- UI COMPONENTS (GỘP CHUNG) ---
@@ -164,12 +160,16 @@ const JobItem = ({ job }) => {
   
   return (
     <motion.div className="schedule-item" variants={itemVariants}>
-      <h4>{job.JobName || 'Unnamed Job'}</h4>
+      {/* ⚠️ GIẢ ĐỊNH TÊN CỘT: Sửa 'job.JobName' thành 'job.Store' */}
+      <h4>{job.Store || 'Unnamed Job'}</h4>
       <p className="time"><FiClock /> {timeGroup}</p>
-      <p className="location"><FiMapPin /> {job.Location || 'No location'}</p>
-      <p className="session"><FiMic /> Session type: {job.SessionType || '—'}</p>
-      <p className="mc"><FiUser /> {job.MC || '...'}</p>
-      <p className="standby"><FiMonitor /> {job.Standby || '...'}</p>
+      {/* ⚠️ GIẢ ĐỊNH TÊN CỘT: Sửa 'job.Location' thành 'job.Address' */}
+      <p className="location"><FiMapPin /> {job.Address || 'No location'}</p>
+      <p className="session"><FiMic /> Session type: {job['Type of session'] || '—'}</p>
+      {/* ⚠️ GIẢ ĐỊNH TÊN CỘT: Sửa 'job.MC' thành 'job.Talent 1' */}
+      <p className="mc"><FiUser /> {job['Talent 1'] || '...'}</p>
+      {/* ⚠️ GIẢ ĐỊNH TÊN CỘT: Sửa 'job.Standby' thành 'job.Coordinator 1' */}
+      <p className="standby"><FiMonitor /> {job['Coordinator 1'] || '...'}</p>
     </motion.div>
   );
 };
@@ -177,12 +177,12 @@ const JobItem = ({ job }) => {
 // --- COMPONENT APP CHÍNH ---
 function App() {
   const [theme, toggleTheme] = useDarkMode();
-  const { jobs, isLoading, uniqueDates } = useJobData();
+  const { jobs, isLoading, uniqueDates, error } = useJobData();
+  
   const [dateFilter, setDateFilter] = useState(() => localStorage.getItem('lastViewedDate') || '');
   const [inputValue, setInputValue] = useState('Quốc Huy'); 
   const [nameFilter, setNameFilter] = useState('Quốc Huy'); 
 
-  // --- EFFECTS (Debounce & Cache Filter) ---
   useEffect(() => {
     const timerId = setTimeout(() => setNameFilter(inputValue), 300);
     return () => clearTimeout(timerId);
@@ -192,26 +192,28 @@ function App() {
     localStorage.setItem('lastViewedDate', dateFilter);
   }, [dateFilter]);
 
-  // --- LOGIC LỌC (ĐÃ FIX LỖI TÌM TIẾNG VIỆT) ---
+  // Logic lọc
   const filteredJobs = useMemo(() => {
     let jobsToFilter = jobs;
     const normNameFilter = removeAccents(nameFilter.toLowerCase().trim());
     if (normNameFilter) {
       jobsToFilter = jobsToFilter.filter(job => {
-        const mc = removeAccents((job.MC || '').toLowerCase()).includes(normNameFilter);
-        const standby = removeAccents((job.Standby || '').toLowerCase()).includes(normNameFilter);
-        const jobName = removeAccents((job.JobName || '').toLowerCase()).includes(normNameFilter);
-        const location = removeAccents((job.Location || '').toLowerCase()).includes(normNameFilter);
+        // ⚠️ GIẢ ĐỊNH TÊN CỘT: Sửa logic lọc
+        const mc = removeAccents((job['Talent 1'] || '').toLowerCase()).includes(normNameFilter);
+        const standby = removeAccents((job['Coordinator 1'] || '').toLowerCase()).includes(normNameFilter);
+        const jobName = removeAccents((job.Store || '').toLowerCase()).includes(normNameFilter);
+        const location = removeAccents((job.Address || '').toLowerCase()).includes(normNameFilter);
         return mc || standby || jobName || location;
       });
     }
+    
     if (dateFilter) { 
-      jobsToFilter = jobsToFilter.filter(job => (job.Date || '').toString() === dateFilter);
+      jobsToFilter = jobsToFilter.filter(job => (job['Date livestream'] || '').toString() === dateFilter);
     }
     return jobsToFilter;
   }, [jobs, dateFilter, nameFilter]); 
 
-  // --- Logic Gom Nhóm (Đã fix lỗi undefined) ---
+  // Logic Gom Nhóm
   const groupedJobs = useMemo(() => {
     return filteredJobs.reduce((acc, job) => {
       const timeGroup = `${job.StartTime || 'N/A'}–${job.EndTime || 'N/A'}`;
@@ -223,7 +225,7 @@ function App() {
 
   const jobGroups = Object.keys(groupedJobs);
 
-  // --- GIAO DIỆN (JSX) ---
+  // Giao diện
   return (
     <div className="App">
       <Header theme={theme} toggleTheme={toggleTheme} />
@@ -236,13 +238,17 @@ function App() {
           uniqueDates={uniqueDates}
         />
         <div id="schedule-list" className="schedule-list">
-          {isLoading ? (
+          {error ? (
+             <motion.div className="empty-state" initial={{opacity:0}} animate={{opacity:1}}>
+                <FiSearch className="empty-state-icon" style={{color: '#dc3545'}}/>
+                <h3>Error Loading Data</h3>
+                <p>Could not connect to the Google Sheet. Please check the link or sharing permissions.</p>
+            </motion.div>
+          ) : isLoading ? (
             <SkeletonLoader />
           ) : (jobs.length > 0 && jobGroups.length === 0) ? (
-            // Nếu có dữ liệu (jobs > 0) nhưng không tìm thấy (jobGroups = 0)
             <EmptyState />
           ) : (
-            // Nếu đang tải, hoặc có kết quả
             <AnimatePresence>
               {jobGroups.map(timeGroup => (
                 <motion.div 
