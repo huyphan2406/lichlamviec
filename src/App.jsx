@@ -1,7 +1,7 @@
 /*
 =================================================
   File: App.jsx (Nội dung chính của ứng dụng Lịch)
-  ✅ LOGIC MỚI: Đăng xuất sẽ giải phóng activeUID trong Firestore.
+  ✅ LOGIC MỚI: Đăng xuất ưu tiên Auth Logout và giải phóng mã code.
 =================================================
 */
 
@@ -11,6 +11,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import useSWR from 'swr';
 import * as ics from 'ics';
 import { Link } from 'react-router-dom'; 
+import { collection, query, where, getDocs, updateDoc } from 'firebase/firestore'; // Firestore functions
 import { 
   // Icons chính
   FiClock, FiMapPin, FiMic, FiUser, FiMonitor,
@@ -23,8 +24,7 @@ import './App.css';
 
 // 🌟 IMPORT LOGIC AUTH VÀ FIRESTORE 🌟
 import { useAuth } from './AuthContext.jsx'; 
-import { auth, signOut, db } from './firebase.js'; // Cần auth, signOut, và db
-import { collection, query, where, getDocs, updateDoc } from 'firebase/firestore'; // Firestore functions
+import { auth, signOut, db } from './firebase.js'; 
 
 
 // --- HÀM HỖ TRỢ (GIỮ NGUYÊN) ---
@@ -189,42 +189,45 @@ const NotificationPopup = () => {
 // --- UI COMPONENTS ---
 
 const Header = ({ theme, toggleTheme }) => {
-  // 🌟 LẤY currentUser VÀ HÀM LOGOUT TỪ CONTEXT 🌟
   const { currentUser } = useAuth(); 
 
   const handleLogout = async () => {
     try {
-        // 1. TÌM VÀ GIẢI PHÓNG MÃ CODE ĐANG ĐƯỢC SỬ DỤNG
         if (currentUser) {
             const userUID = currentUser.uid;
             
-            // Tìm mã code mà activeUID khớp với UID của người dùng hiện tại
+            // 1. TÌM VÀ GIẢI PHÓNG MÃ CODE ĐANG ĐƯỢC SỬ DỤNG
             const q = query(
-                collection(db, 'code'), 
+                collection(db, 'code'), // Collection 'code'
                 where('activeUID', '==', userUID)
             );
             
-            // ⚠️ CHÚ Ý: getDocs là thao tác bất đồng bộ
+            // Lấy Document Snapshot
             const querySnapshot = await getDocs(q);
             
             if (!querySnapshot.empty) {
-                // Chỉ lấy document đầu tiên (giả sử 1 UID chỉ dùng 1 mã)
                 const docToUpdate = querySnapshot.docs[0]; 
                 
-                // 2. ĐẶT activeUID = null ĐỂ GIẢI PHÓNG MÃ
+                // 2. ĐẶT activeUID = "" (CHUỖI RỖNG) ĐỂ GIẢI PHÓNG MÃ
                 await updateDoc(docToUpdate.ref, {
-                    activeUID: null 
+                    activeUID: "" 
                 });
-                console.log(`Mã code ${docToUpdate.id} đã được giải phóng.`);
+                console.log(`Mã code ${docToUpdate.id} đã được giải phóng thành công.`);
             }
         }
-        
-        // 3. Thực hiện Đăng xuất Firebase Auth
-        await signOut(auth); 
-
     } catch (error) {
-      console.error("Lỗi đăng xuất/giải phóng code:", error);
-      alert("Đăng xuất thất bại! Vui lòng thử lại.");
+      // ⚠️ CẢNH BÁO LỖI FIRESTORE nhưng KHÔNG ngăn cản Đăng xuất
+      console.error("Lỗi giải phóng code (sẽ tiếp tục đăng xuất):", error);
+      alert("Cảnh báo: Không thể giải phóng mã code trong Database. Vui lòng thử đăng nhập lại.");
+    } finally {
+      // 3. ĐẢM BẢO ĐĂNG XUẤT AUTH LUÔN ĐƯỢC GỌI
+      try {
+          await signOut(auth);
+          console.log("Đăng xuất Firebase Auth thành công.");
+      } catch (authError) {
+          console.error("Lỗi đăng xuất Auth:", authError);
+          alert("Đăng xuất Auth thất bại!");
+      }
     }
   };
 
