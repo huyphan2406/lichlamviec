@@ -203,7 +203,7 @@ const FilterBar = ({ dateFilter, setDateFilter, inputValue, setInputValue, uniqu
         <input 
           type="text" 
           id="nameInput" 
-          placeholder="e.g., Quốc Huy" // Sửa lại placeholder
+          placeholder="e.g., Your Name" // Sửa lại placeholder
           value={inputValue} 
           onChange={(e) => setInputValue(e.target.value)} 
         />
@@ -215,7 +215,7 @@ const FilterBar = ({ dateFilter, setDateFilter, inputValue, setInputValue, uniqu
         disabled={filteredJobs.length === 0}
       >
         <FiDownload size={18} />
-        Export Filtered (.ics)
+        Export to Google Calendar (.ics)
       </button>
     </div>
   );
@@ -269,8 +269,8 @@ function App() {
   const [dateFilter, setDateFilter] = useState(() => getFormattedToday());
 
   // ⚠️ FIX LỖI: Thêm 2 dòng state bị thiếu
-  const [inputValue, setInputValue] = useState('Quốc Huy'); 
-  const [nameFilter, setNameFilter] = useState('Quốc Huy'); 
+  const [inputValue, setInputValue] = useState(''); 
+  const [nameFilter, setNameFilter] = useState(''); 
 
   useEffect(() => {
     const timerId = setTimeout(() => setNameFilter(inputValue), 300);
