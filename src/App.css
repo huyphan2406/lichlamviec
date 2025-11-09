@@ -743,3 +743,258 @@ body[data-theme='dark'] .auth-button.crm-dashboard-button:hover {
     background-color: #777;
     border-color: #777;
 }
+
+/*
+=================================================
+  File: App.css (Stylesheet - Phiên bản Tối Ưu Hoàn Chỉnh & Responsive)
+=================================================
+*/
+
+/* --- BIẾN MÀU (CSS VARIABLES) --- */
+:root {
+  --font-main: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --color-bg: #f7f8fa;
+  --color-card: #ffffff;
+  --color-text-primary: #1a1a1a;
+  --color-text-secondary: #555;
+  --color-border: #eee;
+  --color-input-bg: #fdfdfd;
+  --color-shadow: rgba(0, 0, 0, 0.04);
+  --color-shadow-hover: rgba(0, 0, 0, 0.07);
+  --color-brand: #007bff;
+  --color-brand-hover: #0067d7;
+  --color-brand-active: #0056b3;
+  --color-brand-light: rgba(0,123,255,0.1);
+  --color-danger: #dc3545;
+  --color-grey: #6c757d;
+  --transition-speed: 0.3s ease;
+  
+  /* Màu Report và Warning */
+  --color-warning: #ffc107;
+  --color-warning-light: #fff3cd; 
+  --color-report-primary: #28a745; 
+  --color-report-hover: #218838;
+  --color-report-active: #19692c;
+  --color-report-shadow-rgb: 40, 167, 69;
+  --color-brand-rgb: 0, 123, 255; 
+  --color-grey-hover: #5a6268;
+}
+
+/* Chế độ Tối (Dark Mode) */
+body[data-theme='dark'] {
+  --color-bg: #121212;
+  --color-card: #1e1e1e;
+  --color-text-primary: #f1f1f1;
+  --color-text-secondary: #aaa;
+  --color-border: #333;
+  --color-input-bg: #2a2a2a;
+  --color-shadow: rgba(0, 0, 0, 0.2);
+  --color-shadow-hover: rgba(0, 0, 0, 0.3);
+  --color-brand: #0d8eff;
+  --color-brand-hover: #0a70cc;
+  --color-brand-active: #085399;
+  --color-brand-light: rgba(13,142,255,0.15);
+  --color-warning: #ffb800;
+  --color-warning-light: #4a3400;
+  --color-report-primary: #17ad35; 
+  --color-report-hover: #138c2c;
+  --color-report-active: #106f23;
+  --color-report-shadow-rgb: 23, 173, 53;
+  --color-brand-rgb: 13, 142, 255;
+}
+
+/* --- CÀI ĐẶT CƠ BẢN --- */
+body {
+  font-family: var(--font-main);
+  background-color: var(--color-bg);
+  color: var(--color-text-primary);
+  margin: 0;
+  padding: 20px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color var(--transition-speed), color var(--transition-speed);
+}
+
+.App { max-width: 700px; margin: 0 auto; }
+main { padding: 0; }
+
+/* 🌟 Temporary Notification */
+.temporary-notification {
+    position: fixed; top: 0; left: 50%; transform: translateX(-50%); z-index: 999;
+    padding: 10px 20px; background-color: var(--color-brand); color: #ffffff;
+    border-radius: 0 0 8px 8px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    font-size: 0.9rem; font-weight: 500; display: flex; align-items: center;
+}
+
+
+/* --- HEADER & DARK MODE TOGGLE (Sửa lỗi che tiêu đề) --- */
+.app-header {
+  display: flex; justify-content: space-between; align-items: center; padding: 10px 0; margin-bottom: 15px;
+}
+.app-header h1 {
+  margin: 0; color: var(--color-text-primary); font-size: 1.8rem; font-weight: 700; transition: color var(--transition-speed);
+  
+  /* 🌟 TỐI ƯU ỔN ĐỊNH: Cho phép co lại, không bao giờ bị tràn */
+  flex-shrink: 1; 
+  min-width: 0; 
+  padding-right: 15px; 
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.header-controls { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+.auth-buttons { display: flex; align-items: center; gap: 0; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.15); }
+.auth-button {
+    display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 8px 12px; border: none;
+    font-size: 0.85rem; font-weight: 500; font-family: var(--font-main); cursor: pointer;
+    white-space: nowrap; transition: all 0.2s ease;
+}
+.auth-button svg { font-size: 1em; flex-shrink: 0; }
+
+/* Nút Login/Register/CRM Styles */
+.auth-button.login { background-color: var(--color-card); color: var(--color-text-primary); border-right: 1px solid var(--color-border); }
+.auth-button.login:hover { background-color: var(--color-input-bg); }
+.auth-button.register { background-color: var(--color-brand); color: #ffffff; }
+.auth-button.register:hover { background-color: var(--color-brand-hover); }
+.auth-button.crm-dashboard-button { background-color: var(--color-grey); color: #fff; border: none; border-radius: 6px; padding: 7px 12px; font-size: 0.85rem; font-weight: 500; }
+.auth-button.crm-dashboard-button:hover { background-color: var(--color-grey-hover); }
+
+/* Dark Mode Toggle */
+.theme-toggle { display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--color-text-secondary); padding: 6px; border-radius: 20px; transition: background-color var(--transition-speed), color var(--transition-speed); }
+.theme-toggle:hover { background-color: var(--color-border); }
+.theme-toggle-switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+.theme-toggle-switch input { opacity: 0; width: 0; height: 0; }
+.theme-toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
+.theme-toggle-slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+input:checked + .theme-toggle-slider { background-color: var(--color-brand); }
+input:checked + .theme-toggle-slider:before { transform: translateX(20px); }
+
+/* --- FILTER BAR (Responsive Grid) --- */
+.filter-container {
+  padding: 20px; background-color: var(--color-card); border-radius: 12px;
+  box-shadow: 0 4px 12px var(--color-shadow); margin-bottom: 25px;
+}
+.form-group-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 15px; }
+@media (max-width: 640px) { /* Thiết lập Responsive cho Filter Grid */
+    .form-group-grid { grid-template-columns: 1fr; gap: 0; }
+    .form-group-grid .full-width { grid-column: span 1; margin-top: 15px; }
+    .form-group { margin-bottom: 15px; }
+    .form-group:last-child { margin-bottom: 0; }
+}
+.form-group label { display: block; font-weight: 600; margin-bottom: 8px; font-size: 0.9em; color: var(--color-text-secondary); }
+.form-group input, .form-group select { width: 100%; padding: 12px; font-size: 1em; border: 1px solid var(--color-border); border-radius: 8px; box-sizing: border-box; font-family: var(--font-main); background-color: var(--color-input-bg); color: var(--color-text-primary); transition: all var(--transition-speed); }
+.input-with-icon { position: relative; display: flex; align-items: center; }
+.input-with-icon input { padding-left: 40px; }
+.download-button { 
+  display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 14px;
+  font-size: 1rem; font-weight: 600; background-color: var(--color-brand); color: #ffffff; border: none;
+  border-radius: 8px; cursor: pointer; transition: background-color 0.2s ease, box-shadow 0.2s ease; margin-top: 15px;
+}
+.download-button:hover { background-color: var(--color-brand-hover); box-shadow: 0 4px 12px rgba(0,123,255,0.3); }
+
+
+/* --- SCHEDULE LIST & JOB ITEM --- */
+.schedule-list { padding: 0; }
+.schedule-group-title { /* Giữ nguyên */ }
+.schedule-item {
+  background-color: var(--color-card); border-radius: 12px; box-shadow: 0 4px 12px var(--color-shadow);
+  padding: 20px; margin: 15px 0; transition: transform 0.2s ease-out, box-shadow var(--transition-speed), background-color var(--transition-speed);
+}
+.schedule-item:hover { transform: translateY(-3px); box-shadow: 0 6px 16px var(--color-shadow-hover); }
+
+/* 🌟 CÁC STYLE CHO JOB ITEM CON */
+.job-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px; 
+}
+.schedule-item h4 {
+  margin: 0; font-size: 1.25em; color: var(--color-text-primary); font-weight: 600; transition: color var(--transition-speed);
+}
+
+/* 🌟🌟🌟 NÚT ĐIỀN REPORT NHANH (TỐI ƯU MÀU VÀ HIỆU ỨNG) 🌟🌟🌟 */
+.quick-report-button {
+    display: flex; align-items: center; gap: 7px; padding: 10px 20px; font-size: 0.9em; font-weight: 600;
+    background-color: var(--color-report-primary); color: #fff; border: none; border-radius: 8px; 
+    cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 10px rgba(var(--color-report-shadow-rgb), 0.3);
+}
+.quick-report-button:hover { background-color: var(--color-report-hover); transform: translateY(-2px); box-shadow: 0 8px 15px rgba(var(--color-report-shadow-rgb), 0.45); }
+.quick-report-button:active { transform: translateY(0); box-shadow: 0 2px 5px rgba(var(--color-report-shadow-rgb), 0.3); background-color: var(--color-report-active); }
+
+.schedule-item p { /* Style chung cho các dòng thông tin */
+  margin: 10px 0; display: flex; align-items: center; color: var(--color-text-secondary); font-size: 0.95em; font-weight: 500;
+}
+.schedule-item p svg {
+  margin-right: 12px; font-size: 1.2em; color: var(--color-brand); flex-shrink: 0;
+}
+.schedule-item p.location svg { color: var(--color-danger); }
+.schedule-item p.time svg { color: var(--color-grey); }
+
+/* --- FEATURE 2 CSS (Highlight) --- */
+.schedule-item.job-active { /* Giữ nguyên style highlight */
+    border: 2px solid var(--color-warning); background-color: var(--color-warning-light); 
+    box-shadow: 0 4px 15px rgba(255, 193, 7, 0.4); animation: pulse-border 2s infinite ease-in-out;
+}
+@keyframes pulse-border { /* Giữ nguyên keyframes */ }
+
+
+/* 🌟🌟🌟 KHỐI CSS SỬA LỖI BỐ CỤC GROUP HOST/BRAND (GRID) 🌟🌟🌟 */
+.job-groups-footer-container {
+    margin-top: 15px;
+    padding-top: 10px;
+    border-top: 1px solid var(--color-border);
+    
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Chia thành hai cột bằng nhau */
+    gap: 15px; /* Khoảng cách giữa các mục */
+    align-items: center;
+}
+
+.job-group-item {
+    display: flex;
+    align-items: center;
+    font-size: 0.95em;
+    font-weight: 500;
+    color: var(--color-text-primary);
+    line-height: 1.4;
+}
+
+.job-group-icon {
+    margin-right: 10px;
+    color: var(--color-brand);
+    flex-shrink: 0;
+}
+
+.job-group-value {
+    margin-left: 5px;
+    color: var(--color-text-secondary);
+    font-weight: 400; 
+    overflow: hidden; 
+    text-overflow: ellipsis;
+    white-space: nowrap; 
+}
+
+/* Căn chỉnh riêng cho cột Group Host (Cột thứ 2) */
+.group-host {
+    justify-self: end; 
+    text-align: right; 
+}
+.group-host .job-group-item {
+    justify-content: flex-end; 
+}
+
+/* Xử lý Responsive (cho màn hình nhỏ hơn) */
+@media (max-width: 480px) {
+    .job-groups-footer-container {
+        grid-template-columns: 1fr; /* Xếp chồng thành 1 cột */
+        gap: 5px;
+    }
+    .group-host {
+        justify-self: start; 
+        text-align: left;
+    }
+    .group-host .job-group-item {
+        justify-content: flex-start;
+    }
+}
