@@ -1,10 +1,6 @@
 import { useState, useMemo, useEffect, useCallback, memo, useRef } from 'react';
-// 🌟 TỐI ƯU 1: Đã xóa Papa.parse (chuyển sang JSON)
-// import Papa from 'papaparse';
 import { motion, AnimatePresence } from 'framer-motion';
 import useSWR from 'swr';
-// 🌟 TỐI ƯU 3: Đã xóa ics (sẽ được tải lười)
-// import * as ics from 'ics';
 import { 
   FiClock, FiMapPin, FiMic, FiUser, FiMonitor,
   FiMoon, FiSun,
@@ -12,13 +8,11 @@ import {
   FiCalendar, FiInfo, FiTag, FiAward,
   FiLogIn, FiUserPlus,
   FiFilter, FiUsers, FiUserCheck, FiEdit3, 
-  FiBarChart2 // Icon cho CRM (nếu bạn thêm lại)
+  FiBarChart2
 } from 'react-icons/fi';
-// 🌟 TỐI ƯU 2: Thêm import cho Virtualizer
 import { useVirtualizer } from '@tanstack/react-virtual';
 import './App.css'; 
 
-// --- HÀM HỖ TRỢ ---
 const removeAccents = (str) => {
   if (!str) return '';
   return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D");
@@ -41,10 +35,8 @@ const getFormattedToday = () => {
   return `${day}/${month}/${year}`;
 };
 
-// 🌟 TỐI ƯU 1: HÀM TẢI DỮ LIỆU (FETCHER) MỚI CHO SWR
 const jsonFetcher = (url) => fetch(url).then((res) => res.json());
 
-// 🌟 HÀM KIỂM TRA CÔNG VIỆC ĐANG HOẠT ĐỘNG (60 PHÚT)
 const isJobActive = (job) => {
     try {
         const now = new Date();
@@ -52,7 +44,7 @@ const isJobActive = (job) => {
         const [startTimeStr, endTimeStr] = (job['Time slot'] || '00:00 - 00:00').split(' - ');
         
         const [startHour, startMinute] = startTimeStr.split(':').map(Number);
-        const [endHour, endMinute] = endTimeStr.split(':').map(Number); 
+        const [endHour, endMinute] = (endTimeStr || '00:00').split(':').map(Number); // Thêm fallback cho endMinute
 
         const jobStartTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), startHour, startMinute);
         jobStartTime.setFullYear(parseInt(year), parseInt(month) - 1, parseInt(day));
@@ -72,6 +64,7 @@ const isJobActive = (job) => {
         return isRunning || isStartingSoon;
 
     } catch (e) {
+        console.error("Lỗi isJobActive:", e, job); // Log lỗi nếu parse thời gian thất bại
         return false;
     }
 };
@@ -242,16 +235,25 @@ const handleAuthClick = (showAuthPopup) => {
 
 const Header = ({ theme, toggleTheme, showAuthPopup }) => ( 
   <header className="app-header">
-    
-    {/* 🌟 HÀNG 1: TIÊU ĐỀ CĂN GIỮA (Sử dụng CSS để căn giữa) */}
-    <h1 className="header-title-centered">
+    <h1 style={{margin: 0, paddingRight: '15px', flexShrink: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>
         Lịch làm việc
     </h1>
     
-    {/* 🌟 HÀNG 2: KHỐI ĐIỀU KHIỂN (Căn 2 bên) */}
     <div className="header-controls">
 
-      {/* 🌟 VỊ TRÍ MỚI: NÚT SÁNG/TỐI (BÊN TRÁI) */}
+      {/* Nút CRM (Đã bị ẩn/xóa theo yêu cầu trước, nhưng vẫn giữ code nếu bạn cần) */}
+      {/* <button 
+        className="auth-button crm-dashboard-button" 
+        title="Dashboard CRM"
+        onClick={() => alert("Chức năng Dashboard/CRM đang được phát triển!")}
+        style={{ flexShrink: 0 }} 
+      >
+        <FiBarChart2 size={16} />
+        <span>CRM</span>
+      </button> 
+      */}
+      
+      {/* Nút Sáng/Tối (BÊN TRÁI AUTH) */}
       <label className="theme-toggle" title="Toggle Light/Dark Mode">
         {theme === 'light' ? <FiMoon size={18} /> : <FiSun size={18} />}
         <div className="theme-toggle-switch">
@@ -260,7 +262,6 @@ const Header = ({ theme, toggleTheme, showAuthPopup }) => (
         </div>
       </label>
       
-      {/* Nút Đăng nhập/Đăng ký (Khối liền mạch - BÊN PHẢI) */}
       <div className="auth-buttons">
         <button 
           className="auth-button login" 
@@ -281,7 +282,6 @@ const Header = ({ theme, toggleTheme, showAuthPopup }) => (
           <span>Đăng ký</span>
         </button>
       </div>
-
     </div>
   </header>
 );
@@ -397,6 +397,8 @@ const FilterBar = ({
                 {uniqueStores.map(store => <option key={store} value={store}>{store}</option>)}
             </select>
         </div>
+
+        {/* Đã xóa Group Brand và Group Host khỏi FilterBar */}
 
         <div className="form-group filter-search full-width">
             <label htmlFor="nameInput">Tìm Kiếm</label>
@@ -596,11 +598,6 @@ function App() {
 
   }, [jobs, dateFilter, nameFilter, sessionFilter, storeFilter, currentTime]);
 
-  // 🌟 TỐI ƯU HÓA 2: Bỏ giới hạn .slice()
-  // const limitedJobs = useMemo(() => {
-  //     return filteredJobs.slice(0, 50);
-  // }, [filteredJobs]);
-
   // Logic Gom Nhóm (Dùng toàn bộ, không giới hạn)
   const groupedJobs = useMemo(() => {
     return filteredJobs.reduce((acc, job) => { // 👈 Dùng filteredJobs
@@ -609,7 +606,7 @@ function App() {
       acc[timeGroup].push(job);
       return acc;
     }, {});
-  }, [filteredJobs]); // 👈 Dùng filteredJobs
+  }, [filteredJobs]);
 
   // 🌟 TỐI ƯU HÓA 2: "Làm phẳng" (Flatten) dữ liệu để ảo hóa
   const flatRowItems = useMemo(() => {
@@ -617,14 +614,7 @@ function App() {
     const jobGroups = Object.keys(groupedJobs);
 
     jobGroups.forEach(timeGroup => {
-        // 1. Thêm Header
-        items.push({
-            id: `header_${timeGroup}`,
-            type: 'HEADER',
-            content: timeGroup
-        });
-        
-        // 2. Thêm Jobs
+        items.push({ id: `header_${timeGroup}`, type: 'HEADER', content: timeGroup });
         groupedJobs[timeGroup].forEach((job, index) => {
             items.push({
                 id: `job_${timeGroup}_${index}`,
@@ -642,19 +632,17 @@ function App() {
   const parentRef = useRef(null);
   
   const rowVirtualizer = useVirtualizer({
-    count: flatRowItems.length, // Tổng số lượng (Header + Job)
+    count: flatRowItems.length, 
     getScrollElement: () => parentRef.current,
     estimateSize: (index) => {
-        // Ước tính chiều cao
         const itemType = flatRowItems[index]?.type;
-        // 🌟 Điều chỉnh chiều cao ước tính
-        return itemType === 'HEADER' ? 50 : 360; // 50px cho Header, 360px cho JobItem (Vì có thêm 2 dòng Group)
+        return itemType === 'HEADER' ? 50 : 360; // 50px cho Header, 360px cho JobItem
     },
-    overscan: 5, // Render thêm 5 item bên ngoài màn hình
+    overscan: 5, 
   });
 
   const virtualItems = rowVirtualizer.getVirtualItems();
-  const totalFilteredCount = filteredJobs.length; // 👈 Đếm tổng số lượng thực tế
+  const totalFilteredCount = filteredJobs.length;
 
   // Giao diện
   return (
@@ -688,7 +676,6 @@ function App() {
           showTempNotification={showTempNotification}
         />
         
-        {/* 🌟 HIỂN THỊ SỐ LƯỢNG CÔNG VIỆC (Đã bỏ giới hạn) */}
         {jobs.length > 0 && totalFilteredCount > 0 && (
             <motion.div 
                 className="job-count-summary"
