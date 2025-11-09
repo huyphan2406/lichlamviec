@@ -77,130 +77,75 @@ main {
 
 /* --- HEADER & DARK MODE TOGGLE --- */
 .app-header {
-  /* Khôi phục lại cấu trúc 1 hàng (row) */
+  /* 🌟 Bố cục chính là xếp chồng (2 hàng) */
   display: flex;
-  justify-content: space-between; /* Căn tiêu đề và khối nút ra hai bên */
-  align-items: center;
+  flex-direction: column; 
+  align-items: flex-start; /* Giữ nguyên flex-start để các khối con tự căn chỉnh */
   
   padding: 10px 0;
   margin-bottom: 15px;
+  width: 100%; 
 }
 
 .app-header h1 {
-  /* Tiêu đề nằm bên trái, cho phép co lại nếu màn hình hẹp */
-  margin: 0;
+  /* 🌟 KHỐI TIÊU ĐỀ: CĂN GIỮA TRÊN HÀNG RIÊNG */
+  margin: 0 auto 10px auto; /* Đẩy h1 ra giữa và thêm margin dưới */
+  width: 100%; 
+  
   color: var(--color-text-primary);
   font-size: 1.8rem; 
   font-weight: 700;
-  transition: color var(--transition-speed);
+  text-align: center; /* Căn giữa chữ */
   
-  /* Flexbox: Đảm bảo tiêu đề co lại để nhường chỗ cho khối nút */
-  flex-shrink: 1; 
-  min-width: 0; 
-  padding-right: 15px; /* Tạo khoảng cách với khối nút */
+  /* Đảm bảo h1 không bị lỗi Responsive */
+  flex-shrink: 0; 
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  padding-right: 0; 
 }
 
 .header-controls {
-    /* Khối điều khiển nằm bên phải */
+    /* 🌟 KHỐI ĐIỀU KHIỂN (HÀNG DƯỚI): CĂN GIỮA NỘI DUNG */
     display: flex;
     align-items: center;
+    justify-content: center; /* 🌟 ĐÃ THAY ĐỔI: Căn giữa toàn bộ khối nút */
+    width: 100%; /* Chiếm 100% chiều rộng để căn giữa */
     gap: 12px;
-    flex-shrink: 0; /* Đảm bảo khối điều khiển không bị co */
+    flex-shrink: 0; 
 }
 
-/* --- KHỐI AUTH BUTTONS (LIỀN MẠCH) --- */
+/* 🌟 Bổ sung: Class cho H1 để tránh xung đột với h4 */
+.header-title-centered {
+  margin: 0 auto 10px auto; 
+  width: 100%; 
+  text-align: center;
+}
+
+/* --- KHỐI AUTH BUTTONS --- */
 .auth-buttons {
-    display: flex;
-    align-items: center;
-    gap: 0; /* Xóa gap để các nút dính vào nhau */
-    border-radius: 8px; 
-    overflow: hidden; 
-    box-shadow: 0 1px 4px rgba(0,0,0,0.15); 
-    flex-shrink: 0;
-}
-
+    display: flex; align-items: center; gap: 0; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.15); }
 .auth-button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 5px;
-    padding: 7px 10px;
-    border: none;
-    border-radius: 6px;
-    font-size: 0.85rem;
-    font-weight: 500;
-    font-family: var(--font-main);
-    cursor: pointer;
-    white-space: nowrap;
-    transition: all 0.2s ease;
+    display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 8px 12px; border: none;
+    font-size: 0.85rem; font-weight: 500; font-family: var(--font-main); cursor: pointer;
+    white-space: nowrap; transition: all 0.2s ease;
 }
-.auth-button svg {
-    font-size: 1em;
-    flex-shrink: 0;
-}
+.auth-button svg { font-size: 1em; flex-shrink: 0; }
 
 /* Nút Login (Cột 1) */
-.auth-button.login {
-    background-color: var(--color-input-bg);
-    border: 1px solid var(--color-border);
-    border-right: 1px solid var(--color-border); /* Dùng border để tách */
-    color: var(--color-text-secondary);
-}
-.auth-button.login:hover {
-    background-color: var(--color-border);
-    color: var(--color-text-primary);
-}
+.auth-button.login { background-color: var(--color-input-bg); border: 1px solid var(--color-border); border-right: 1px solid var(--color-border); color: var(--color-text-secondary); }
+.auth-button.login:hover { background-color: var(--color-border); color: var(--color-text-primary); }
 
 /* Nút Register (Cột 2) */
-.auth-button.register {
-    background-color: var(--color-brand);
-    color: #ffffff;
-    border: 1px solid var(--color-brand);
-}
-.auth-button.register:hover {
-    background-color: var(--color-brand-hover);
-    border-color: var(--color-brand-hover);
-}
+.auth-button.register { background-color: var(--color-brand); color: #ffffff; border: 1px solid var(--color-brand); }
+.auth-button.register:hover { background-color: #0069d9; border-color: #0069d9; }
 
 /* Căn chỉnh Dark Mode Toggle */
-.theme-toggle {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    cursor: pointer;
-    color: var(--color-text-secondary);
-    padding: 6px;
-    border-radius: 20px;
-    transition: background-color var(--transition-speed), color var(--transition-speed);
-}
+.theme-toggle { display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--color-text-secondary); padding: 6px; border-radius: 20px; transition: background-color var(--transition-speed), color var(--transition-speed); }
 .theme-toggle:hover { background-color: var(--color-border); }
-.theme-toggle-switch {
-    position: relative;
-    display: inline-block;
-    width: 44px;
-    height: 24px;
-}
+.theme-toggle-switch { position: relative; display: inline-block; width: 44px; height: 24px; }
 .theme-toggle-switch input { opacity: 0; width: 0; height: 0; }
-.theme-toggle-slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background-color: #ccc;
-    transition: .4s;
-    border-radius: 24px;
-}
-.theme-toggle-slider:before {
-    position: absolute;
-    content: "";
-    height: 18px; width: 18px;
-    left: 3px; bottom: 3px;
-    background-color: white;
-    transition: .4s;
-    border-radius: 50%;
-}
+.theme-toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
 input:checked + .theme-toggle-slider { background-color: var(--color-brand); }
 input:checked + .theme-toggle-slider:before { transform: translateX(20px); }
 
