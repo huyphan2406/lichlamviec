@@ -1,31 +1,19 @@
-/*
-=================================================
-  File: App.jsx (Nội dung chính của ứng dụng Lịch)
-  ✅ ĐÃ FIX: Logic Đăng xuất ưu tiên Auth Logout và giải phóng mã code (activeUID: "").
-=================================================
-*/
-
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import Papa from 'papaparse';
 import { motion, AnimatePresence } from 'framer-motion';
 import useSWR from 'swr';
 import * as ics from 'ics';
-import { Link } from 'react-router-dom'; 
-import { collection, query, where, getDocs, updateDoc } from 'firebase/firestore'; 
 import { 
   FiClock, FiMapPin, FiMic, FiUser, FiMonitor,
-  FiMoon, FiSun, FiLogIn, FiUserPlus,
-  FiSearch, FiDownload, FiX, FiZap 
+  FiMoon, FiSun,
+  FiSearch, FiDownload, FiX, FiZap,
+  FiCalendar, FiInfo, FiTag, FiAward,
+  FiLogIn, FiUserPlus,
+  FiFilter
 } from 'react-icons/fi';
 import './App.css'; 
 
-// 🌟 IMPORT LOGIC AUTH VÀ FIRESTORE 🌟
-import { useAuth } from './AuthContext.jsx'; 
-// Đảm bảo file firebase.js có export { auth, signOut, db }
-import { auth, signOut, db } from './firebase.js'; 
-
-
-// --- HÀM HỖ TRỢ (GIỮ NGUYÊN) ---
+// --- HÀM HỖ TRỢ ---
 const removeAccents = (str) => {
   if (!str) return '';
   return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D");
@@ -93,20 +81,66 @@ function useJobData() {
   );
 
   const processedData = useMemo(() => {
-    if (!rawData || error) return { jobs: [], dates: [] };
+    if (!rawData || error) return { jobs: [], dates: [], sessions: [], stores: [] };
     const validData = rawData.filter(row => row['Date livestream'] && row['Date livestream'].includes('/'));
+    
     const sortedData = validData.sort((a, b) => {
       const dtA = parseDate(a['Date livestream'], a['Time slot']);
       const dtB = parseDate(b['Date livestream'], b['Time slot']);
       return dtA - dtB;
     });
+
     const uniqueDates = [...new Set(sortedData.map(job => job['Date livestream']).filter(Boolean))];
-    return { jobs: sortedData, dates: uniqueDates };
+    
+    // 🌟 SỬA LỖI CASE-SENSITIVE: Chuyển về chữ thường (.toLowerCase()) và làm sạch (.trim())
+    const sessionsList = sortedData
+      .map(job => (job['Type of session'] || '').trim())
+      .filter(s => s && s !== 'nan');
+    
+    // 🌟 Tạo danh sách duy nhất bằng cách chuyển tất cả về chữ thường trước khi đưa vào Set
+    const uniqueSessions = [...new Set(sessionsList.map(s => s.toLowerCase()))];
+    
+    // Lưu ý: Nếu muốn hiển thị tên đẹp (ví dụ: 'Ca Nối') trong dropdown, 
+    // chúng ta cần phải giữ lại giá trị gốc. 
+    // Nhưng để tránh trùng, tạm thời dùng lowercase cho logic set.
+
+    // 🌟 LƯU Ý QUAN TRỌNG: Để hiển thị đúng (Ca Nối) nhưng so sánh không bị lỗi:
+    // 1. Tạo Map để liên kết lowercase (key) với giá trị gốc (value)
+    const sessionMap = new Map();
+    sessionsList.forEach(session => {
+        const lowerCase = session.toLowerCase();
+        if (!sessionMap.has(lowerCase)) {
+            sessionMap.set(lowerCase, session);
+        }
+    });
+    
+    const uniqueSessionsForDisplay = Array.from(sessionMap.values()); // Lấy các giá trị gốc đã được lọc
+
+    // Áp dụng tương tự cho Stores
+    const storesList = sortedData.map(job => (job['Store'] || '').trim()).filter(s => s && s !== 'nan');
+    const storeMap = new Map();
+    storesList.forEach(store => {
+        const lowerCase = store.toLowerCase();
+        if (!storeMap.has(lowerCase)) {
+            storeMap.set(lowerCase, store);
+        }
+    });
+    const uniqueStoresForDisplay = Array.from(storeMap.values());
+
+
+    return { 
+        jobs: sortedData, 
+        dates: uniqueDates,
+        sessions: uniqueSessionsForDisplay, // 🌟 Dùng giá trị đã được làm sạch
+        stores: uniqueStoresForDisplay
+    };
   }, [rawData, error]);
 
   return { 
     jobs: processedData.jobs, 
     uniqueDates: processedData.dates,
+    uniqueSessions: processedData.sessions, // 🌟 Đã sửa
+    uniqueStores: processedData.stores,     // 🌟 Đã sửa
     isLoading: isLoading && !rawData, 
     error 
   };
@@ -126,17 +160,57 @@ const combineLocation = (job) => {
   const locationDisplay = [addressName, roomName]
     .filter(part => part && part !== 'nan') 
     .join(' | ');
-  return locationDisplay || 'Không có địa điểm';
+  return locationDisplay || 'No location';
 };
 
-// COMPONENT POPUP THÔNG BÁO
-const NotificationPopup = () => {
-    const [isVisible, setIsVisible] = useState(true); 
+// 🌟 COMPONENT THÔNG BÁO TẠM THỜI (thay thế alert)
+const TemporaryNotification = ({ message, onDismiss }) => {
+  useEffect(() => {
+    if (message) {
+      const timer = setTimeout(onDismiss, 3000); // Tự động biến mất sau 3 giây
+      return () => clearTimeout(timer);
+    }
+  }, [message, onDismiss]);
+
+  return (
+    <AnimatePresence>
+      {message && (
+        <motion.div
+          className="temporary-notification"
+          initial={{ y: -50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: -50, opacity: 0 }}
+        >
+          {message}
+          <button 
+            onClick={onDismiss} 
+            style={{ 
+              marginLeft: '10px', 
+              background: 'none', 
+              border: 'none', 
+              color: 'inherit', 
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center'
+            }}
+          >
+            <FiX size={16} />
+          </button>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+};
+
+
+// 🌟 COMPONENT POPUP THÔNG BÁO 
+const NotificationPopup = ({ isVisible, setIsVisible }) => {
+    // const LOCAL_STORAGE_KEY = 'dismissed_popup_15nov_v4'; // Dùng khi muốn bật ghi nhớ
 
     const handleDismiss = () => {
         setIsVisible(false);
-        localStorage.setItem('dismissed_popup_15nov', 'true');
     };
+
 
     return (
         <AnimatePresence>
@@ -147,8 +221,9 @@ const NotificationPopup = () => {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        onClick={handleDismiss} 
+                        onClick={handleDismiss}
                     />
+                    
                     <motion.div 
                         className="popup-modal"
                         initial={{ opacity: 0, x: "-50%", y: "calc(-50% + 50px)" }}
@@ -156,26 +231,40 @@ const NotificationPopup = () => {
                         exit={{ opacity: 0, x: "-50%", y: "calc(-50% + 50px)" }}
                         transition={{ type: 'spring', stiffness: 100, damping: 20 }}
                     >
+                        <div className="popup-header">
+                            <FiZap size={22} className="popup-icon-zap" />
+                            <h3>Thông Báo Quan Trọng</h3>
+                            <button className="popup-dismiss-btn" onClick={handleDismiss} title="Đóng">
+                                <FiX size={20} />
+                            </button>
+                        </div>
                         <div className="popup-content">
-                            <p className="popup-title">
-                                Lịch Livestream Nhanh & Chính Xác!
+                            
+                            <p className="popup-main-title">
+                                <strong>LỊCH LIVESTREAM NHANH & CHÍNH XÁC!</strong>
                             </p>
-                            <p>
-                                Web dùng để tra cứu lịch làm việc của <strong>Standby</strong> và <strong>Host</strong>.
+
+                            <p className="popup-content-text">
+                                Website này dùng để tra cứu lịch làm việc của <strong>Standby</strong> và <strong>Host</strong>.
                             </p>
-                            <p>
-                                Dùng miễn phí tới <strong className="highlight-date">15/11</strong>. Sau ngày 15, bạn cần đăng kí tài khoản để sử dụng.
+                            
+                            <hr className="popup-divider" />
+                            
+                            <p className="popup-content-text popup-highlight-area">
+                                **DÙNG THỬ:** Miễn phí tới ngày <strong className="highlight-date">30/11</strong>.
+                                <br/>
+                                Sau ngày 30, bạn cần đăng kí tài khoản để tiếp tục sử dụng.
                             </p>
-                            <p>
-                                Nhiều chức năng mới sẽ sớm được ra mắt...
-                            </p>
-                            <p className="popup-author">
-                                Tác giả: Quốc Huy
+
+                            <hr className="popup-divider" />
+
+                            <p className="popup-content-text popup-footer-area">
+                                *Nhiều chức năng mới đang được phát triển và sẽ ra mắt sớm...
+                                <span className="popup-author-simple">
+                                    <FiAward size={14} /> Tác giả: Huy Phan
+                                </span>
                             </p>
                         </div>
-                        <button className="popup-dismiss-btn-hidden" onClick={handleDismiss} title="Đóng">
-                            <FiX size={20} />
-                        </button>
                     </motion.div>
                 </>
             )}
@@ -184,104 +273,78 @@ const NotificationPopup = () => {
 };
 
 
-// --- UI COMPONENTS ---
-
-const Header = ({ theme, toggleTheme }) => {
-  const { currentUser } = useAuth(); 
-
-  const handleLogout = async () => {
-    try {
-        if (currentUser) {
-            const userUID = currentUser.uid;
-            
-            // 1. TÌM VÀ GIẢI PHÓNG MÃ CODE ĐANG ĐƯỢC SỬ DỤNG
-            const q = query(
-                collection(db, 'code'), // Collection 'code'
-                where('activeUID', '==', userUID)
-            );
-            
-            const querySnapshot = await getDocs(q);
-            
-            if (!querySnapshot.empty) {
-                const docToUpdate = querySnapshot.docs[0]; 
-                
-                // 2. ĐẶT activeUID = "" (CHUỖI RỖNG) ĐỂ GIẢI PHÓNG MÃ
-                await updateDoc(docToUpdate.ref, {
-                    activeUID: "" 
-                });
-                console.log(`Mã code ${docToUpdate.id} đã được giải phóng thành công.`);
-            }
-        }
-    } catch (error) {
-      // Cảnh báo lỗi Firestore nhưng KHÔNG ngăn cản Đăng xuất Auth
-      console.error("Lỗi giải phóng code (sẽ tiếp tục đăng xuất):", error);
-      alert("Cảnh báo: Không thể giải phóng mã code trong Database. Vui lòng thử đăng nhập lại.");
-    } finally {
-      // 3. ĐẢM BẢO ĐĂNG XUẤT AUTH LUÔN ĐƯỢC GỌI
-      try {
-          await signOut(auth);
-          console.log("Đăng xuất Firebase Auth thành công.");
-      } catch (authError) {
-          console.error("Lỗi đăng xuất Auth:", authError);
-          alert("Đăng xuất Auth thất bại!");
-      }
-    }
-  };
-
-  return (
-    <header className="app-header">
-      <h1>Lịch Làm Việc</h1>
-      <div className="header-controls">
-        
-        <div className="auth-buttons">
-          {currentUser ? (
-            // HIỂN THỊ KHI ĐÃ ĐĂNG NHẬP
-            <button className="auth-button logout" onClick={handleLogout}>
-              <FiLogIn size={16} style={{ transform: 'scaleX(-1)' }} />
-              <span>Đăng xuất</span>
-            </button>
-          ) : (
-            // HIỂN THỊ KHI CHƯA ĐĂNG NHẬP
-            <>
-              <Link to="/login" className="auth-button login">
-                <FiLogIn size={16} />
-                <span>Đăng nhập</span>
-              </Link>
-              <Link to="/register" className="auth-button register">
-                <FiUserPlus size={16} />
-                <span>Đăng ký</span>
-              </Link>
-            </>
-          )}
-        </div>
-
-        <label className="theme-toggle" title="Chuyển chế độ Sáng/Tối">
-          {theme === 'light' ? <FiMoon size={18} /> : <FiSun size={18} />}
-          <div className="theme-toggle-switch">
-            <input type="checkbox" checked={theme === 'dark'} onChange={toggleTheme} />
-            <span className="theme-toggle-slider"></span>
-          </div>
-        </label>
-      </div>
-    </header>
-  );
+// 🌟 HÀM XỬ LÝ CLICK TẠM THỜI CHO NÚT AUTH
+const handleAuthClick = (showAuthPopup) => {
+    showAuthPopup(); // Chỉ cần hiển thị popup
 };
 
-const FilterBar = ({ dateFilter, setDateFilter, inputValue, setInputValue, uniqueDates, filteredJobs }) => {
+
+const Header = ({ theme, toggleTheme, showAuthPopup }) => ( // 🌟 Nhận showAuthPopup
+  <header className="app-header">
+    <h1>Lịch làm việc</h1>
+    
+    <div className="header-controls">
+      
+      {/* Nút Đăng nhập/Đăng ký (Gắn hàm gọi popup) */}
+      <div className="auth-buttons">
+        <button 
+          className="auth-button login" 
+          title="Đăng nhập"
+          onClick={() => handleAuthClick(showAuthPopup)}
+        >
+          <FiLogIn size={16} />
+          <span>Đăng nhập</span>
+        </button>
+        <button 
+          className="auth-button register" 
+          title="Đăng ký"
+          onClick={() => handleAuthClick(showAuthPopup)}
+        >
+          <FiUserPlus size={16} />
+          <span>Đăng ký</span>
+        </button>
+      </div>
+
+      {/* Nút Sáng/Tối */}
+      <label className="theme-toggle" title="Toggle Light/Dark Mode">
+        {theme === 'light' ? <FiMoon size={18} /> : <FiSun size={18} />}
+        <div className="theme-toggle-switch">
+          <input type="checkbox" checked={theme === 'dark'} onChange={toggleTheme} />
+          <span className="theme-toggle-slider"></span>
+        </div>
+      </label>
+    </div>
+  </header>
+);
+
+const FilterBar = ({ 
+    dateFilter, setDateFilter, 
+    inputValue, setInputValue, 
+    uniqueDates, filteredJobs,
+    sessionFilter, setSessionFilter,
+    uniqueSessions, 
+    storeFilter, setStoreFilter,
+    uniqueStores,
+    showTempNotification
+}) => {
   
   const handleDownloadICS = () => {
     const events = filteredJobs.map(job => {
       try {
         const [day, month, year] = job['Date livestream'].split('/');
         const [startTimeStr, endTimeStr] = (job['Time slot'] || '00:00 - 00:00').split(' - ');
+        
         const [startHour, startMinute] = startTimeStr.split(':').map(Number);
         const [endHour, endMinute] = (endTimeStr || startTimeStr).split(':').map(Number); 
+
         const startDate = new Date(0, 0, 0, startHour, startMinute);
         const endDate = new Date(0, 0, 0, endHour, endMinute);
         let diffMs = endDate.getTime() - startDate.getTime();
         if (diffMs <= 0) diffMs = 60 * 60 * 1000; 
+
         const durationHours = Math.floor(diffMs / (1000 * 60 * 60));
         const durationMinutes = (diffMs / (1000 * 60)) % 60;
+
         return {
           title: job.Store || 'Unnamed Job',
           start: [parseInt(year), parseInt(month), parseInt(day), startHour, startMinute],
@@ -289,18 +352,24 @@ const FilterBar = ({ dateFilter, setDateFilter, inputValue, setInputValue, uniqu
           location: combineLocation(job),
           description: `MC: ${combineNames(job['Talent 1'], job['Talent 2'])}\nCoordinator: ${combineNames(job['Coordinator 1'], job['Coordinator 2'])}`
         };
-      } catch (e) { return null; }
+      } catch (e) {
+        return null; 
+      }
     }).filter(Boolean); 
 
     if (events.length === 0) {
-      alert("Không có lịch hợp lệ để xuất.");
+      showTempNotification("Không có sự kiện hợp lệ nào để xuất lịch.");
       return;
     }
+
     const { error, value } = ics.createEvents(events);
+
     if (error) {
-      alert("Lỗi khi tạo file ICS.");
+      console.error("Error creating ICS file:", error);
+      showTempNotification("Lỗi khi tạo file ICS.");
       return;
     }
+
     const blob = new Blob([value], { type: 'text/calendar;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -309,34 +378,60 @@ const FilterBar = ({ dateFilter, setDateFilter, inputValue, setInputValue, uniqu
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    showTempNotification("Đã xuất lịch thành công!");
   };
 
   return (
     <div className="filter-container">
-      <div className="form-group">
-        <label htmlFor="dateInput">Lịch</label>
-        <select id="dateInput" value={dateFilter} onChange={(e) => setDateFilter(e.target.value)}>
-          <option value="">Tất cả ngày</option>
-          {uniqueDates.map(date => <option key={date} value={date}>{date}</option>)}
-        </select>
+        
+      <div className="form-group-grid">
+        <div className="form-group filter-date">
+            <label htmlFor="dateInput">Ngày</label>
+            <select id="dateInput" value={dateFilter} onChange={(e) => setDateFilter(e.target.value)}>
+              <option value="">All Dates</option>
+              {uniqueDates.map(date => <option key={date} value={date}>{date}</option>)}
+            </select>
+        </div>
+        
+        <div className="form-group filter-session">
+            <label htmlFor="sessionInput">Loại ca</label>
+            <select id="sessionInput" value={sessionFilter} onChange={(e) => setSessionFilter(e.target.value)}>
+                <option value="">All Sessions</option>
+                {uniqueSessions.map(session => <option key={session} value={session}>{session}</option>)}
+            </select>
+        </div>
+
+        <div className="form-group filter-store">
+            <label htmlFor="storeInput">Brand</label>
+            <select id="storeInput" value={storeFilter} onChange={(e) => setStoreFilter(e.target.value)}>
+                <option value="">All Stores</option>
+                {uniqueStores.map(store => <option key={store} value={store}>{store}</option>)}
+            </select>
+        </div>
+
+        <div className="form-group filter-search full-width">
+            <label htmlFor="nameInput">Search (Name/Job)</label>
+            <div className="input-with-icon">
+              <FiSearch className="search-icon" size={18} />
+              <input 
+                type="text" 
+                id="nameInput" 
+                placeholder="e.g., Your Name, Store Name" 
+                value={inputValue} 
+                onChange={(e) => setInputValue(e.target.value)} 
+              />
+            </div>
+        </div>
+
       </div>
-      <div className="form-group">
-        <label htmlFor="nameInput">Tìm tên</label>
-        <input 
-          type="text" 
-          id="nameInput" 
-          placeholder="VD: Nguyễn Văn A" 
-          value={inputValue} 
-          onChange={(e) => setInputValue(e.target.value)} 
-        />
-      </div>
+
       <button 
         className="download-button" 
         onClick={handleDownloadICS} 
         disabled={filteredJobs.length === 0}
       >
         <FiDownload size={18} />
-        Xuất ra Google Calendar (.ics)
+        Xuất ra file (.ics)
       </button>
     </div>
   );
@@ -358,38 +453,51 @@ const SkeletonLoader = () => (
 const EmptyState = ({ dateFilter }) => (
   <motion.div className="empty-state" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}>
     <FiSearch className="empty-state-icon" />
-    <h3>Không tìm thấy kết quả</h3>
-    <p>Không tìm thấy lịch nào {dateFilter ? `cho ngày ${dateFilter}` : ''}. Vui lòng thử tên hoặc ngày khác.</p>
+    <h3>No Results Found</h3>
+    <p>No matching schedule found {dateFilter ? `for ${dateFilter}` : ''}. Please try a different name or date.</p>
   </motion.div>
 );
 
 const JobItem = ({ job }) => {
   const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } };
-  const timeGroup = `${job['Time slot'] || 'Chưa rõ'}`;
+  const timeGroup = `${job['Time slot'] || 'N/A'}`;
   const talentDisplay = combineNames(job['Talent 1'], job['Talent 2']);
   const coordDisplay = combineNames(job['Coordinator 1'], job['Coordinator 2']);
   const locationDisplay = combineLocation(job);
 
   return (
     <motion.div className="schedule-item" variants={itemVariants}>
-      <h4>{job.Store || 'Chưa đặt tên'}</h4>
+      <h4>{job.Store || 'Unnamed Job'}</h4>
       <p className="time"><FiClock /> {timeGroup}</p>
       <p className="location"><FiMapPin /> {locationDisplay}</p>
-      <p className="session"><FiMic /> Loại phiên: {job['Type of session'] || '—'}</p>
+      <p className="session"><FiMic /> Session type: {job['Type of session'] || '—'}</p>
       <p className="mc"><FiUser /> {talentDisplay}</p>
       <p className="standby"><FiMonitor /> {coordDisplay}</p>
     </motion.div>
   );
 };
 
-// --- COMPONENT CHÍNH ---
+// --- COMPONENT APP CHÍNH ---
 function App() {
   const [theme, toggleTheme] = useDarkMode();
-  const { jobs, isLoading, uniqueDates, error } = useJobData();
+  const { jobs, isLoading, uniqueDates, uniqueSessions, uniqueStores, error } = useJobData();
   
   const [dateFilter, setDateFilter] = useState(() => getFormattedToday());
   const [inputValue, setInputValue] = useState(''); 
   const [nameFilter, setNameFilter] = useState(''); 
+  const [sessionFilter, setSessionFilter] = useState('');
+  const [storeFilter, setStoreFilter] = useState('');
+
+  // State và hàm quản lý thông báo tạm thời
+  const [tempNotification, setTempNotification] = useState(null); 
+  const showTempNotification = (message) => setTempNotification(message);
+  const dismissTempNotification = () => setTempNotification(null);
+
+  // State và hàm kiểm soát Popup chính (Thông Báo Quan Trọng)
+  const [isAuthPopupVisible, setIsAuthPopupVisible] = useState(true);
+  const showAuthPopup = () => setIsAuthPopupVisible(true);
+  const hideAuthPopup = () => setIsAuthPopupVisible(false);
+
 
   useEffect(() => {
     const timerId = setTimeout(() => setNameFilter(inputValue), 300);
@@ -400,6 +508,8 @@ function App() {
   const filteredJobs = useMemo(() => {
     let jobsToFilter = jobs;
     const normNameFilter = removeAccents(nameFilter.toLowerCase().trim());
+    
+    // Lọc theo Input/Name
     if (normNameFilter) {
       jobsToFilter = jobsToFilter.filter(job => {
         const talent1 = removeAccents((job['Talent 1'] || '').toLowerCase()).includes(normNameFilter);
@@ -414,16 +524,28 @@ function App() {
       });
     }
     
+    // Lọc theo Date
     if (dateFilter) { 
       jobsToFilter = jobsToFilter.filter(job => (job['Date livestream'] || '').toString() === dateFilter);
     }
+
+    // Lọc theo Session Type
+    if (sessionFilter) {
+        jobsToFilter = jobsToFilter.filter(job => (job['Type of session'] || '') === sessionFilter);
+    }
+
+    // Lọc theo Store Name
+    if (storeFilter) {
+        jobsToFilter = jobsToFilter.filter(job => (job.Store || '') === storeFilter);
+    }
+
     return jobsToFilter;
-  }, [jobs, dateFilter, nameFilter]); 
+  }, [jobs, dateFilter, nameFilter, sessionFilter, storeFilter]);
 
   // Logic Gom Nhóm
   const groupedJobs = useMemo(() => {
     return filteredJobs.reduce((acc, job) => {
-      const timeGroup = job['Time slot'] || 'Chưa rõ';
+      const timeGroup = job['Time slot'] || 'N/A';
       if (!acc[timeGroup]) acc[timeGroup] = [];
       acc[timeGroup].push(job);
       return acc;
@@ -435,10 +557,22 @@ function App() {
   // Giao diện
   return (
     <div className="App">
-      <NotificationPopup /> 
+        {/* Truyền state và hàm điều khiển vào popup */}
+        <NotificationPopup isVisible={isAuthPopupVisible} setIsVisible={hideAuthPopup} /> 
         
-      <Header theme={theme} toggleTheme={toggleTheme} />
+      {/* Truyền showAuthPopup và showTempNotification xuống Header */}
+      <Header 
+        theme={theme} 
+        toggleTheme={toggleTheme} 
+        showTempNotification={showTempNotification}
+        showAuthPopup={showAuthPopup}
+      />
+      
+      {/* Hiển thị thông báo tạm thời */}
+      <TemporaryNotification message={tempNotification} onDismiss={dismissTempNotification} />
+
       <main>
+        {/* Truyền hàm thông báo xuống FilterBar */}
         <FilterBar 
           dateFilter={dateFilter}
           setDateFilter={setDateFilter}
@@ -446,13 +580,22 @@ function App() {
           setInputValue={setInputValue}
           uniqueDates={uniqueDates}
           filteredJobs={filteredJobs} 
+          
+          sessionFilter={sessionFilter}
+          setSessionFilter={setSessionFilter}
+          uniqueSessions={uniqueSessions}
+
+          storeFilter={storeFilter}
+          setStoreFilter={setStoreFilter}
+          uniqueStores={uniqueStores}
+          showTempNotification={showTempNotification}
         />
         <div id="schedule-list" className="schedule-list">
           {error ? (
              <motion.div className="empty-state" initial={{opacity:0}} animate={{opacity:1}}>
                 <FiSearch className="empty-state-icon" style={{color: '#dc3545'}}/>
-                <h3>Lỗi Tải Dữ Liệu</h3>
-                <p>Không thể kết nối đến Google Sheet. Vui lòng kiểm tra lại đường dẫn hoặc quyền chia sẻ.</p>
+                <h3>Error Loading Data</h3>
+                <p>Could not connect to the Google Sheet. Please check the link or sharing permissions.</p>
              </motion.div>
           ) : isLoading ? (
             <SkeletonLoader />
@@ -481,5 +624,4 @@ function App() {
   );
 }
 
-// PHẢI EXPORT DEFAULT NÓ
 export default App;
