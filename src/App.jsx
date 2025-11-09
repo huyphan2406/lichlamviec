@@ -1,8 +1,10 @@
-import { useState, useMemo, useEffect, useCallback, memo } from 'react';
+import { useState, useMemo, useEffect, useCallback, memo, useRef } // 🌟 Thêm useRef
+from 'react';
 import Papa from 'papaparse';
 import { motion, AnimatePresence } from 'framer-motion';
 import useSWR from 'swr';
-import * as ics from 'ics';
+// 🌟 TỐI ƯU 3: Bỏ import 'ics' ở đây
+// import * as ics from 'ics'; 
 import { 
   FiClock, FiMapPin, FiMic, FiUser, FiMonitor,
   FiMoon, FiSun,
@@ -10,8 +12,10 @@ import {
   FiCalendar, FiInfo, FiTag, FiAward,
   FiLogIn, FiUserPlus,
   FiFilter, FiUsers, FiUserCheck, FiEdit3, 
-  FiBarChart2 // Đảm bảo icon này đã được import
+  FiBarChart2
 } from 'react-icons/fi';
+// 🌟 TỐI ƯU 2: Thêm import cho Virtualizer
+import { useVirtualizer } from '@tanstack/react-virtual';
 import './App.css'; 
 
 // --- HÀM HỖ TRỢ ---
@@ -57,7 +61,7 @@ const csvFetcher = (url) => {
   });
 };
 
-// 🌟 HÀM KIỂM TRA CÔNG VIỆC ĐANG HOẠT ĐỘNG (60 PHÚT)
+// HÀM KIỂM TRA CÔNG VIỆC ĐANG HOẠT ĐỘNG (60 PHÚT)
 const isJobActive = (job) => {
     try {
         const now = new Date();
@@ -289,15 +293,15 @@ const handleAuthClick = (showAuthPopup) => {
 const Header = ({ theme, toggleTheme, showAuthPopup }) => ( 
   <header className="app-header">
     
-    {/* 🌟 HÀNG 1: TIÊU ĐỀ CĂN GIỮA (Sử dụng CSS để căn giữa) */}
-    <h1 className="header-title-centered">
+    {/* 🌟 HÀNG DUY NHẤT: Tiêu đề nằm bên trái */}
+    <h1>
         Lịch làm việc
     </h1>
     
-    {/* 🌟 HÀNG 2: KHỐI ĐIỀU KHIỂN (Căn 2 bên) */}
+    {/* 🌟 KHỐI ĐIỀU KHIỂN: Nằm bên phải */}
     <div className="header-controls">
 
-      {/* 🌟 VỊ TRÍ MỚI: NÚT SÁNG/TỐI (BÊN TRÁI) */}
+      {/* 🌟 NÚT SÁNG/TỐI (BÊN TRÁI AUTH) */}
       <label className="theme-toggle" title="Toggle Light/Dark Mode">
         {theme === 'light' ? <FiMoon size={18} /> : <FiSun size={18} />}
         <div className="theme-toggle-switch">
@@ -332,9 +336,10 @@ const Header = ({ theme, toggleTheme, showAuthPopup }) => (
   </header>
 );
 
+// 🌟🌟🌟 COMPONENT FILTERBAR (ĐÃ TÁCH STATE - Tối ưu 4) 🌟🌟🌟
 const FilterBar = ({ 
     dateFilter, setDateFilter, 
-    inputValue, setInputValue, 
+    setNameFilter, // 👈 ĐÃ THÊM
     uniqueDates, filteredJobs,
     sessionFilter, setSessionFilter,
     uniqueSessions, 
@@ -343,12 +348,27 @@ const FilterBar = ({
     showTempNotification
 }) => {
   
+  // 🌟 TỐI ƯU HÓA 4: Tách state 'inputValue' vào FilterBar
+  const [inputValue, setInputValue] = useState(''); 
+
+  // 🌟 TỐI ƯU HÓA 4: Debounce (làm trễ) việc cập nhật bộ lọc
+  useEffect(() => {
+    // Đợi 300ms sau khi người dùng ngừng gõ...
+    const timerId = setTimeout(() => {
+        setNameFilter(inputValue); // ...rồi mới cập nhật state của App
+    }, 300);
+    
+    return () => {
+        clearTimeout(timerId); // Xóa timer nếu người dùng gõ tiếp
+    };
+  }, [inputValue, setNameFilter]); // 👈 Chỉ chạy khi inputValue hoặc setNameFilter thay đổi
+  
+  
   // 🌟 TỐI ƯU HÓA 3: Tải lười (Lazy Loading) thư viện 'ics'
   const handleDownloadICS = useCallback(async () => { // 👈 Thêm async
     // 🌟 Chỉ import khi nhấn nút
     const ics = await import('ics');
 
-    // 🌟 LƯU Ý: filteredJobs ở đây là danh sách đã bị giới hạn (50 jobs)
     const events = filteredJobs.map(job => {
       try {
         const [day, month, year] = job['Date livestream'].split('/');
@@ -437,8 +457,8 @@ const FilterBar = ({
                 type="text" 
                 id="nameInput" 
                 placeholder="Nhập tên của bạn " 
-                value={inputValue} 
-                onChange={(e) => setInputValue(e.target.value)} 
+                value={inputValue} // 👈 Dùng state nội bộ
+                onChange={(e) => setInputValue(e.target.value)} // 👈 Cập nhật state nội bộ
               />
             </div>
         </div>
@@ -478,67 +498,39 @@ const EmptyState = ({ dateFilter }) => (
   >
     {/* THẺ CẢNH BÁO CHÍNH - STYLE CAO CẤP */}
     <div style={{ 
-        border: '2px solid var(--color-danger)', 
-        borderRadius: '16px', 
-        padding: '25px', 
-        backgroundColor: 'var(--color-card)', 
-        width: '100%',
-        boxSizing: 'border-box',
+        border: '2px solid var(--color-danger)', borderRadius: '16px', padding: '25px', 
+        backgroundColor: 'var(--color-card)', width: '100%', boxSizing: 'border-box',
         boxShadow: '0 8px 25px rgba(220, 53, 69, 0.2)'
     }}>
         
-        {/* TIÊU ĐỀ KHỐI CẢNH BÁO */}
         <h3 style={{ 
-            color: 'var(--color-danger)', 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '12px', 
-            margin: '0 0 20px 0',
-            paddingBottom: '10px',
-            borderBottom: '1px solid var(--color-border)', 
-            fontSize: '1.3rem', 
-            fontWeight: 700
+            color: 'var(--color-danger)', display: 'flex', alignItems: 'center', gap: '12px', 
+            margin: '0 0 20px 0', paddingBottom: '10px', borderBottom: '1px solid var(--color-border)', 
+            fontSize: '1.3rem', fontWeight: 700
         }}>
             <FiSearch size={24} style={{color: 'var(--color-danger)'}} />
             KHÔNG TÌM THẤY LỊCH LÀM VIỆC!
         </h3>
         
-        {/* KHỐI NỘI DUNG 1: LÝ DO */}
-        <p style={{ 
-            color: 'var(--color-text-primary)', 
-            fontWeight: 500,
-            fontSize: '1.05em',
-            margin: '0 0 15px 0'
-        }}>
+        <p style={{ color: 'var(--color-text-primary)', fontWeight: 500, fontSize: '1.05em', margin: '0 0 15px 0' }}>
             <FiInfo size={18} style={{marginRight: '10px', color: 'var(--color-danger)'}}/>
             <strong style={{color: 'var(--color-danger)'}}>Lỗi:</strong> Không có công việc nào khớp với các tiêu chí lọc.
         </p>
         
-        {/* KHỐI NỘI DUNG 2: NGÀY LỌC HIỆN TẠI (Làm nổi bật) */}
         {dateFilter && (
             <p style={{ 
-                color: 'var(--color-text-primary)', 
-                fontSize: '1em',
-                margin: '0 0 25px 0',
-                padding: '10px 15px',
-                borderLeft: '4px solid var(--color-brand)', 
-                backgroundColor: 'var(--color-brand-light)', 
-                borderRadius: '4px'
+                color: 'var(--color-text-primary)', fontSize: '1em', margin: '0 0 25px 0',
+                padding: '10px 15px', borderLeft: '4px solid var(--color-brand)', 
+                backgroundColor: 'var(--color-brand-light)', borderRadius: '4px'
             }}>
-                <span style={{ fontWeight: 600 }}>
-                    Đang lọc theo Ngày:
-                </span> 
+                <span style={{ fontWeight: 600 }}>Đang lọc theo Ngày:</span> 
                 <strong style={{marginLeft: '5px'}}>{dateFilter}</strong>
             </p>
         )}
         
-        {/* KHỐI NỘI DUNG 3: LỜI NHẮC HÀNH ĐỘNG (ACTIONABLE TIP) */}
         <p style={{ 
-            color: 'var(--color-text-secondary)', 
-            fontWeight: 500,
-            paddingTop: '15px',
-            borderTop: '1px solid var(--color-border)',
-            fontSize: '0.95em'
+            color: 'var(--color-text-secondary)', fontWeight: 500, paddingTop: '15px',
+            borderTop: '1px solid var(--color-border)', fontSize: '0.95em'
         }}>
             👉 Vui lòng điều chỉnh lại Ngày, Tên Cửa Hàng, hoặc Loại Phiên để xem lịch.
         </p>
@@ -566,25 +558,9 @@ const JobItem = memo(({ job, isActive }) => {
       className={`schedule-item ${isActive ? 'job-active' : ''}`}
       variants={itemVariants}
     >
-      {/* 🌟 KHỐI 1: TÊN CỬA HÀNG VÀ NÚT REPORT (ĐÃ TỐI ƯU CĂN CHỈNH) */}
-      <div className="job-header-row" style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center', 
-          marginBottom: '15px' 
-      }}>
+      <div className="job-header-row">
+        <h4 className="job-title-with-button">{job.Store || 'Unnamed Job'}</h4> 
         
-        {/* Tiêu đề: Cho phép co lại nếu cần */}
-        <h4 className="job-title-main" style={{ 
-            margin: 0, 
-            paddingRight: '10px', 
-            flexShrink: 1, 
-            minWidth: '50%' 
-        }}>
-            {job.Store || 'Unnamed Job'}
-        </h4> 
-        
-        {/* NÚT ĐIỀN REPORT NHANH (FORMAT ĐẸP) */}
         <button 
           className="quick-report-button" 
           onClick={handleQuickReport}
@@ -595,14 +571,12 @@ const JobItem = memo(({ job, isActive }) => {
         </button>
       </div>
       
-      {/* CÁC MỤC THÔNG TIN CHÍNH */}
       <p className="time"><FiClock /> {timeGroup}</p>
       <p className="location"><FiMapPin /> {locationDisplay}</p>
       <p className="session"><FiMic /> Loại Ca: {sessionTypeDisplay}</p> 
       <p className="mc"><FiUser /> {talentDisplay}</p>
       <p className="standby"><FiMonitor /> {coordDisplay}</p>
 
-      {/* KHỐI 2 CỘT ỔN ĐỊNH: SỬ DỤNG CLASS CSS GRID */}
       <div className="job-groups-footer-container">
           <div className="group-brand job-group-item">
             <FiUsers size={18} className="job-group-icon" /> 
@@ -624,31 +598,25 @@ function App() {
   const { jobs, isLoading, uniqueDates, uniqueSessions, uniqueStores, error } = useJobData();
   
   const [dateFilter, setDateFilter] = useState(() => getFormattedToday());
-  const [inputValue, setInputValue] = useState(''); 
+  // 🌟 TỐI ƯU HÓA 4: Xóa 'inputValue'
   const [nameFilter, setNameFilter] = useState(''); 
   const [sessionFilter, setSessionFilter] = useState('');
   const [storeFilter, setStoreFilter] = useState('');
 
-  // State và hàm quản lý thông báo tạm thời
   const [tempNotification, setTempNotification] = useState(null); 
   const showTempNotification = useCallback((message) => setTempNotification(message), []);
   const dismissTempNotification = useCallback(() => setTempNotification(null), []);
 
-  // State và hàm kiểm soát Popup chính (Thông Báo Quan Trọng)
   const [isAuthPopupVisible, setIsAuthPopupVisible] = useState(true);
   const showAuthPopup = useCallback(() => setIsAuthPopupVisible(true), []);
   const hideAuthPopup = useCallback(() => setIsAuthPopupVisible(false), []);
 
-
-  useEffect(() => {
-    const timerId = setTimeout(() => setNameFilter(inputValue), 300);
-    return () => clearTimeout(timerId);
-  }, [inputValue]);
-  
-  // 🌟 THÊM: SỬ DỤNG STATE ĐỂ BUỘC RE-RENDER THƯỜNG XUYÊN CHO HIGHLIGHT
   const [currentTime, setCurrentTime] = useState(new Date());
+  
+  // 🌟 TỐI ƯU HÓA 4: Xóa useEffect debounce (đã chuyển vào FilterBar)
+  
   useEffect(() => {
-      const intervalId = setInterval(() => setCurrentTime(new Date()), 60000); // Cập nhật mỗi 1 phút
+      const intervalId = setInterval(() => setCurrentTime(new Date()), 60000); 
       return () => clearInterval(intervalId);
   }, []);
 
@@ -682,49 +650,81 @@ function App() {
 
   }, [jobs, dateFilter, nameFilter, sessionFilter, storeFilter, currentTime]);
 
-  // 🌟 TỐI ƯU HÓA: CHỈ LẤY 30 JOBS ĐẦU TIÊN
-  const limitedJobs = useMemo(() => {
-      return filteredJobs.slice(0, 30);
-  }, [filteredJobs]);
-
-  // Logic Gom Nhóm (Dựa trên 50 jobs)
+  // Logic Gom Nhóm (Dùng toàn bộ, không giới hạn)
   const groupedJobs = useMemo(() => {
-    return limitedJobs.reduce((acc, job) => { // 👈 Dùng limitedJobs
+    return filteredJobs.reduce((acc, job) => {
       const timeGroup = job['Time slot'] || 'N/A';
       if (!acc[timeGroup]) acc[timeGroup] = [];
       acc[timeGroup].push(job);
       return acc;
     }, {});
-  }, [limitedJobs]); // 👈 Dùng limitedJobs
+  }, [filteredJobs]);
 
-  const jobGroups = Object.keys(groupedJobs);
-  const totalFilteredCount = filteredJobs.length; // 👈 Đếm tổng số lượng thực tế
+  // 🌟 TỐI ƯU HÓA 2: "Làm phẳng" (Flatten) dữ liệu để ảo hóa
+  const flatRowItems = useMemo(() => {
+    const items = [];
+    const jobGroups = Object.keys(groupedJobs);
+
+    jobGroups.forEach(timeGroup => {
+        // 1. Thêm Header
+        items.push({
+            id: `header_${timeGroup}`,
+            type: 'HEADER',
+            content: timeGroup
+        });
+        
+        // 2. Thêm Jobs
+        groupedJobs[timeGroup].forEach((job, index) => {
+            items.push({
+                id: `job_${timeGroup}_${index}`,
+                type: 'JOB',
+                content: job,
+                isActive: isJobActive(job)
+            });
+        });
+    });
+    return items;
+  }, [groupedJobs]);
+
+
+  // 🌟 TỐI ƯU HÓA 2: Khởi tạo Virtualizer
+  const parentRef = useRef(null);
+  
+  const rowVirtualizer = useVirtualizer({
+    count: flatRowItems.length, // Tổng số lượng (Header + Job)
+    getScrollElement: () => parentRef.current,
+    estimateSize: (index) => {
+        // Ước tính chiều cao
+        const itemType = flatRowItems[index]?.type;
+        return itemType === 'HEADER' ? 50 : 350; // 50px cho Header, 350px cho JobItem (Tùy chỉnh nếu JobItem cao hơn)
+    },
+    overscan: 5, // Render thêm 5 item bên ngoài màn hình
+  });
+
+  const virtualItems = rowVirtualizer.getVirtualItems();
+  const totalFilteredCount = filteredJobs.length;
 
   // Giao diện
   return (
     <div className="App">
-        {/* Truyền state và hàm điều khiển vào popup */}
         <NotificationPopup isVisible={isAuthPopupVisible} setIsVisible={hideAuthPopup} /> 
         
-      {/* Truyền showAuthPopup và showTempNotification xuống Header */}
       <Header 
         theme={theme} 
         toggleTheme={toggleTheme} 
         showAuthPopup={showAuthPopup}
       />
       
-      {/* Hiển thị thông báo tạm thời */}
       <TemporaryNotification message={tempNotification} onDismiss={dismissTempNotification} />
 
       <main>
-        {/* Truyền hàm thông báo xuống FilterBar */}
+        {/* 🌟 TỐI ƯU HÓA 4: Truyền 'setNameFilter' */}
         <FilterBar 
           dateFilter={dateFilter}
           setDateFilter={setDateFilter}
-          inputValue={inputValue}
-          setInputValue={setInputValue}
+          setNameFilter={setNameFilter} // 👈 ĐÃ THÊM
           uniqueDates={uniqueDates}
-          filteredJobs={limitedJobs} // 👈 Chỉ export 50 jobs
+          filteredJobs={filteredJobs} // 👈 Truyền toàn bộ danh sách đã lọc
           
           sessionFilter={sessionFilter}
           setSessionFilter={setSessionFilter}
@@ -736,8 +736,7 @@ function App() {
           showTempNotification={showTempNotification}
         />
         
-        {/* 🌟 HIỂN THỊ SỐ LƯỢNG CÔNG VIỆC (Đã cập nhật) */}
-        {jobs.length > 0 && jobGroups.length > 0 && (
+        {jobs.length > 0 && totalFilteredCount > 0 && (
             <motion.div 
                 className="job-count-summary"
                 initial={{ opacity: 0, y: -10 }}
@@ -746,9 +745,7 @@ function App() {
             >
                 <FiFilter size={18} style={{marginRight: '8px'}}/>
                 Tìm thấy <strong style={{color: 'var(--color-brand)'}}>{totalFilteredCount}</strong> công việc
-                {totalFilteredCount > 50 && ( // 👈 Cập nhật thành 50
-                    <span style={{marginLeft: '5px', color: 'var(--color-danger)'}}>(Đang hiển thị 30 jobs đầu tiên)</span>
-                )}
+                {dateFilter ? ` cho ngày ${dateFilter}` : ' trong danh sách'}
             </motion.div>
         )}
         
@@ -761,28 +758,48 @@ function App() {
              </motion.div>
           ) : isLoading ? (
             <SkeletonLoader />
-          ) : (jobs.length > 0 && jobGroups.length === 0) ? (
+          ) : (jobs.length > 0 && flatRowItems.length === 0) ? ( // 🌟 Sửa: Dùng flatRowItems.length
             <EmptyState dateFilter={dateFilter} />
           ) : (
-            <AnimatePresence>
-              {jobGroups.map(timeGroup => (
-                <motion.div 
-                  key={timeGroup} 
-                  className="time-group-container"
-                  initial="hidden" animate="visible" exit="hidden"
-                  variants={{ visible: { transition: { staggerChildren: 0.05 } } }}
-                > 
-                  <h3 className="schedule-group-title">{timeGroup}</h3>
-                  {groupedJobs[timeGroup].map((job, index) => (
-                    <JobItem 
-                        key={`${timeGroup}-${index}`} 
-                        job={job} 
-                        isActive={isJobActive(job)} // 👈 Gắn trạng thái hoạt động
-                    />
-                  ))}
-                </motion.div>
-              ))}
-            </AnimatePresence>
+            // 🌟 TỐI ƯU HÓA 2: ÁP DỤNG VIRTUALIZER
+            <div 
+                ref={parentRef} 
+                className="virtual-list-container" // 👈 Container cuộn
+            >
+                <div style={{ height: `${rowVirtualizer.getTotalSize()}px`, width: '100%', position: 'relative' }}>
+                    {virtualItems.map((virtualItem) => {
+                        const item = flatRowItems[virtualItem.index];
+                        
+                        // 🌟 Xử lý trường hợp item không tồn tại (an toàn)
+                        if (!item) {
+                            return null; 
+                        }
+                        
+                        return (
+                            <div
+                                key={item.id}
+                                style={{
+                                    position: 'absolute',
+                                    top: 0,
+                                    left: 0,
+                                    width: '100%',
+                                    transform: `translateY(${virtualItem.start}px)`,
+                                    padding: '5px 0' // Thêm khoảng cách nhẹ giữa các item
+                                }}
+                            >
+                                {item.type === 'HEADER' ? (
+                                    <h3 className="schedule-group-title">{item.content}</h3>
+                                ) : (
+                                    <JobItem 
+                                        job={item.content} 
+                                        isActive={item.isActive} 
+                                    />
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
           )}
         </div>
       </main>
