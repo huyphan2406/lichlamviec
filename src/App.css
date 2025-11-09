@@ -399,3 +399,56 @@ input:checked + .theme-toggle-slider:before { transform: translateX(20px); }
     display: flex; align-items: center; gap: 5px; margin-top: 10px; font-style: italic;
     color: var(--color-grey); text-align: right; width: 100%; justify-content: flex-end;
 }
+
+/* --- EMPTY STATE & SKELETON --- */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center; 
+    justify-content: center;
+    
+    /* 🌟 QUAN TRỌNG: Loại bỏ mọi padding, màu nền, và box-shadow cũ */
+    padding: 0; 
+    background-color: transparent; 
+    box-shadow: none;
+    
+    width: 100%;
+    box-sizing: border-box;
+    /* Các thuộc tính này vẫn quan trọng cho motion.div */
+    color: var(--color-text-secondary);
+    border-radius: 12px;
+    transition: all var(--transition-speed);
+}
+
+/* 🌟 Dành cho các style inline trong JSX (chỉ để căn icon và chữ) */
+.empty-state-icon {
+    font-size: 1.5em; 
+    margin-bottom: 0;
+}
+.empty-state h3 {
+    margin: 0;
+}
+/* Xóa các style mặc định cho P và h3 để style inline trong JSX kiểm soát */
+
+/* --- SKELETON (Giữ nguyên) --- */
+.skeleton-container {
+  padding: 10px 0;
+}
+.skeleton-item {
+  background-color: var(--color-card);
+  border-radius: 12px;
+  padding: 20px;
+  margin: 15px 0;
+}
+.skeleton-line {
+  background-color: var(--color-border);
+  border-radius: 4px;
+  animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+.skeleton-line.h4 { height: 24px; width: 40%; margin-bottom: 15px; }
+.skeleton-line.p { height: 16px; width: 80%; margin-bottom: 10px; }
+.skeleton-line.p:last-child { width: 60%; }
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}

@@ -394,7 +394,7 @@ const FilterBar = ({
         </div>
         
         <div className="form-group filter-session">
-            <label htmlFor="sessionInput">Loại ca</label>
+            <label htmlFor="sessionInput">Loại Phiên</label>
             <select id="sessionInput" value={sessionFilter} onChange={(e) => setSessionFilter(e.target.value)}>
                 <option value="">All Sessions</option>
                 {uniqueSessions.map(session => <option key={session} value={session}>{session}</option>)}
@@ -402,7 +402,7 @@ const FilterBar = ({
         </div>
 
         <div className="form-group filter-store">
-            <label htmlFor="storeInput">Brand</label>
+            <label htmlFor="storeInput">Tên Cửa Hàng</label>
             <select id="storeInput" value={storeFilter} onChange={(e) => setStoreFilter(e.target.value)}>
                 <option value="">All Stores</option>
                 {uniqueStores.map(store => <option key={store} value={store}>{store}</option>)}
@@ -410,13 +410,13 @@ const FilterBar = ({
         </div>
 
         <div className="form-group filter-search full-width">
-            <label htmlFor="nameInput">Search (Name/Job)</label>
+            <label htmlFor="nameInput">Tìm Kiếm</label>
             <div className="input-with-icon">
               <FiSearch className="search-icon" size={18} />
               <input 
                 type="text" 
                 id="nameInput" 
-                placeholder="e.g., Your Name, Store Name" 
+                placeholder="Nhập tên của bạn " 
                 value={inputValue} 
                 onChange={(e) => setInputValue(e.target.value)} 
               />
@@ -451,10 +451,80 @@ const SkeletonLoader = () => (
 );
 
 const EmptyState = ({ dateFilter }) => (
-  <motion.div className="empty-state" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}>
-    <FiSearch className="empty-state-icon" />
-    <h3>No Results Found</h3>
-    <p>No matching schedule found {dateFilter ? `for ${dateFilter}` : ''}. Please try a different name or date.</p>
+  <motion.div 
+    className="empty-state" 
+    initial={{ opacity: 0, scale: 0.9 }} 
+    animate={{ opacity: 1, scale: 1 }}
+  >
+    {/* 🌟 THẺ CẢNH BÁO CHÍNH - NHẤN MẠNH SỰ KHÔNG TÌM THẤY */}
+    <div style={{ 
+        border: '2px solid var(--color-danger)', /* Viền đậm hơn */
+        borderRadius: '16px', /* Bo góc lớn hơn */
+        padding: '25px', /* Padding rộng rãi */
+        backgroundColor: 'var(--color-card)', /* Nền trắng/tối */
+        width: '100%',
+        boxSizing: 'border-box',
+        boxShadow: '0 8px 25px rgba(220, 53, 69, 0.2)' /* Đổ bóng nhấn mạnh cảnh báo */
+    }}>
+        
+        {/* TIÊU ĐỀ KHỐI CẢNH BÁO */}
+        <h3 style={{ 
+            color: 'var(--color-danger)', 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '12px', /* Khoảng cách lớn hơn */
+            margin: '0 0 20px 0',
+            paddingBottom: '10px',
+            borderBottom: '1px solid var(--color-border)', /* Viền phân cách nhẹ nhàng */
+            fontSize: '1.3rem', /* Cỡ chữ lớn hơn */
+            fontWeight: 700
+        }}>
+            {/* Icon lớn hơn, màu đỏ nổi bật */}
+            <FiSearch size={24} style={{color: 'var(--color-danger)'}} />
+            KHÔNG TÌM THẤY LỊCH LÀM VIỆC!
+        </h3>
+        
+        {/* KHỐI NỘI DUNG 1: LÝ DO */}
+        <p style={{ 
+            color: 'var(--color-text-primary)', 
+            fontWeight: 500,
+            fontSize: '1.05em',
+            margin: '0 0 15px 0'
+        }}>
+            <FiInfo size={18} style={{marginRight: '10px', color: 'var(--color-danger)'}}/>
+            <strong style={{color: 'var(--color-danger)'}}>Lỗi:</strong> Không có công việc nào khớp với các tiêu chí lọc.
+        </p>
+        
+        {/* KHỐI NỘI DUNG 2: NGÀY LỌC HIỆN TẠI (Làm nổi bật) */}
+        {dateFilter && (
+            <p style={{ 
+                color: 'var(--color-text-primary)', 
+                fontSize: '1em',
+                margin: '0 0 25px 0',
+                padding: '10px 15px',
+                borderLeft: '4px solid var(--color-brand)', /* Viền xanh đậm */
+                backgroundColor: 'var(--color-brand-light)', /* Nền xanh nhạt */
+                borderRadius: '4px'
+            }}>
+                <span style={{ fontWeight: 600 }}>
+                    Đang lọc theo Ngày:
+                </span> 
+                <strong style={{marginLeft: '5px'}}>{dateFilter}</strong>
+            </p>
+        )}
+        
+        {/* KHỐI NỘI DUNG 3: LỜI NHẮC HÀNH ĐỘNG (ACTIONABLE TIP) */}
+        <p style={{ 
+            color: 'var(--color-text-secondary)', 
+            fontWeight: 500,
+            paddingTop: '15px',
+            borderTop: '1px solid var(--color-border)',
+            fontSize: '0.95em'
+        }}>
+            👉 Vui lòng điều chỉnh lại Ngày, Tên Cửa Hàng, hoặc Loại Phiên để xem lịch.
+        </p>
+
+    </div>
   </motion.div>
 );
 
