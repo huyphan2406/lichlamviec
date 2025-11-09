@@ -106,11 +106,11 @@ main {
 }
 
 .header-controls {
-    /* 🌟 KHỐI ĐIỀU KHIỂN (HÀNG DƯỚI): CĂN GIỮA NỘI DUNG */
+    /* 🌟 KHỐI ĐIỀU KHIỂN (HÀNG DƯỚI): CĂN GIỮA */
     display: flex;
     align-items: center;
-    justify-content: center; /* 🌟 ĐÃ THAY ĐỔI: Căn giữa toàn bộ khối nút */
-    width: 100%; /* Chiếm 100% chiều rộng để căn giữa */
+    justify-content: center; /* 👈 SỬA THÀNH 'center' */
+    width: 100%; 
     gap: 12px;
     flex-shrink: 0; 
 }

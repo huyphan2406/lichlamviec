@@ -294,12 +294,19 @@ const Header = ({ theme, toggleTheme, showAuthPopup }) => (
         Lịch làm việc
     </h1>
     
-    {/* 🌟 HÀNG 2: KHỐI ĐIỀU KHIỂN (Căn phải) */}
+    {/* 🌟 HÀNG 2: KHỐI ĐIỀU KHIỂN (Căn 2 bên) */}
     <div className="header-controls">
 
-      {/* 🌟 NÚT CRM ĐÃ ĐƯỢC XÓA */}
+      {/* 🌟 VỊ TRÍ MỚI: NÚT SÁNG/TỐI (BÊN TRÁI) */}
+      <label className="theme-toggle" title="Toggle Light/Dark Mode">
+        {theme === 'light' ? <FiMoon size={18} /> : <FiSun size={18} />}
+        <div className="theme-toggle-switch">
+          <input type="checkbox" checked={theme === 'dark'} onChange={toggleTheme} />
+          <span className="theme-toggle-slider"></span>
+        </div>
+      </label>
       
-      {/* Nút Đăng nhập/Đăng ký (Khối liền mạch) */}
+      {/* Nút Đăng nhập/Đăng ký (Khối liền mạch - BÊN PHẢI) */}
       <div className="auth-buttons">
         <button 
           className="auth-button login" 
@@ -321,14 +328,6 @@ const Header = ({ theme, toggleTheme, showAuthPopup }) => (
         </button>
       </div>
 
-      {/* Nút Sáng/Tối */}
-      <label className="theme-toggle" title="Toggle Light/Dark Mode">
-        {theme === 'light' ? <FiMoon size={18} /> : <FiSun size={18} />}
-        <div className="theme-toggle-switch">
-          <input type="checkbox" checked={theme === 'dark'} onChange={toggleTheme} />
-          <span className="theme-toggle-slider"></span>
-        </div>
-      </label>
     </div>
   </header>
 );
@@ -683,9 +682,9 @@ function App() {
 
   }, [jobs, dateFilter, nameFilter, sessionFilter, storeFilter, currentTime]);
 
-  // 🌟 TỐI ƯU HÓA: CHỈ LẤY 50 JOBS ĐẦU TIÊN
+  // 🌟 TỐI ƯU HÓA: CHỈ LẤY 30 JOBS ĐẦU TIÊN
   const limitedJobs = useMemo(() => {
-      return filteredJobs.slice(0, 50);
+      return filteredJobs.slice(0, 30);
   }, [filteredJobs]);
 
   // Logic Gom Nhóm (Dựa trên 50 jobs)
@@ -748,7 +747,7 @@ function App() {
                 <FiFilter size={18} style={{marginRight: '8px'}}/>
                 Tìm thấy <strong style={{color: 'var(--color-brand)'}}>{totalFilteredCount}</strong> công việc
                 {totalFilteredCount > 50 && ( // 👈 Cập nhật thành 50
-                    <span style={{marginLeft: '5px', color: 'var(--color-danger)'}}>(Đang hiển thị 50 jobs đầu tiên)</span>
+                    <span style={{marginLeft: '5px', color: 'var(--color-danger)'}}>(Đang hiển thị 30 jobs đầu tiên)</span>
                 )}
             </motion.div>
         )}
