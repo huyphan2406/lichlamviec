@@ -9,8 +9,8 @@ import {
   FiSearch, FiDownload, FiX, FiZap,
   FiCalendar, FiInfo, FiTag, FiAward,
   FiLogIn, FiUserPlus,
-  FiFilter, FiUsers, FiUserCheck, FiEdit3,
-  FiBarChart2 // Thêm FiEdit3 cho nút Report
+  FiFilter, FiUsers, FiUserCheck, FiEdit3, 
+  FiBarChart2 // Đảm bảo icon này đã được import
 } from 'react-icons/fi';
 import './App.css'; 
 
@@ -126,7 +126,6 @@ function useJobData() {
 
     const uniqueDates = [...new Set(sortedData.map(job => job['Date livestream']).filter(Boolean))];
     
-    // Tối ưu hóa: Loại bỏ khoảng trắng và xử lý case-sensitive
     const sessionsList = sortedData.map(job => (job['Type of session'] || '').trim()).filter(s => s && s !== 'nan');
     const storesList = sortedData.map(job => (job['Store'] || '').trim()).filter(s => s && s !== 'nan');
     
@@ -135,7 +134,7 @@ function useJobData() {
         list.forEach(item => {
             const lowerCase = item.toLowerCase();
             if (!itemMap.has(lowerCase)) {
-                itemMap.set(lowerCase, item); // Giữ lại giá trị gốc cho hiển thị
+                itemMap.set(lowerCase, item);
             }
         });
         return Array.from(itemMap.values());
@@ -147,7 +146,7 @@ function useJobData() {
     return { 
         jobs: sortedData, 
         dates: uniqueDates,
-        sessions: uniqueSessions, // Giá trị đã được làm sạch và duy nhất
+        sessions: uniqueSessions,
         stores: uniqueStores
     };
   }, [rawData, error]);
@@ -183,7 +182,7 @@ const combineLocation = (job) => {
 const TemporaryNotification = ({ message, onDismiss }) => {
   useEffect(() => {
     if (message) {
-      const timer = setTimeout(onDismiss, 3000); // Tự động biến mất sau 3 giây
+      const timer = setTimeout(onDismiss, 3000);
       return () => clearTimeout(timer);
     }
   }, [message, onDismiss]);
@@ -201,12 +200,8 @@ const TemporaryNotification = ({ message, onDismiss }) => {
           <button 
             onClick={onDismiss} 
             style={{ 
-              marginLeft: '10px', 
-              background: 'none', 
-              border: 'none', 
-              color: 'inherit', 
-              cursor: 'pointer',
-              display: 'flex',
+              marginLeft: '10px', background: 'none', border: 'none', 
+              color: 'inherit', cursor: 'pointer', display: 'flex',
               alignItems: 'center'
             }}
           >
@@ -291,26 +286,27 @@ const handleAuthClick = (showAuthPopup) => {
     showAuthPopup(); // Chỉ cần hiển thị popup
 };
 
-
 const Header = ({ theme, toggleTheme, showAuthPopup }) => ( 
   <header className="app-header">
     
-    {/* 🌟 HÀNG DUY NHẤT: Tiêu đề nằm bên trái */}
-    <h1>
+    {/* 🌟 HÀNG 1: TIÊU ĐỀ CĂN GIỮA (Sử dụng CSS để căn giữa) */}
+    <h1 className="header-title-centered">
         Lịch làm việc
     </h1>
     
-    {/* 🌟 KHỐI ĐIỀU KHIỂN: Nằm bên phải */}
+    {/* 🌟 HÀNG 2: KHỐI ĐIỀU KHIỂN (Căn phải) */}
     <div className="header-controls">
 
-      {/* 🌟 VỊ TRÍ MỚI: NÚT SÁNG/TỐI (ĐÃ ĐƯỢC CHUYỂN LÊN ĐẦU) */}
-      <label className="theme-toggle" title="Toggle Light/Dark Mode">
-        {theme === 'light' ? <FiMoon size={18} /> : <FiSun size={18} />}
-        <div className="theme-toggle-switch">
-          <input type="checkbox" checked={theme === 'dark'} onChange={toggleTheme} />
-          <span className="theme-toggle-slider"></span>
-        </div>
-      </label>
+      {/* NÚT MỚI: DASHBOARD/CRM */}
+      <button 
+        className="auth-button crm-dashboard-button" 
+        title="Dashboard CRM"
+        onClick={() => alert("Chức năng Dashboard/CRM đang được phát triển!")}
+        style={{ flexShrink: 0 }} 
+      >
+        <FiBarChart2 size={16} />
+        <span>CRM</span>
+      </button>
       
       {/* Nút Đăng nhập/Đăng ký (Khối liền mạch) */}
       <div className="auth-buttons">
@@ -333,10 +329,18 @@ const Header = ({ theme, toggleTheme, showAuthPopup }) => (
           <span>Đăng ký</span>
         </button>
       </div>
+
+      {/* Nút Sáng/Tối */}
+      <label className="theme-toggle" title="Toggle Light/Dark Mode">
+        {theme === 'light' ? <FiMoon size={18} /> : <FiSun size={18} />}
+        <div className="theme-toggle-switch">
+          <input type="checkbox" checked={theme === 'dark'} onChange={toggleTheme} />
+          <span className="theme-toggle-slider"></span>
+        </div>
+      </label>
     </div>
   </header>
 );
-
 
 const FilterBar = ({ 
     dateFilter, setDateFilter, 
@@ -349,7 +353,12 @@ const FilterBar = ({
     showTempNotification
 }) => {
   
-  const handleDownloadICS = useCallback(() => { // Dùng useCallback
+  // 🌟 TỐI ƯU HÓA 3: Tải lười (Lazy Loading) thư viện 'ics'
+  const handleDownloadICS = useCallback(async () => { // 👈 Thêm async
+    // 🌟 Chỉ import khi nhấn nút
+    const ics = await import('ics');
+
+    // 🌟 LƯU Ý: filteredJobs ở đây là danh sách đã bị giới hạn (50 jobs)
     const events = filteredJobs.map(job => {
       try {
         const [day, month, year] = job['Date livestream'].split('/');
@@ -572,7 +581,7 @@ const JobItem = memo(({ job, isActive }) => {
           display: 'flex', 
           justifyContent: 'space-between', 
           alignItems: 'center', 
-          marginBottom: '15px' // Tăng margin dưới để cách khối thông tin
+          marginBottom: '15px' 
       }}>
         
         {/* Tiêu đề: Cho phép co lại nếu cần */}
@@ -580,7 +589,7 @@ const JobItem = memo(({ job, isActive }) => {
             margin: 0, 
             paddingRight: '10px', 
             flexShrink: 1, 
-            minWidth: '50%' /* Đảm bảo tiêu đề vẫn hiển thị */
+            minWidth: '50%' 
         }}>
             {job.Store || 'Unnamed Job'}
         </h4> 
@@ -590,7 +599,6 @@ const JobItem = memo(({ job, isActive }) => {
           className="quick-report-button" 
           onClick={handleQuickReport}
           title="Điền Report Nhanh"
-          // Các style đã được chuyển sang CSS để đảm bảo tính nhất quán (App.css)
         >
           <FiEdit3 size={16} />
           Điền Report Nhanh
@@ -656,13 +664,11 @@ function App() {
 
   // Logic lọc
   const filteredJobs = useMemo(() => {
-    // Phụ thuộc vào currentTime để kích hoạt re-evaluation isJobActive và re-render
     const dummy = currentTime.toISOString(); 
     
     let jobsToFilter = jobs;
     const normNameFilter = removeAccents(nameFilter.toLowerCase().trim());
     
-    // Lọc theo Input/Name
     if (normNameFilter) {
       jobsToFilter = jobsToFilter.filter(job => {
         const jobStr = `${job['Talent 1']} ${job['Talent 2']} ${job['Coordinator 1']} ${job['Coordinator 2']} ${job.Store} ${job.Address} ${job['Studio/Room']}`;
@@ -670,37 +676,39 @@ function App() {
       });
     }
     
-    // Lọc theo Date
     if (dateFilter) { 
       jobsToFilter = jobsToFilter.filter(job => (job['Date livestream'] || '').toString() === dateFilter);
     }
-
-    // Lọc theo Session Type (Case-insensitive)
     if (sessionFilter) {
         const normalizedFilter = sessionFilter.toLowerCase();
         jobsToFilter = jobsToFilter.filter(job => (job['Type of session'] || '').trim().toLowerCase() === normalizedFilter);
     }
-
-    // Lọc theo Store Name (Case-insensitive)
     if (storeFilter) {
         const normalizedFilter = storeFilter.toLowerCase();
         jobsToFilter = jobsToFilter.filter(job => (job.Store || '').trim().toLowerCase() === normalizedFilter);
     }
 
     return jobsToFilter;
+
   }, [jobs, dateFilter, nameFilter, sessionFilter, storeFilter, currentTime]);
 
-  // Logic Gom Nhóm
+  // 🌟 TỐI ƯU HÓA: CHỈ LẤY 50 JOBS ĐẦU TIÊN
+  const limitedJobs = useMemo(() => {
+      return filteredJobs.slice(0, 50);
+  }, [filteredJobs]);
+
+  // Logic Gom Nhóm (Dựa trên 50 jobs)
   const groupedJobs = useMemo(() => {
-    return filteredJobs.reduce((acc, job) => {
+    return limitedJobs.reduce((acc, job) => { // 👈 Dùng limitedJobs
       const timeGroup = job['Time slot'] || 'N/A';
       if (!acc[timeGroup]) acc[timeGroup] = [];
       acc[timeGroup].push(job);
       return acc;
     }, {});
-  }, [filteredJobs]);
+  }, [limitedJobs]); // 👈 Dùng limitedJobs
 
   const jobGroups = Object.keys(groupedJobs);
+  const totalFilteredCount = filteredJobs.length; // 👈 Đếm tổng số lượng thực tế
 
   // Giao diện
   return (
@@ -726,7 +734,7 @@ function App() {
           inputValue={inputValue}
           setInputValue={setInputValue}
           uniqueDates={uniqueDates}
-          filteredJobs={filteredJobs} 
+          filteredJobs={limitedJobs} // 👈 Chỉ export 50 jobs
           
           sessionFilter={sessionFilter}
           setSessionFilter={setSessionFilter}
@@ -738,7 +746,7 @@ function App() {
           showTempNotification={showTempNotification}
         />
         
-        {/* 🌟 HIỂN THỊ SỐ LƯỢNG CÔNG VIỆC (FEATURE 1) */}
+        {/* 🌟 HIỂN THỊ SỐ LƯỢNG CÔNG VIỆC (Đã cập nhật) */}
         {jobs.length > 0 && jobGroups.length > 0 && (
             <motion.div 
                 className="job-count-summary"
@@ -747,8 +755,10 @@ function App() {
                 transition={{ duration: 0.3 }}
             >
                 <FiFilter size={18} style={{marginRight: '8px'}}/>
-                Tìm thấy <strong style={{color: 'var(--color-brand)'}}>{filteredJobs.length}</strong> công việc
-                {dateFilter ? ` cho ngày ${dateFilter}` : ' trong danh sách'}
+                Tìm thấy <strong style={{color: 'var(--color-brand)'}}>{totalFilteredCount}</strong> công việc
+                {totalFilteredCount > 50 && ( // 👈 Cập nhật thành 50
+                    <span style={{marginLeft: '5px', color: 'var(--color-danger)'}}>(Đang hiển thị 50 jobs đầu tiên)</span>
+                )}
             </motion.div>
         )}
         
