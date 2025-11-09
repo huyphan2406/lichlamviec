@@ -430,21 +430,42 @@ input:checked + .theme-toggle-slider:before { transform: translateX(20px); }
 .job-count-summary {
     display: flex;
     align-items: center;
-    justify-content: flex-start;
+    /* Mặc định trên desktop: căn trái */
+    justify-content: flex-start; 
+    
     padding: 12px 20px;
     margin-bottom: 20px;
-    background-color: var(--color-brand-light); /* Màu nền nhẹ nhàng */
+    background-color: var(--color-brand-light); 
     color: var(--color-text-primary);
-    border-radius: var(--border-radius);
+    border-radius: 12px;
+    border: 1px solid var(--color-border);
+    
     font-size: 0.95em;
     font-weight: 500;
-    border: 1px solid var(--color-border);
-    transition: all 0.3s ease;
+    
+    /* Cho phép wrap trên màn hình nhỏ */
+    flex-wrap: wrap; 
 }
 
 .job-count-summary strong {
     font-weight: 700;
     margin: 0 4px;
+}
+
+/* 🌟 Responsive cho màn hình hẹp */
+@media (max-width: 450px) {
+    .job-count-summary {
+        /* Căn giữa toàn bộ nội dung khi xuống dòng trên mobile */
+        justify-content: center; 
+        text-align: center;
+        padding: 10px 15px;
+        font-size: 0.9em; /* Nhỏ hơn một chút */
+    }
+
+    .job-count-summary svg {
+        /* Đảm bảo icon không bị xuống dòng */
+        margin-right: 5px; 
+    }
 }
 
 /* --- FEATURE 2: ACTIVE JOB HIGHLIGHT --- */
