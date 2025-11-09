@@ -122,23 +122,63 @@ main {
   text-align: center;
 }
 
-/* --- KHỐI AUTH BUTTONS --- */
+/* --- KHỐI AUTH BUTTONS (LIỀN MẠC VÀ SẠCH HƠN) --- */
 .auth-buttons {
-    display: flex; align-items: center; gap: 0; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.15); }
-.auth-button {
-    display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 8px 12px; border: none;
-    font-size: 0.85rem; font-weight: 500; font-family: var(--font-main); cursor: pointer;
-    white-space: nowrap; transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0; /* Xóa gap để các nút dính vào nhau */
+    border-radius: 8px; 
+    overflow: hidden; 
+    /* Đổ bóng nhẹ nhưng sắc nét hơn */
+    box-shadow: 0 1px 4px rgba(0,0,0,0.18); 
+    flex-shrink: 0;
 }
-.auth-button svg { font-size: 1em; flex-shrink: 0; }
 
-/* Nút Login (Cột 1) */
-.auth-button.login { background-color: var(--color-input-bg); border: 1px solid var(--color-border); border-right: 1px solid var(--color-border); color: var(--color-text-secondary); }
-.auth-button.login:hover { background-color: var(--color-border); color: var(--color-text-primary); }
+.auth-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px; /* Tăng khoảng cách icon/text nhẹ */
+    padding: 8px 14px; /* Tăng padding để nút nhìn lớn hơn */
+    border: none;
+    font-size: 0.88rem; /* Rõ ràng hơn */
+    font-weight: 600; /* Đậm hơn */
+    font-family: var(--font-main);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s ease-in-out;
+    flex-shrink: 0;
+}
+.auth-button svg {
+    font-size: 1em;
+    flex-shrink: 0;
+}
 
-/* Nút Register (Cột 2) */
-.auth-button.register { background-color: var(--color-brand); color: #ffffff; border: 1px solid var(--color-brand); }
-.auth-button.register:hover { background-color: #0069d9; border-color: #0069d9; }
+/* 🌟 Nút Login (Cột 1) */
+.auth-button.login {
+    background-color: var(--color-card); /* Nền trắng/tối */
+    color: var(--color-text-primary);
+    /* Border mỏng hơn, sạch hơn */
+    border-right: 1px solid var(--color-border); 
+}
+.auth-button.login:hover {
+    background-color: var(--color-input-bg);
+    color: var(--color-text-primary);
+    /* Loại bỏ đổ bóng khi hover để không bị cồng kềnh */
+}
+
+/* 🌟 Nút Register (Cột 2) - Nổi bật hơn */
+.auth-button.register {
+    background-color: var(--color-brand);
+    color: #ffffff;
+    /* Dùng độ đậm nhẹ của box-shadow để tách biệt */
+    box-shadow: -1px 0 3px rgba(0,0,0,0.1); 
+}
+.auth-button.register:hover {
+    background-color: var(--color-brand-hover);
+    /* Giữ hiệu ứng transform như các nút khác */
+    transform: translateY(-1px); 
+}
 
 /* Căn chỉnh Dark Mode Toggle */
 .theme-toggle { display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--color-text-secondary); padding: 6px; border-radius: 20px; transition: background-color var(--transition-speed), color var(--transition-speed); }

@@ -303,6 +303,15 @@ const Header = ({ theme, toggleTheme, showAuthPopup }) => (
     {/* 🌟 KHỐI ĐIỀU KHIỂN: Nằm bên phải */}
     <div className="header-controls">
 
+      {/* 🌟 VỊ TRÍ MỚI: NÚT SÁNG/TỐI (ĐÃ ĐƯỢC CHUYỂN LÊN ĐẦU) */}
+      <label className="theme-toggle" title="Toggle Light/Dark Mode">
+        {theme === 'light' ? <FiMoon size={18} /> : <FiSun size={18} />}
+        <div className="theme-toggle-switch">
+          <input type="checkbox" checked={theme === 'dark'} onChange={toggleTheme} />
+          <span className="theme-toggle-slider"></span>
+        </div>
+      </label>
+      
       {/* Nút Đăng nhập/Đăng ký (Khối liền mạch) */}
       <div className="auth-buttons">
         <button 
@@ -324,15 +333,6 @@ const Header = ({ theme, toggleTheme, showAuthPopup }) => (
           <span>Đăng ký</span>
         </button>
       </div>
-
-      {/* Nút Sáng/Tối */}
-      <label className="theme-toggle" title="Toggle Light/Dark Mode">
-        {theme === 'light' ? <FiMoon size={18} /> : <FiSun size={18} />}
-        <div className="theme-toggle-switch">
-          <input type="checkbox" checked={theme === 'dark'} onChange={toggleTheme} />
-          <span className="theme-toggle-slider"></span>
-        </div>
-      </label>
     </div>
   </header>
 );
