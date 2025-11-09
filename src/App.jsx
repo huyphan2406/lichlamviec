@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, memo } from 'react';
 import Papa from 'papaparse';
 import { motion, AnimatePresence } from 'framer-motion';
 import useSWR from 'swr';
@@ -9,7 +9,7 @@ import {
   FiSearch, FiDownload, FiX, FiZap,
   FiCalendar, FiInfo, FiTag, FiAward,
   FiLogIn, FiUserPlus,
-  FiFilter
+  FiFilter, FiUsers, FiUserCheck // Đã thêm icons cho Group
 } from 'react-icons/fi';
 import './App.css'; 
 
@@ -92,55 +92,37 @@ function useJobData() {
 
     const uniqueDates = [...new Set(sortedData.map(job => job['Date livestream']).filter(Boolean))];
     
-    // 🌟 SỬA LỖI CASE-SENSITIVE: Chuyển về chữ thường (.toLowerCase()) và làm sạch (.trim())
-    const sessionsList = sortedData
-      .map(job => (job['Type of session'] || '').trim())
-      .filter(s => s && s !== 'nan');
-    
-    // 🌟 Tạo danh sách duy nhất bằng cách chuyển tất cả về chữ thường trước khi đưa vào Set
-    const uniqueSessions = [...new Set(sessionsList.map(s => s.toLowerCase()))];
-    
-    // Lưu ý: Nếu muốn hiển thị tên đẹp (ví dụ: 'Ca Nối') trong dropdown, 
-    // chúng ta cần phải giữ lại giá trị gốc. 
-    // Nhưng để tránh trùng, tạm thời dùng lowercase cho logic set.
-
-    // 🌟 LƯU Ý QUAN TRỌNG: Để hiển thị đúng (Ca Nối) nhưng so sánh không bị lỗi:
-    // 1. Tạo Map để liên kết lowercase (key) với giá trị gốc (value)
-    const sessionMap = new Map();
-    sessionsList.forEach(session => {
-        const lowerCase = session.toLowerCase();
-        if (!sessionMap.has(lowerCase)) {
-            sessionMap.set(lowerCase, session);
-        }
-    });
-    
-    const uniqueSessionsForDisplay = Array.from(sessionMap.values()); // Lấy các giá trị gốc đã được lọc
-
-    // Áp dụng tương tự cho Stores
+    // Tối ưu hóa: Loại bỏ khoảng trắng và xử lý case-sensitive
+    const sessionsList = sortedData.map(job => (job['Type of session'] || '').trim()).filter(s => s && s !== 'nan');
     const storesList = sortedData.map(job => (job['Store'] || '').trim()).filter(s => s && s !== 'nan');
-    const storeMap = new Map();
-    storesList.forEach(store => {
-        const lowerCase = store.toLowerCase();
-        if (!storeMap.has(lowerCase)) {
-            storeMap.set(lowerCase, store);
-        }
-    });
-    const uniqueStoresForDisplay = Array.from(storeMap.values());
+    
+    const getUniqueItems = (list) => {
+        const itemMap = new Map();
+        list.forEach(item => {
+            const lowerCase = item.toLowerCase();
+            if (!itemMap.has(lowerCase)) {
+                itemMap.set(lowerCase, item); // Giữ lại giá trị gốc cho hiển thị
+            }
+        });
+        return Array.from(itemMap.values());
+    };
 
+    const uniqueSessions = getUniqueItems(sessionsList);
+    const uniqueStores = getUniqueItems(storesList);
 
     return { 
         jobs: sortedData, 
         dates: uniqueDates,
-        sessions: uniqueSessionsForDisplay, // 🌟 Dùng giá trị đã được làm sạch
-        stores: uniqueStoresForDisplay
+        sessions: uniqueSessions, // Giá trị đã được làm sạch và duy nhất
+        stores: uniqueStores
     };
   }, [rawData, error]);
 
   return { 
     jobs: processedData.jobs, 
     uniqueDates: processedData.dates,
-    uniqueSessions: processedData.sessions, // 🌟 Đã sửa
-    uniqueStores: processedData.stores,     // 🌟 Đã sửa
+    uniqueSessions: processedData.sessions,
+    uniqueStores: processedData.stores,
     isLoading: isLoading && !rawData, 
     error 
   };
@@ -205,12 +187,9 @@ const TemporaryNotification = ({ message, onDismiss }) => {
 
 // 🌟 COMPONENT POPUP THÔNG BÁO 
 const NotificationPopup = ({ isVisible, setIsVisible }) => {
-    // const LOCAL_STORAGE_KEY = 'dismissed_popup_15nov_v4'; // Dùng khi muốn bật ghi nhớ
-
     const handleDismiss = () => {
         setIsVisible(false);
     };
-
 
     return (
         <AnimatePresence>
@@ -328,7 +307,7 @@ const FilterBar = ({
     showTempNotification
 }) => {
   
-  const handleDownloadICS = () => {
+  const handleDownloadICS = useCallback(() => { // Dùng useCallback
     const events = filteredJobs.map(job => {
       try {
         const [day, month, year] = job['Date livestream'].split('/');
@@ -379,7 +358,7 @@ const FilterBar = ({
     link.click();
     document.body.removeChild(link);
     showTempNotification("Đã xuất lịch thành công!");
-  };
+  }, [dateFilter, filteredJobs, showTempNotification]);
 
   return (
     <div className="filter-container">
@@ -431,7 +410,7 @@ const FilterBar = ({
         disabled={filteredJobs.length === 0}
       >
         <FiDownload size={18} />
-        Xuất ra file (.ics)
+        Nhập vào Google Calendar (.ics)
       </button>
     </div>
   );
@@ -456,15 +435,15 @@ const EmptyState = ({ dateFilter }) => (
     initial={{ opacity: 0, scale: 0.9 }} 
     animate={{ opacity: 1, scale: 1 }}
   >
-    {/* 🌟 THẺ CẢNH BÁO CHÍNH - NHẤN MẠNH SỰ KHÔNG TÌM THẤY */}
+    {/* THẺ CẢNH BÁO CHÍNH - STYLE CAO CẤP */}
     <div style={{ 
-        border: '2px solid var(--color-danger)', /* Viền đậm hơn */
-        borderRadius: '16px', /* Bo góc lớn hơn */
-        padding: '25px', /* Padding rộng rãi */
-        backgroundColor: 'var(--color-card)', /* Nền trắng/tối */
+        border: '2px solid var(--color-danger)', 
+        borderRadius: '16px', 
+        padding: '25px', 
+        backgroundColor: 'var(--color-card)', 
         width: '100%',
         boxSizing: 'border-box',
-        boxShadow: '0 8px 25px rgba(220, 53, 69, 0.2)' /* Đổ bóng nhấn mạnh cảnh báo */
+        boxShadow: '0 8px 25px rgba(220, 53, 69, 0.2)'
     }}>
         
         {/* TIÊU ĐỀ KHỐI CẢNH BÁO */}
@@ -472,14 +451,13 @@ const EmptyState = ({ dateFilter }) => (
             color: 'var(--color-danger)', 
             display: 'flex', 
             alignItems: 'center', 
-            gap: '12px', /* Khoảng cách lớn hơn */
+            gap: '12px', 
             margin: '0 0 20px 0',
             paddingBottom: '10px',
-            borderBottom: '1px solid var(--color-border)', /* Viền phân cách nhẹ nhàng */
-            fontSize: '1.3rem', /* Cỡ chữ lớn hơn */
+            borderBottom: '1px solid var(--color-border)', 
+            fontSize: '1.3rem', 
             fontWeight: 700
         }}>
-            {/* Icon lớn hơn, màu đỏ nổi bật */}
             <FiSearch size={24} style={{color: 'var(--color-danger)'}} />
             KHÔNG TÌM THẤY LỊCH LÀM VIỆC!
         </h3>
@@ -502,8 +480,8 @@ const EmptyState = ({ dateFilter }) => (
                 fontSize: '1em',
                 margin: '0 0 25px 0',
                 padding: '10px 15px',
-                borderLeft: '4px solid var(--color-brand)', /* Viền xanh đậm */
-                backgroundColor: 'var(--color-brand-light)', /* Nền xanh nhạt */
+                borderLeft: '4px solid var(--color-brand)', 
+                backgroundColor: 'var(--color-brand-light)', 
                 borderRadius: '4px'
             }}>
                 <span style={{ fontWeight: 600 }}>
@@ -528,24 +506,52 @@ const EmptyState = ({ dateFilter }) => (
   </motion.div>
 );
 
-const JobItem = ({ job }) => {
+const JobItem = memo(({ job }) => {
   const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } };
   const timeGroup = `${job['Time slot'] || 'N/A'}`;
   const talentDisplay = combineNames(job['Talent 1'], job['Talent 2']);
   const coordDisplay = combineNames(job['Coordinator 1'], job['Coordinator 2']);
   const locationDisplay = combineLocation(job);
+  const sessionTypeDisplay = job['Type of session'] && job['Type of session'].trim() !== '' ? job['Type of session'] : '—';
+  
+  // Giá trị mặc định
+  const defaultUpdateMessage = "Đang cập nhật...";
 
   return (
     <motion.div className="schedule-item" variants={itemVariants}>
       <h4>{job.Store || 'Unnamed Job'}</h4>
       <p className="time"><FiClock /> {timeGroup}</p>
       <p className="location"><FiMapPin /> {locationDisplay}</p>
-      <p className="session"><FiMic /> Session type: {job['Type of session'] || '—'}</p>
+      <p className="session"><FiMic /> Session type: {sessionTypeDisplay}</p> 
       <p className="mc"><FiUser /> {talentDisplay}</p>
       <p className="standby"><FiMonitor /> {coordDisplay}</p>
+
+      {/* 🌟 THÊM MỤC MỚI: GROUP BRAND (Đã làm đẹp) */}
+      <p className="group-brand" style={{
+          marginTop: '15px', 
+          paddingTop: '10px',
+          borderTop: '1px solid var(--color-border)', /* Viền phân cách rõ ràng hơn */
+          color: 'var(--color-text-primary)', /* Màu chữ chính */
+          fontWeight: 500,
+          fontSize: '0.95em'
+      }}>
+        <FiUsers size={18} style={{marginRight: '12px', color: 'var(--color-brand)'}}/> 
+        Group Brand: <strong style={{marginLeft: '5px', color: 'var(--color-text-secondary)'}}>{defaultUpdateMessage}</strong>
+      </p>
+
+      {/* 🌟 THÊM MỤC MỚI: GROUP HOST (Đã làm đẹp) */}
+      <p className="group-host" style={{
+          color: 'var(--color-text-primary)',
+          fontWeight: 500,
+          fontSize: '0.95em'
+      }}>
+        <FiUserCheck size={18} style={{marginRight: '12px', color: 'var(--color-brand)'}}/>
+        Group Host: <strong style={{marginLeft: '5px', color: 'var(--color-text-secondary)'}}>{defaultUpdateMessage}</strong>
+      </p>
+
     </motion.div>
   );
-};
+});
 
 // --- COMPONENT APP CHÍNH ---
 function App() {
@@ -560,13 +566,13 @@ function App() {
 
   // State và hàm quản lý thông báo tạm thời
   const [tempNotification, setTempNotification] = useState(null); 
-  const showTempNotification = (message) => setTempNotification(message);
-  const dismissTempNotification = () => setTempNotification(null);
+  const showTempNotification = useCallback((message) => setTempNotification(message), []);
+  const dismissTempNotification = useCallback(() => setTempNotification(null), []);
 
   // State và hàm kiểm soát Popup chính (Thông Báo Quan Trọng)
   const [isAuthPopupVisible, setIsAuthPopupVisible] = useState(true);
-  const showAuthPopup = () => setIsAuthPopupVisible(true);
-  const hideAuthPopup = () => setIsAuthPopupVisible(false);
+  const showAuthPopup = useCallback(() => setIsAuthPopupVisible(true), []);
+  const hideAuthPopup = useCallback(() => setIsAuthPopupVisible(false), []);
 
 
   useEffect(() => {
@@ -582,15 +588,8 @@ function App() {
     // Lọc theo Input/Name
     if (normNameFilter) {
       jobsToFilter = jobsToFilter.filter(job => {
-        const talent1 = removeAccents((job['Talent 1'] || '').toLowerCase()).includes(normNameFilter);
-        const talent2 = removeAccents((job['Talent 2'] || '').toLowerCase()).includes(normNameFilter);
-        const coord1 = removeAccents((job['Coordinator 1'] || '').toLowerCase()).includes(normNameFilter);
-        const coord2 = removeAccents((job['Coordinator 2'] || '').toLowerCase()).includes(normNameFilter);
-        const jobName = removeAccents((job.Store || '').toLowerCase()).includes(normNameFilter);
-        const location = removeAccents((job.Address || '').toLowerCase()).includes(normNameFilter);
-        const studio = removeAccents((job.Studio || '').toLowerCase()).includes(normNameFilter);
-        const room = removeAccents((job['Studio/Room'] || '').toLowerCase()).includes(normNameFilter);
-        return talent1 || talent2 || coord1 || coord2 || jobName || location || studio || room;
+        const jobStr = `${job['Talent 1']} ${job['Talent 2']} ${job['Coordinator 1']} ${job['Coordinator 2']} ${job.Store} ${job.Address} ${job['Studio/Room']}`;
+        return removeAccents(jobStr.toLowerCase()).includes(normNameFilter);
       });
     }
     
@@ -599,14 +598,16 @@ function App() {
       jobsToFilter = jobsToFilter.filter(job => (job['Date livestream'] || '').toString() === dateFilter);
     }
 
-    // Lọc theo Session Type
+    // Lọc theo Session Type (Case-insensitive)
     if (sessionFilter) {
-        jobsToFilter = jobsToFilter.filter(job => (job['Type of session'] || '') === sessionFilter);
+        const normalizedFilter = sessionFilter.toLowerCase();
+        jobsToFilter = jobsToFilter.filter(job => (job['Type of session'] || '').trim().toLowerCase() === normalizedFilter);
     }
 
-    // Lọc theo Store Name
+    // Lọc theo Store Name (Case-insensitive)
     if (storeFilter) {
-        jobsToFilter = jobsToFilter.filter(job => (job.Store || '') === storeFilter);
+        const normalizedFilter = storeFilter.toLowerCase();
+        jobsToFilter = jobsToFilter.filter(job => (job.Store || '').trim().toLowerCase() === normalizedFilter);
     }
 
     return jobsToFilter;
@@ -634,7 +635,6 @@ function App() {
       <Header 
         theme={theme} 
         toggleTheme={toggleTheme} 
-        showTempNotification={showTempNotification}
         showAuthPopup={showAuthPopup}
       />
       

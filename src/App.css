@@ -1,6 +1,6 @@
 /*
 =================================================
-  File: App.css (Stylesheet)
+  File: App.css (Stylesheet - Phiên bản Tối Ưu Cuối Cùng)
 =================================================
 */
 
@@ -57,7 +57,7 @@ main {
   padding: 0;
 }
 
-/* 🌟 CSS MỚI: Temporary Notification (Thay thế Alert) */
+/* 🌟 CSS MỚI: Temporary Notification (Thông báo thay thế Alert) */
 .temporary-notification {
     position: fixed;
     top: 0;
@@ -340,7 +340,7 @@ input:checked + .theme-toggle-slider:before { transform: translateX(20px); }
 .schedule-item p.time svg { color: var(--color-grey); }
 
 
-/* --- CSS CHO POPUP THÔNG BÁO (Giữ nguyên) --- */
+/* --- CSS CHO POPUP THÔNG BÁO --- */
 .popup-overlay {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
@@ -407,7 +407,7 @@ input:checked + .theme-toggle-slider:before { transform: translateX(20px); }
     align-items: center; 
     justify-content: center;
     
-    /* 🌟 QUAN TRỌNG: Loại bỏ mọi padding, màu nền, và box-shadow cũ */
+    /* QUAN TRỌNG: Loại bỏ mọi padding, màu nền, và box-shadow cũ */
     padding: 0; 
     background-color: transparent; 
     box-shadow: none;
@@ -420,7 +420,7 @@ input:checked + .theme-toggle-slider:before { transform: translateX(20px); }
     transition: all var(--transition-speed);
 }
 
-/* 🌟 Dành cho các style inline trong JSX (chỉ để căn icon và chữ) */
+/* Dành cho các style inline trong JSX (chỉ để căn icon và chữ) */
 .empty-state-icon {
     font-size: 1.5em; 
     margin-bottom: 0;
