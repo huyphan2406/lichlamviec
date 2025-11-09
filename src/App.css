@@ -287,26 +287,11 @@ input:checked + .theme-toggle-slider:before { transform: translateX(20px); }
   box-shadow: 0 6px 16px var(--color-shadow-hover);
 }
 .schedule-item h4 {
-  /* 🌟 GIÁ TRỊ CỐ ĐỊNH */
+  margin: 0 0 15px 0; 
   font-size: 1.25em; 
   color: var(--color-text-primary);
   font-weight: 600; 
   transition: color var(--transition-speed);
-  
-  /* 🌟 GIÁ TRỊ MARGIN TỪ KHỐI ĐẦU TIÊN */
-  margin: 0 0 15px 0; /* Giữ margin 15px dưới tiêu đề (cho khối thông tin chính) */
-
-  /* 🌟 ĐẢM BẢO KHÔNG BỊ XUNG ĐỘT KHI CÓ NÚT REPORT */
-  /* Thêm thuộc tính này để h4 co lại và căn chỉnh đúng trong khối Flexbox/Grid */
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.job-header-row h4 {
-    margin: 0; /* Loại bỏ margin dưới khi nó nằm ngang hàng với nút Report */
-    flex-shrink: 1; 
-    min-width: 0; 
-    padding-right: 15px; /* Đảm bảo khoảng cách với nút */
 }
 .schedule-item p {
   margin: 10px 0; 
@@ -916,6 +901,10 @@ input:checked + .theme-toggle-slider:before { transform: translateX(20px); }
     justify-content: space-between;
     align-items: center;
     margin-bottom: 10px; 
+}
+.schedule-item h4 {
+  margin: 0; font-size: 1.25em; color: var(--color-text-primary); font-weight: 600; transition: color var(--transition-speed);
+}
 
 /* 🌟🌟🌟 NÚT ĐIỀN REPORT NHANH (TỐI ƯU MÀU VÀ HIỆU ỨNG) 🌟🌟🌟 */
 .quick-report-button {
