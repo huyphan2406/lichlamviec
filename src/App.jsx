@@ -784,7 +784,7 @@ function App() {
                                     left: 0,
                                     width: '100%',
                                     transform: `translateY(${virtualItem.start}px)`,
-                                    padding: '5px 0' // Thêm khoảng cách nhẹ giữa các item
+                                    paddingBottom: '15px'
                                 }}
                             >
                                 {item.type === 'HEADER' ? (
