@@ -81,42 +81,47 @@ main { padding: 0; }
 }
 
 
-/* --- HEADER & DARK MODE TOGGLE (Bố cục 1 Hàng - Nút Đèn Bên Trái) --- */
+/* --- HEADER & DARK MODE TOGGLE (Bố cục 2 Hàng - Căn Giữa) --- */
 .app-header {
-  /* 🌟 Bố cục 1 hàng, căn 2 bên */
+  /* 🌟 Bố cục chính là xếp chồng (2 hàng) */
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column; 
+  align-items: center; /* 🌟 Căn giữa toàn bộ nội dung */
   
   padding: 10px 0;
   margin-bottom: 15px;
+  width: 100%; 
 }
 
 .app-header h1 {
-  margin: 0;
+  /* 🌟 KHỐI TIÊU ĐỀ: CĂN GIỮA TRÊN HÀNG RIÊNG */
+  margin: 0 0 10px 0; /* Chỉ cần margin dưới */
+  width: 100%; 
+  
   color: var(--color-text-primary);
   font-size: 1.8rem; 
   font-weight: 700;
-  transition: color var(--transition-speed);
+  text-align: center; 
   
-  /* 🌟 TỐI ƯU ỔN ĐỊNH: Cho phép co lại, không bao giờ bị tràn */
-  flex-shrink: 1; 
-  min-width: 0; 
-  padding-right: 15px; 
+  /* Đảm bảo h1 không bị lỗi Responsive */
+  flex-shrink: 0; 
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  padding-right: 0; 
 }
 
 .header-controls {
-    /* Khối điều khiển nằm bên phải */
+    /* 🌟 KHỐI ĐIỀU KHIỂN (HÀNG DƯỚI): CĂN GIỮA */
     display: flex;
     align-items: center;
+    justify-content: center; 
+    width: 100%; 
     gap: 12px;
     flex-shrink: 0; 
 }
 
-/* --- KHỐI AUTH BUTTONS --- */
+/* --- KHỐI AUTH BUTTONS (LIỀN MẠCH) --- */
 .auth-buttons {
     display: flex; align-items: center; gap: 0; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.15); 
     flex-shrink: 0;
@@ -135,10 +140,6 @@ main { padding: 0; }
 /* Nút Register (Cột 2) */
 .auth-button.register { background-color: var(--color-brand); color: #ffffff; }
 .auth-button.register:hover { background-color: var(--color-brand-hover); }
-
-/* 🌟 NÚT CRM ĐÃ BỊ XÓA (Loại bỏ style nếu có) */
-/* .auth-button.crm-dashboard-button { ... } */
-
 
 /* Căn chỉnh Dark Mode Toggle */
 .theme-toggle { display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--color-text-secondary); padding: 6px; border-radius: 20px; transition: background-color var(--transition-speed), color var(--transition-speed); }
