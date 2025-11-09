@@ -9,7 +9,8 @@ import {
   FiSearch, FiDownload, FiX, FiZap,
   FiCalendar, FiInfo, FiTag, FiAward,
   FiLogIn, FiUserPlus,
-  FiFilter, FiUsers, FiUserCheck // Đã thêm icons cho Group
+  FiFilter, FiUsers, FiUserCheck, FiEdit3,
+  FiBarChart2 // Thêm FiEdit3 cho nút Report
 } from 'react-icons/fi';
 import './App.css'; 
 
@@ -55,6 +56,39 @@ const csvFetcher = (url) => {
     });
   });
 };
+
+// 🌟 HÀM KIỂM TRA CÔNG VIỆC ĐANG HOẠT ĐỘNG (60 PHÚT)
+const isJobActive = (job) => {
+    try {
+        const now = new Date();
+        const [day, month, year] = job['Date livestream'].split('/');
+        const [startTimeStr, endTimeStr] = (job['Time slot'] || '00:00 - 00:00').split(' - ');
+        
+        const [startHour, startMinute] = startTimeStr.split(':').map(Number);
+        const [endHour, endMinute] = endTimeStr.split(':').map(Number); 
+
+        const jobStartTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), startHour, startMinute);
+        jobStartTime.setFullYear(parseInt(year), parseInt(month) - 1, parseInt(day));
+
+        const jobEndTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), endHour, endMinute);
+        jobEndTime.setFullYear(parseInt(year), parseInt(month) - 1, parseInt(day));
+
+        if (jobEndTime.getTime() < jobStartTime.getTime()) {
+            jobEndTime.setDate(jobEndTime.getDate() + 1);
+        }
+
+        const isRunning = now.getTime() >= jobStartTime.getTime() && now.getTime() < jobEndTime.getTime();
+        const soonThreshold = 60 * 60 * 1000; 
+        const timeToStart = jobStartTime.getTime() - now.getTime();
+        const isStartingSoon = timeToStart > 0 && timeToStart <= soonThreshold;
+
+        return isRunning || isStartingSoon;
+
+    } catch (e) {
+        return false;
+    }
+};
+
 
 // --- LOGIC (HOOKS) ---
 
@@ -224,7 +258,7 @@ const NotificationPopup = ({ isVisible, setIsVisible }) => {
                             </p>
 
                             <p className="popup-content-text">
-                                Website này dùng để tra cứu lịch làm việc của <strong>Standby</strong> và <strong>Host</strong>.
+                                Tra cứu nhanh lịch làm việc của <strong>Standby</strong> và <strong>Host</strong>.
                             </p>
                             
                             <hr className="popup-divider" />
@@ -238,7 +272,7 @@ const NotificationPopup = ({ isVisible, setIsVisible }) => {
                             <hr className="popup-divider" />
 
                             <p className="popup-content-text popup-footer-area">
-                                *Nhiều chức năng mới đang được phát triển và sẽ ra mắt sớm...
+                                <strong>Tính năng đăng được triển khai: Join nhanh group brand và host; điền nhanh report; dashboard thống kê jobs(CRM)</strong>
                                 <span className="popup-author-simple">
                                     <FiAward size={14} /> Tác giả: Huy Phan
                                 </span>
@@ -258,11 +292,64 @@ const handleAuthClick = (showAuthPopup) => {
 };
 
 
-const Header = ({ theme, toggleTheme, showAuthPopup }) => ( // 🌟 Nhận showAuthPopup
+// const Header = ({ theme, toggleTheme, showAuthPopup }) => ( // 🌟 Nhận showAuthPopup
+//   <header className="app-header">
+//     <h1>Lịch làm việc</h1>
+    
+//     <div className="header-controls">
+      
+//       {/* Nút Đăng nhập/Đăng ký (Gắn hàm gọi popup) */}
+//       <div className="auth-buttons">
+//         <button 
+//           className="auth-button login" 
+//           title="Đăng nhập"
+//           onClick={() => handleAuthClick(showAuthPopup)}
+//         >
+//           <FiLogIn size={16} />
+//           <span>Đăng nhập</span>
+//         </button>
+//         <button 
+//           className="auth-button register" 
+//           title="Đăng ký"
+//           onClick={() => handleAuthClick(showAuthPopup)}
+//         >
+//           <FiUserPlus size={16} />
+//           <span>Đăng ký</span>
+//         </button>
+//       </div>
+
+//       {/* Nút Sáng/Tối */}
+//       <label className="theme-toggle" title="Toggle Light/Dark Mode">
+//         {theme === 'light' ? <FiMoon size={18} /> : <FiSun size={18} />}
+//         <div className="theme-toggle-switch">
+//           <input type="checkbox" checked={theme === 'dark'} onChange={toggleTheme} />
+//           <span className="theme-toggle-slider"></span>
+//         </div>
+//       </label>
+//     </div>
+//   </header>
+// );
+
+
+const Header = ({ theme, toggleTheme, showAuthPopup }) => ( 
   <header className="app-header">
-    <h1>Lịch làm việc</h1>
+    {/* 🌟 Tiêu đề H1 được đặt trong div để kiểm soát tốt hơn trên mobile */}
+    <h1 style={{margin: 0, paddingRight: '15px', flexShrink: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>
+        Lịch làm việc
+    </h1>
     
     <div className="header-controls">
+
+      {/* 🌟 NÚT MỚI: DASHBOARD/CRM */}
+      <button 
+        className="auth-button crm-dashboard-button" 
+        title="Dashboard CRM"
+        onClick={() => alert("Chức năng Dashboard/CRM đang được phát triển!")}
+        style={{ flexShrink: 0 }} 
+      >
+        <FiBarChart2 size={16} />
+        <span>CRM</span>
+      </button>
       
       {/* Nút Đăng nhập/Đăng ký (Gắn hàm gọi popup) */}
       <div className="auth-buttons">
@@ -270,6 +357,7 @@ const Header = ({ theme, toggleTheme, showAuthPopup }) => ( // 🌟 Nhận showA
           className="auth-button login" 
           title="Đăng nhập"
           onClick={() => handleAuthClick(showAuthPopup)}
+          style={{ flexShrink: 0 }} 
         >
           <FiLogIn size={16} />
           <span>Đăng nhập</span>
@@ -278,6 +366,7 @@ const Header = ({ theme, toggleTheme, showAuthPopup }) => ( // 🌟 Nhận showA
           className="auth-button register" 
           title="Đăng ký"
           onClick={() => handleAuthClick(showAuthPopup)}
+          style={{ flexShrink: 0 }} 
         >
           <FiUserPlus size={16} />
           <span>Đăng ký</span>
@@ -295,6 +384,9 @@ const Header = ({ theme, toggleTheme, showAuthPopup }) => ( // 🌟 Nhận showA
     </div>
   </header>
 );
+
+
+
 
 const FilterBar = ({ 
     dateFilter, setDateFilter, 
@@ -373,7 +465,7 @@ const FilterBar = ({
         </div>
         
         <div className="form-group filter-session">
-            <label htmlFor="sessionInput">Loại Phiên</label>
+            <label htmlFor="sessionInput">Loại Ca</label>
             <select id="sessionInput" value={sessionFilter} onChange={(e) => setSessionFilter(e.target.value)}>
                 <option value="">All Sessions</option>
                 {uniqueSessions.map(session => <option key={session} value={session}>{session}</option>)}
@@ -506,7 +598,7 @@ const EmptyState = ({ dateFilter }) => (
   </motion.div>
 );
 
-const JobItem = memo(({ job }) => {
+const JobItem = memo(({ job, isActive }) => {
   const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } };
   const timeGroup = `${job['Time slot'] || 'N/A'}`;
   const talentDisplay = combineNames(job['Talent 1'], job['Talent 2']);
@@ -514,40 +606,65 @@ const JobItem = memo(({ job }) => {
   const locationDisplay = combineLocation(job);
   const sessionTypeDisplay = job['Type of session'] && job['Type of session'].trim() !== '' ? job['Type of session'] : '—';
   
-  // Giá trị mặc định
   const defaultUpdateMessage = "Đang cập nhật...";
 
+  const handleQuickReport = useCallback(() => {
+    alert(`Tính năng đang được triển khai bạn vui lòng chờ nha!!!`);
+  }, [job]);
+
   return (
-    <motion.div className="schedule-item" variants={itemVariants}>
-      <h4>{job.Store || 'Unnamed Job'}</h4>
+    <motion.div 
+      className={`schedule-item ${isActive ? 'job-active' : ''}`}
+      variants={itemVariants}
+    >
+      {/* 🌟 KHỐI 1: TÊN CỬA HÀNG VÀ NÚT REPORT (ĐÃ TỐI ƯU CĂN CHỈNH) */}
+      <div className="job-header-row" style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          marginBottom: '15px' // Tăng margin dưới để cách khối thông tin
+      }}>
+        
+        {/* Tiêu đề: Cho phép co lại nếu cần */}
+        <h4 className="job-title-main" style={{ 
+            margin: 0, 
+            paddingRight: '10px', 
+            flexShrink: 1, 
+            minWidth: '50%' /* Đảm bảo tiêu đề vẫn hiển thị */
+        }}>
+            {job.Store || 'Unnamed Job'}
+        </h4> 
+        
+        {/* NÚT ĐIỀN REPORT NHANH (FORMAT ĐẸP) */}
+        <button 
+          className="quick-report-button" 
+          onClick={handleQuickReport}
+          title="Điền Report Nhanh"
+          // Các style đã được chuyển sang CSS để đảm bảo tính nhất quán (App.css)
+        >
+          <FiEdit3 size={16} />
+          Điền Report Nhanh
+        </button>
+      </div>
+      
+      {/* CÁC MỤC THÔNG TIN CHÍNH */}
       <p className="time"><FiClock /> {timeGroup}</p>
       <p className="location"><FiMapPin /> {locationDisplay}</p>
-      <p className="session"><FiMic /> Session type: {sessionTypeDisplay}</p> 
+      <p className="session"><FiMic /> Loại Ca: {sessionTypeDisplay}</p> 
       <p className="mc"><FiUser /> {talentDisplay}</p>
       <p className="standby"><FiMonitor /> {coordDisplay}</p>
 
-      {/* 🌟 THÊM MỤC MỚI: GROUP BRAND (Đã làm đẹp) */}
-      <p className="group-brand" style={{
-          marginTop: '15px', 
-          paddingTop: '10px',
-          borderTop: '1px solid var(--color-border)', /* Viền phân cách rõ ràng hơn */
-          color: 'var(--color-text-primary)', /* Màu chữ chính */
-          fontWeight: 500,
-          fontSize: '0.95em'
-      }}>
-        <FiUsers size={18} style={{marginRight: '12px', color: 'var(--color-brand)'}}/> 
-        Group Brand: <strong style={{marginLeft: '5px', color: 'var(--color-text-secondary)'}}>{defaultUpdateMessage}</strong>
-      </p>
-
-      {/* 🌟 THÊM MỤC MỚI: GROUP HOST (Đã làm đẹp) */}
-      <p className="group-host" style={{
-          color: 'var(--color-text-primary)',
-          fontWeight: 500,
-          fontSize: '0.95em'
-      }}>
-        <FiUserCheck size={18} style={{marginRight: '12px', color: 'var(--color-brand)'}}/>
-        Group Host: <strong style={{marginLeft: '5px', color: 'var(--color-text-secondary)'}}>{defaultUpdateMessage}</strong>
-      </p>
+      {/* KHỐI 2 CỘT ỔN ĐỊNH: SỬ DỤNG CLASS CSS GRID */}
+      <div className="job-groups-footer-container">
+          <div className="group-brand job-group-item">
+            <FiUsers size={18} className="job-group-icon" /> 
+            Group Brand: <span className="job-group-value">{defaultUpdateMessage}</span>
+          </div>
+          <div className="group-host job-group-item">
+            <FiUserCheck size={18} className="job-group-icon" />
+            Group Host: <span className="job-group-value">{defaultUpdateMessage}</span>
+          </div>
+      </div>
 
     </motion.div>
   );
@@ -579,9 +696,19 @@ function App() {
     const timerId = setTimeout(() => setNameFilter(inputValue), 300);
     return () => clearTimeout(timerId);
   }, [inputValue]);
+  
+  // 🌟 THÊM: SỬ DỤNG STATE ĐỂ BUỘC RE-RENDER THƯỜNG XUYÊN CHO HIGHLIGHT
+  const [currentTime, setCurrentTime] = useState(new Date());
+  useEffect(() => {
+      const intervalId = setInterval(() => setCurrentTime(new Date()), 60000); // Cập nhật mỗi 1 phút
+      return () => clearInterval(intervalId);
+  }, []);
 
   // Logic lọc
   const filteredJobs = useMemo(() => {
+    // Phụ thuộc vào currentTime để kích hoạt re-evaluation isJobActive và re-render
+    const dummy = currentTime.toISOString(); 
+    
     let jobsToFilter = jobs;
     const normNameFilter = removeAccents(nameFilter.toLowerCase().trim());
     
@@ -611,7 +738,7 @@ function App() {
     }
 
     return jobsToFilter;
-  }, [jobs, dateFilter, nameFilter, sessionFilter, storeFilter]);
+  }, [jobs, dateFilter, nameFilter, sessionFilter, storeFilter, currentTime]);
 
   // Logic Gom Nhóm
   const groupedJobs = useMemo(() => {
@@ -660,6 +787,21 @@ function App() {
           uniqueStores={uniqueStores}
           showTempNotification={showTempNotification}
         />
+        
+        {/* 🌟 HIỂN THỊ SỐ LƯỢNG CÔNG VIỆC (FEATURE 1) */}
+        {jobs.length > 0 && jobGroups.length > 0 && (
+            <motion.div 
+                className="job-count-summary"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+            >
+                <FiFilter size={18} style={{marginRight: '8px'}}/>
+                Tìm thấy <strong style={{color: 'var(--color-brand)'}}>{filteredJobs.length}</strong> công việc
+                {dateFilter ? ` cho ngày ${dateFilter}` : ' trong danh sách'}
+            </motion.div>
+        )}
+        
         <div id="schedule-list" className="schedule-list">
           {error ? (
              <motion.div className="empty-state" initial={{opacity:0}} animate={{opacity:1}}>
@@ -682,7 +824,11 @@ function App() {
                 > 
                   <h3 className="schedule-group-title">{timeGroup}</h3>
                   {groupedJobs[timeGroup].map((job, index) => (
-                    <JobItem key={`${timeGroup}-${index}`} job={job} />
+                    <JobItem 
+                        key={`${timeGroup}-${index}`} 
+                        job={job} 
+                        isActive={isJobActive(job)} // 👈 Gắn trạng thái hoạt động
+                    />
                   ))}
                 </motion.div>
               ))}

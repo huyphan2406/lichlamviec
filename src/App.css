@@ -452,3 +452,294 @@ input:checked + .theme-toggle-slider:before { transform: translateX(20px); }
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
 }
+
+/* --- FEATURE 1: JOB COUNT SUMMARY --- */
+.job-count-summary {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 12px 20px;
+    margin-bottom: 20px;
+    background-color: var(--color-brand-light); /* Màu nền nhẹ nhàng */
+    color: var(--color-text-primary);
+    border-radius: var(--border-radius);
+    font-size: 0.95em;
+    font-weight: 500;
+    border: 1px solid var(--color-border);
+    transition: all 0.3s ease;
+}
+
+.job-count-summary strong {
+    font-weight: 700;
+    margin: 0 4px;
+}
+
+/* --- FEATURE 2: ACTIVE JOB HIGHLIGHT --- */
+
+/* Định nghĩa màu cảnh báo (màu cam/vàng) */
+:root, [data-theme='light'] {
+    --color-warning: #ffc107; /* Màu vàng đậm */
+    --color-warning-light: #fff3cd; /* Nền vàng nhạt */
+}
+
+[data-theme='dark'] {
+    --color-warning: #ffb800;
+    --color-warning-light: #4a3400; 
+}
+
+/* Style cho Job Item đang hoạt động/sắp hoạt động */
+.schedule-item.job-active {
+    border: 2px solid var(--color-warning); /* Viền màu nổi bật */
+    background-color: var(--color-warning-light); 
+    box-shadow: 0 4px 15px rgba(255, 193, 7, 0.4);
+    /* Thêm hiệu ứng nhấp nháy nhẹ */
+    animation: pulse-border 2s infinite ease-in-out;
+}
+
+.schedule-item.job-active h4 {
+    color: var(--color-warning); /* Tiêu đề nổi bật */
+}
+
+/* Keyframe cho hiệu ứng nhấp nháy (chú ý nhẹ nhàng) */
+@keyframes pulse-border {
+    0% {
+        box-shadow: 0 4px 15px rgba(255, 193, 7, 0.4);
+    }
+    50% {
+        box-shadow: 0 4px 20px rgba(255, 193, 7, 0.6);
+    }
+    100% {
+        box-shadow: 0 4px 15px rgba(255, 193, 7, 0.4);
+    }
+}
+/* --- BỔ SUNG CSS CHO JOB ITEM GROUPS (SỬ DỤNG GRID ĐỂ ỔN ĐỊNH) --- */
+
+.job-groups-footer-container {
+    /* Khối container chính cho Groups */
+    margin-top: 15px;
+    padding-top: 10px;
+    border-top: 1px solid var(--color-border);
+    
+    /* 🌟 GIẢI PHÁP ỔN ĐỊNH: Dùng Grid để chia 2 cột rõ ràng */
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Chia thành hai cột bằng nhau */
+    gap: 15px; /* Khoảng cách giữa các mục */
+    align-items: center;
+}
+
+.job-group-item {
+    /* Style chung cho mỗi mục Group Brand/Host */
+    /* Đã dùng <div> thay cho <p>, kiểm soát hoàn toàn margin/padding */
+    display: flex;
+    align-items: center;
+    font-size: 0.95em;
+    font-weight: 500;
+    color: var(--color-text-primary);
+    line-height: 1.4;
+}
+
+.job-group-icon {
+    /* Style cho Icon */
+    margin-right: 10px;
+    color: var(--color-brand);
+    flex-shrink: 0;
+}
+
+.job-group-value {
+    /* Style cho chữ "Đang cập nhật..." */
+    margin-left: 5px;
+    color: var(--color-text-secondary);
+    font-weight: 400; 
+    /* Đảm bảo nội dung chữ chiếm hết không gian còn lại */
+    overflow: hidden; 
+    text-overflow: ellipsis;
+    white-space: nowrap; 
+}
+
+/* 🌟 Căn chỉnh riêng cho cột Group Host (Cột thứ 2) */
+.group-host {
+    /* Đẩy cột Host sang phải hết mức trong ô Grid của nó */
+    justify-self: end; 
+    text-align: right; 
+}
+.group-host .job-group-item {
+    /* Căn chỉnh nội dung item Flexbox bên trong sang phải */
+    justify-content: flex-end; 
+}
+
+/* Xử lý Responsive (cho màn hình nhỏ hơn) */
+@media (max-width: 480px) {
+    .job-groups-footer-container {
+        grid-template-columns: 1fr; /* Xếp chồng thành 1 cột */
+        gap: 5px;
+    }
+    .group-brand {
+        justify-self: start;
+    }
+    .group-host {
+        justify-self: start; /* Căn trái cho cả hai mục trên mobile */
+        text-align: left;
+    }
+    .group-host .job-group-item {
+        justify-content: flex-start;
+    }
+}
+
+/* --- BỔ SUNG CSS CHO JOB ITEM GROUPS (GIẢI PHÁP GRID ỔN ĐỊNH) --- */
+
+.job-groups-footer-container {
+    /* Khối container chính cho Groups */
+    margin-top: 15px;
+    padding-top: 10px;
+    border-top: 1px solid var(--color-border);
+    
+    /* 🌟 GIẢI PHÁP ỔN ĐỊNH: Dùng Grid để chia 2 cột rõ ràng */
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Chia thành hai cột bằng nhau */
+    gap: 15px; /* Khoảng cách giữa các mục */
+    align-items: center;
+}
+
+.job-group-item {
+    /* Style chung cho mỗi mục Group Brand/Host */
+    display: flex;
+    align-items: center;
+    font-size: 0.95em;
+    font-weight: 500;
+    color: var(--color-text-primary);
+    line-height: 1.4;
+}
+
+.job-group-icon {
+    /* Style cho Icon */
+    margin-right: 10px;
+    color: var(--color-brand);
+    flex-shrink: 0;
+}
+
+.job-group-value {
+    /* Style cho chữ "Đang cập nhật..." */
+    margin-left: 5px;
+    color: var(--color-text-secondary);
+    font-weight: 1000; 
+    overflow: hidden; 
+    text-overflow: ellipsis;
+    white-space: nowrap; /* Đảm bảo chữ nằm trên một hàng */
+}
+
+/* 🌟 Căn chỉnh riêng cho cột Group Host (Cột thứ 2) */
+.group-host {
+    /* Đẩy cột Host sang phải hết mức trong ô Grid của nó */
+    justify-self: end; 
+    text-align: right; 
+}
+.group-host .job-group-item {
+    /* Căn chỉnh nội dung item Flexbox bên trong sang phải */
+    justify-content: flex-end; 
+}
+
+/* Xử lý Responsive (cho màn hình nhỏ hơn) */
+@media (max-width: 480px) {
+    .job-groups-footer-container {
+        grid-template-columns: 1fr; /* Xếp chồng thành 1 cột */
+        gap: 5px;
+    }
+    .group-brand {
+        justify-self: start;
+    }
+    .group-host {
+        justify-self: start; /* Căn trái cho cả hai mục trên mobile */
+        text-align: left;
+    }
+    .group-host .job-group-item {
+        justify-content: flex-start;
+    }
+}
+
+/* --- CHỈNH SỬA BIẾN MÀU CỤ THỂ CHO NÚT REPORT (Nếu chưa có) --- */
+:root {
+  --color-brand-hover: #0067d7;
+  --color-report-primary: #28a745; /* Trở lại màu xanh lá ban đầu, tinh tế hơn */
+  --color-report-hover: #218838;
+  --color-report-active: #19692c;
+  --color-report-shadow-rgb: 40, 167, 69; /* Dùng cho đổ bóng */
+  --color-brand-rgb: 0, 123, 255;
+}
+
+body[data-theme='dark'] {
+  --color-report-primary: #17ad35; 
+  --color-report-hover: #138c2c;
+  --color-report-active: #106f23;
+  --color-report-shadow-rgb: 23, 173, 53;
+}
+
+/* 🌟🌟🌟 NÚT ĐIỀN REPORT NHANH (NHỎ GỌN VÀ ĐẸP HƠN) 🌟🌟🌟 */
+.quick-report-button {
+    display: flex;
+    align-items: center;
+    gap: 7px; 
+    padding: 9px 18px; /* 🌟 NHỎ HƠN MỘT CHÚT */
+    font-size: 0.88em; /* 🌟 Cỡ chữ nhỏ gọn hơn */
+    font-weight: 600; /* Giữ độ đậm */
+    
+    background-color: var(--color-report-primary) !important; 
+    color: #fff;
+    border: none;
+    border-radius: 8px; /* Bo góc vừa phải */
+    cursor: pointer;
+    transition: all 0.2s ease-in-out; /* Animation mượt mà */
+    /* Đổ bóng tinh tế hơn */
+    box-shadow: 0 4px 10px rgba(var(--color-report-shadow-rgb), 0.25);
+}
+
+.quick-report-button svg {
+    font-size: 1.05em; /* Kích thước icon cân đối với chữ */
+}
+
+.quick-report-button:hover {
+    background-color: var(--color-report-hover) !important; 
+    transform: translateY(-2px); /* Hiệu ứng nổi nhẹ nhàng */
+    box-shadow: 0 6px 14px rgba(var(--color-report-shadow-rgb), 0.4); /* Đổ bóng khi hover */
+}
+
+.quick-report-button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 5px rgba(var(--color-report-shadow-rgb), 0.2);
+    background-color: var(--color-report-active) !important;
+}
+
+/* --- BIẾN MÀU (THÊM CHO CRM) --- */
+/* Đảm bảo các biến này có trong khối :root và body[data-theme='dark'] của bạn */
+:root {
+  --color-grey-hover: #5a6268;
+}
+
+/* 🌟 BỔ SUNG: NÚT CRM/DASHBOARD */
+.auth-button.crm-dashboard-button {
+    background-color: var(--color-grey);
+    color: #fff;
+    border: none; /* Bỏ border nếu bạn muốn nó nổi bật hơn */
+    padding: 7px 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    flex-shrink: 0;
+    
+    /* Thiết lập lại để nó không bị ảnh hưởng bởi khối auth-buttons liền mạch */
+    border-radius: 6px; 
+    box-shadow: 0 1px 4px rgba(0,0,0,0.15); /* Đổ bóng nhẹ */
+}
+.auth-button.crm-dashboard-button:hover {
+    background-color: var(--color-grey-hover); /* Màu xám đậm hơn khi hover */
+    border-color: var(--color-grey-hover);
+    color: #fff;
+}
+
+/* Tinh chỉnh cho Dark Mode */
+body[data-theme='dark'] .auth-button.crm-dashboard-button {
+    background-color: #555;
+    border-color: #555;
+}
+body[data-theme='dark'] .auth-button.crm-dashboard-button:hover {
+    background-color: #777;
+    border-color: #777;
+}
