@@ -297,16 +297,7 @@ const Header = ({ theme, toggleTheme, showAuthPopup }) => (
     {/* 🌟 HÀNG 2: KHỐI ĐIỀU KHIỂN (Căn phải) */}
     <div className="header-controls">
 
-      {/* NÚT MỚI: DASHBOARD/CRM */}
-      <button 
-        className="auth-button crm-dashboard-button" 
-        title="Dashboard CRM"
-        onClick={() => alert("Chức năng Dashboard/CRM đang được phát triển!")}
-        style={{ flexShrink: 0 }} 
-      >
-        <FiBarChart2 size={16} />
-        <span>CRM</span>
-      </button>
+      {/* 🌟 NÚT CRM ĐÃ ĐƯỢC XÓA */}
       
       {/* Nút Đăng nhập/Đăng ký (Khối liền mạch) */}
       <div className="auth-buttons">
