@@ -80,3 +80,4 @@ exports.generateAccessCode = functions.https.onCall(async (data, context) => {
         throw new functions.https.HttpsError('internal', 'Lỗi Database, không thể tạo mã.');
     }
 });
+
