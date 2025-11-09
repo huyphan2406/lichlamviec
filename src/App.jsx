@@ -292,66 +292,18 @@ const handleAuthClick = (showAuthPopup) => {
 };
 
 
-// const Header = ({ theme, toggleTheme, showAuthPopup }) => ( // 🌟 Nhận showAuthPopup
-//   <header className="app-header">
-//     <h1>Lịch làm việc</h1>
-    
-//     <div className="header-controls">
-      
-//       {/* Nút Đăng nhập/Đăng ký (Gắn hàm gọi popup) */}
-//       <div className="auth-buttons">
-//         <button 
-//           className="auth-button login" 
-//           title="Đăng nhập"
-//           onClick={() => handleAuthClick(showAuthPopup)}
-//         >
-//           <FiLogIn size={16} />
-//           <span>Đăng nhập</span>
-//         </button>
-//         <button 
-//           className="auth-button register" 
-//           title="Đăng ký"
-//           onClick={() => handleAuthClick(showAuthPopup)}
-//         >
-//           <FiUserPlus size={16} />
-//           <span>Đăng ký</span>
-//         </button>
-//       </div>
-
-//       {/* Nút Sáng/Tối */}
-//       <label className="theme-toggle" title="Toggle Light/Dark Mode">
-//         {theme === 'light' ? <FiMoon size={18} /> : <FiSun size={18} />}
-//         <div className="theme-toggle-switch">
-//           <input type="checkbox" checked={theme === 'dark'} onChange={toggleTheme} />
-//           <span className="theme-toggle-slider"></span>
-//         </div>
-//       </label>
-//     </div>
-//   </header>
-// );
-
-
 const Header = ({ theme, toggleTheme, showAuthPopup }) => ( 
   <header className="app-header">
-    {/* 🌟 Tiêu đề H1 được đặt trong div để kiểm soát tốt hơn trên mobile */}
-    <h1 style={{margin: 0, paddingRight: '15px', flexShrink: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>
+    
+    {/* 🌟 HÀNG DUY NHẤT: Tiêu đề nằm bên trái */}
+    <h1>
         Lịch làm việc
     </h1>
     
+    {/* 🌟 KHỐI ĐIỀU KHIỂN: Nằm bên phải */}
     <div className="header-controls">
 
-      {/* 🌟 NÚT MỚI: DASHBOARD/CRM */}
-      <button 
-        className="auth-button crm-dashboard-button" 
-        title="Dashboard CRM"
-        onClick={() => alert("Chức năng Dashboard/CRM đang được phát triển!")}
-        style={{ flexShrink: 0 }} 
-      >
-        <FiBarChart2 size={16} />
-        <span>CRM</span>
-      </button>
-      
-      {/* Nút Đăng nhập/Đăng ký (Gắn hàm gọi popup) */}
+      {/* Nút Đăng nhập/Đăng ký (Khối liền mạch) */}
       <div className="auth-buttons">
         <button 
           className="auth-button login" 
@@ -384,8 +336,6 @@ const Header = ({ theme, toggleTheme, showAuthPopup }) => (
     </div>
   </header>
 );
-
-
 
 
 const FilterBar = ({ 
