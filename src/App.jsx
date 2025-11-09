@@ -1,10 +1,10 @@
-import { useState, useMemo, useEffect, useCallback, memo, useRef } // 🌟 Thêm useRef
-from 'react';
-import Papa from 'papaparse';
+import { useState, useMemo, useEffect, useCallback, memo, useRef } from 'react';
+// 🌟 TỐI ƯU 1: Đã xóa Papa.parse (chuyển sang JSON)
+// import Papa from 'papaparse';
 import { motion, AnimatePresence } from 'framer-motion';
 import useSWR from 'swr';
-// 🌟 TỐI ƯU 3: Bỏ import 'ics' ở đây
-// import * as ics from 'ics'; 
+// 🌟 TỐI ƯU 3: Đã xóa ics (sẽ được tải lười)
+// import * as ics from 'ics';
 import { 
   FiClock, FiMapPin, FiMic, FiUser, FiMonitor,
   FiMoon, FiSun,
@@ -12,7 +12,7 @@ import {
   FiCalendar, FiInfo, FiTag, FiAward,
   FiLogIn, FiUserPlus,
   FiFilter, FiUsers, FiUserCheck, FiEdit3, 
-  FiBarChart2
+  FiBarChart2 // Icon cho CRM (nếu bạn thêm lại)
 } from 'react-icons/fi';
 // 🌟 TỐI ƯU 2: Thêm import cho Virtualizer
 import { useVirtualizer } from '@tanstack/react-virtual';
@@ -41,27 +41,10 @@ const getFormattedToday = () => {
   return `${day}/${month}/${year}`;
 };
 
-// HÀM TẢI DỮ LIỆU (FETCHER) CHO SWR
-const csvFetcher = (url) => {
-  return new Promise((resolve, reject) => {
-    Papa.parse(url, {
-      download: true,
-      header: true,
-      skipEmptyLines: true,
-      dynamicTyping: false,
-      transformHeader: (header) => header.replace(/\ufeff/g, '').trim(),
-      complete: (results) => {
-        resolve(results.data);
-      },
-      error: (err) => {
-        console.error("Lỗi Papa.parse:", err);
-        reject(err);
-      }
-    });
-  });
-};
+// 🌟 TỐI ƯU 1: HÀM TẢI DỮ LIỆU (FETCHER) MỚI CHO SWR
+const jsonFetcher = (url) => fetch(url).then((res) => res.json());
 
-// HÀM KIỂM TRA CÔNG VIỆC ĐANG HOẠT ĐỘNG (60 PHÚT)
+// 🌟 HÀM KIỂM TRA CÔNG VIỆC ĐANG HOẠT ĐỘNG (60 PHÚT)
 const isJobActive = (job) => {
     try {
         const now = new Date();
@@ -106,61 +89,27 @@ function useDarkMode() {
   return [theme, toggleTheme];
 }
 
+// 🌟 TỐI ƯU 1: HÀM useJobData ĐÃ ĐƯỢC TỐI ƯU HÓA
 function useJobData() {
-  const dataUrl = 'https://docs.google.com/spreadsheets/d/1716aQ1XqHDiHB4LHSClVYglY0Cgf60TVJ7RYjqlwsOM/export?format=csv&gid=2068764011';
+  // 1. Fetch từ API route của bạn (đảm bảo file /api/get-schedule.js tồn tại)
+  const API_URL = '/api/get-schedule'; 
 
-  const { data: rawData, error, isLoading } = useSWR(
-    dataUrl,
-    csvFetcher,
+  const { data, error, isLoading } = useSWR(
+    API_URL,
+    jsonFetcher, // 👈 Dùng fetcher JSON mới
     {
       refreshInterval: 60000, 
       revalidateOnFocus: true
     }
   );
 
-  const processedData = useMemo(() => {
-    if (!rawData || error) return { jobs: [], dates: [], sessions: [], stores: [] };
-    const validData = rawData.filter(row => row['Date livestream'] && row['Date livestream'].includes('/'));
-    
-    const sortedData = validData.sort((a, b) => {
-      const dtA = parseDate(a['Date livestream'], a['Time slot']);
-      const dtB = parseDate(b['Date livestream'], b['Time slot']);
-      return dtA - dtB;
-    });
-
-    const uniqueDates = [...new Set(sortedData.map(job => job['Date livestream']).filter(Boolean))];
-    
-    const sessionsList = sortedData.map(job => (job['Type of session'] || '').trim()).filter(s => s && s !== 'nan');
-    const storesList = sortedData.map(job => (job['Store'] || '').trim()).filter(s => s && s !== 'nan');
-    
-    const getUniqueItems = (list) => {
-        const itemMap = new Map();
-        list.forEach(item => {
-            const lowerCase = item.toLowerCase();
-            if (!itemMap.has(lowerCase)) {
-                itemMap.set(lowerCase, item);
-            }
-        });
-        return Array.from(itemMap.values());
-    };
-
-    const uniqueSessions = getUniqueItems(sessionsList);
-    const uniqueStores = getUniqueItems(storesList);
-
-    return { 
-        jobs: sortedData, 
-        dates: uniqueDates,
-        sessions: uniqueSessions,
-        stores: uniqueStores
-    };
-  }, [rawData, error]);
-
+  // 2. Dữ liệu đã được xử lý sẵn trên server
   return { 
-    jobs: processedData.jobs, 
-    uniqueDates: processedData.dates,
-    uniqueSessions: processedData.sessions,
-    uniqueStores: processedData.stores,
-    isLoading: isLoading && !rawData, 
+    jobs: data?.jobs || [], 
+    uniqueDates: data?.dates || [],
+    uniqueSessions: data?.sessions || [],
+    uniqueStores: data?.stores || [],
+    isLoading: isLoading, // Giữ nguyên trạng thái loading của SWR
     error 
   };
 }
@@ -290,18 +239,19 @@ const handleAuthClick = (showAuthPopup) => {
     showAuthPopup(); // Chỉ cần hiển thị popup
 };
 
+
 const Header = ({ theme, toggleTheme, showAuthPopup }) => ( 
   <header className="app-header">
     
-    {/* 🌟 HÀNG DUY NHẤT: Tiêu đề nằm bên trái */}
-    <h1>
+    {/* 🌟 HÀNG 1: TIÊU ĐỀ CĂN GIỮA (Sử dụng CSS để căn giữa) */}
+    <h1 className="header-title-centered">
         Lịch làm việc
     </h1>
     
-    {/* 🌟 KHỐI ĐIỀU KHIỂN: Nằm bên phải */}
+    {/* 🌟 HÀNG 2: KHỐI ĐIỀU KHIỂN (Căn 2 bên) */}
     <div className="header-controls">
 
-      {/* 🌟 NÚT SÁNG/TỐI (BÊN TRÁI AUTH) */}
+      {/* 🌟 VỊ TRÍ MỚI: NÚT SÁNG/TỐI (BÊN TRÁI) */}
       <label className="theme-toggle" title="Toggle Light/Dark Mode">
         {theme === 'light' ? <FiMoon size={18} /> : <FiSun size={18} />}
         <div className="theme-toggle-switch">
@@ -336,7 +286,7 @@ const Header = ({ theme, toggleTheme, showAuthPopup }) => (
   </header>
 );
 
-// 🌟🌟🌟 COMPONENT FILTERBAR (ĐÃ TÁCH STATE - Tối ưu 4) 🌟🌟🌟
+// 🌟🌟🌟 COMPONENT FILTERBAR (ĐÃ TÁCH STATE - Tối ưu 3 & 4) 🌟🌟🌟
 const FilterBar = ({ 
     dateFilter, setDateFilter, 
     setNameFilter, // 👈 ĐÃ THÊM
@@ -353,7 +303,6 @@ const FilterBar = ({
 
   // 🌟 TỐI ƯU HÓA 4: Debounce (làm trễ) việc cập nhật bộ lọc
   useEffect(() => {
-    // Đợi 300ms sau khi người dùng ngừng gõ...
     const timerId = setTimeout(() => {
         setNameFilter(inputValue); // ...rồi mới cập nhật state của App
     }, 300);
@@ -361,7 +310,7 @@ const FilterBar = ({
     return () => {
         clearTimeout(timerId); // Xóa timer nếu người dùng gõ tiếp
     };
-  }, [inputValue, setNameFilter]); // 👈 Chỉ chạy khi inputValue hoặc setNameFilter thay đổi
+  }, [inputValue, setNameFilter]); 
   
   
   // 🌟 TỐI ƯU HÓA 3: Tải lười (Lazy Loading) thư viện 'ics'
@@ -598,7 +547,6 @@ function App() {
   const { jobs, isLoading, uniqueDates, uniqueSessions, uniqueStores, error } = useJobData();
   
   const [dateFilter, setDateFilter] = useState(() => getFormattedToday());
-  // 🌟 TỐI ƯU HÓA 4: Xóa 'inputValue'
   const [nameFilter, setNameFilter] = useState(''); 
   const [sessionFilter, setSessionFilter] = useState('');
   const [storeFilter, setStoreFilter] = useState('');
@@ -612,8 +560,6 @@ function App() {
   const hideAuthPopup = useCallback(() => setIsAuthPopupVisible(false), []);
 
   const [currentTime, setCurrentTime] = useState(new Date());
-  
-  // 🌟 TỐI ƯU HÓA 4: Xóa useEffect debounce (đã chuyển vào FilterBar)
   
   useEffect(() => {
       const intervalId = setInterval(() => setCurrentTime(new Date()), 60000); 
@@ -650,15 +596,20 @@ function App() {
 
   }, [jobs, dateFilter, nameFilter, sessionFilter, storeFilter, currentTime]);
 
+  // 🌟 TỐI ƯU HÓA 2: Bỏ giới hạn .slice()
+  // const limitedJobs = useMemo(() => {
+  //     return filteredJobs.slice(0, 50);
+  // }, [filteredJobs]);
+
   // Logic Gom Nhóm (Dùng toàn bộ, không giới hạn)
   const groupedJobs = useMemo(() => {
-    return filteredJobs.reduce((acc, job) => {
+    return filteredJobs.reduce((acc, job) => { // 👈 Dùng filteredJobs
       const timeGroup = job['Time slot'] || 'N/A';
       if (!acc[timeGroup]) acc[timeGroup] = [];
       acc[timeGroup].push(job);
       return acc;
     }, {});
-  }, [filteredJobs]);
+  }, [filteredJobs]); // 👈 Dùng filteredJobs
 
   // 🌟 TỐI ƯU HÓA 2: "Làm phẳng" (Flatten) dữ liệu để ảo hóa
   const flatRowItems = useMemo(() => {
@@ -696,13 +647,14 @@ function App() {
     estimateSize: (index) => {
         // Ước tính chiều cao
         const itemType = flatRowItems[index]?.type;
-        return itemType === 'HEADER' ? 50 : 350; // 50px cho Header, 350px cho JobItem (Tùy chỉnh nếu JobItem cao hơn)
+        // 🌟 Điều chỉnh chiều cao ước tính
+        return itemType === 'HEADER' ? 50 : 360; // 50px cho Header, 360px cho JobItem (Vì có thêm 2 dòng Group)
     },
     overscan: 5, // Render thêm 5 item bên ngoài màn hình
   });
 
   const virtualItems = rowVirtualizer.getVirtualItems();
-  const totalFilteredCount = filteredJobs.length;
+  const totalFilteredCount = filteredJobs.length; // 👈 Đếm tổng số lượng thực tế
 
   // Giao diện
   return (
@@ -736,6 +688,7 @@ function App() {
           showTempNotification={showTempNotification}
         />
         
+        {/* 🌟 HIỂN THỊ SỐ LƯỢNG CÔNG VIỆC (Đã bỏ giới hạn) */}
         {jobs.length > 0 && totalFilteredCount > 0 && (
             <motion.div 
                 className="job-count-summary"
@@ -758,7 +711,7 @@ function App() {
              </motion.div>
           ) : isLoading ? (
             <SkeletonLoader />
-          ) : (jobs.length > 0 && flatRowItems.length === 0) ? ( // 🌟 Sửa: Dùng flatRowItems.length
+          ) : (jobs.length > 0 && flatRowItems.length === 0) ? (
             <EmptyState dateFilter={dateFilter} />
           ) : (
             // 🌟 TỐI ƯU HÓA 2: ÁP DỤNG VIRTUALIZER
@@ -770,7 +723,6 @@ function App() {
                     {virtualItems.map((virtualItem) => {
                         const item = flatRowItems[virtualItem.index];
                         
-                        // 🌟 Xử lý trường hợp item không tồn tại (an toàn)
                         if (!item) {
                             return null; 
                         }
@@ -784,7 +736,7 @@ function App() {
                                     left: 0,
                                     width: '100%',
                                     transform: `translateY(${virtualItem.start}px)`,
-                                    paddingBottom: '15px'
+                                    paddingBottom: '15px' // 👈 Thêm padding dưới để tạo khoảng cách
                                 }}
                             >
                                 {item.type === 'HEADER' ? (
