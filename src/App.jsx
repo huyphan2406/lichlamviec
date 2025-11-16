@@ -48,9 +48,7 @@ const findGroupLink = (name, groupsMap) => {
     // 1. Thử exact match trước
     let groupData = groupsMap[normalizedName];
     if (groupData?.link) {
-        if (process.env.NODE_ENV === 'development') {
-            console.log('✅ [EXACT MATCH]', name, '->', normalizedName, '-> Link:', groupData.link);
-        }
+        console.log('✅ [EXACT MATCH]', name, '->', normalizedName, '-> Link:', groupData.link);
         return groupData.link;
     }
     
@@ -65,9 +63,7 @@ const findGroupLink = (name, groupsMap) => {
     if (foundKey) {
         groupData = groupsMap[foundKey];
         if (groupData?.link) {
-            if (process.env.NODE_ENV === 'development') {
-                console.log('✅ [PARTIAL MATCH]', name, '-> Normalized:', normalizedName, '-> Matched Key:', foundKey, '-> Link:', groupData.link);
-            }
+            console.log('✅ [PARTIAL MATCH]', name, '-> Normalized:', normalizedName, '-> Matched Key:', foundKey, '-> Link:', groupData.link);
             return groupData.link;
         }
     }
@@ -100,18 +96,14 @@ const findGroupLink = (name, groupsMap) => {
     if (bestMatch) {
         groupData = groupsMap[bestMatch];
         if (groupData?.link) {
-            if (process.env.NODE_ENV === 'development') {
-                console.log('✅ [FUZZY MATCH]', name, '-> Normalized:', normalizedName, '-> Matched Key:', bestMatch, '(Score:', bestScore, ') -> Link:', groupData.link);
-            }
+            console.log('✅ [FUZZY MATCH]', name, '-> Normalized:', normalizedName, '-> Matched Key:', bestMatch, '(Score:', bestScore, ') -> Link:', groupData.link);
             return groupData.link;
         }
     }
     
     // Không tìm thấy
-    if (process.env.NODE_ENV === 'development') {
-        console.warn('❌ [NOT FOUND]', name, '-> Normalized:', normalizedName);
-        console.warn('   Available keys sample:', allKeys.slice(0, 10));
-    }
+    console.warn('❌ [NOT FOUND]', name, '-> Normalized:', normalizedName);
+    console.warn('   Available keys sample:', allKeys.slice(0, 10));
     return null;
 };
 
@@ -226,17 +218,22 @@ function useGroupData() {
         error
     };
     
-    // Debug: Log khi data được fetch (chỉ trong development)
+    // Debug: Log khi data được fetch (LUÔN LOG để debug)
     useEffect(() => {
-        if (process.env.NODE_ENV === 'development' && data && !isLoading) {
-            console.log('Groups Data loaded:', {
-                hostCount: result.hostCount,
-                brandCount: result.brandCount,
-                hostSample: Object.keys(result.hostGroups).slice(0, 3),
-                brandSample: Object.keys(result.brandGroups).slice(0, 3)
-            });
-        }
-    }, [data, isLoading]);
+        console.log('🔍 [API DEBUG] useGroupData:', {
+            isLoading,
+            hasData: !!data,
+            error: error?.message || error,
+            hostCount: result.hostCount,
+            brandCount: result.brandCount,
+            hostKeys: Object.keys(result.hostGroups).length,
+            brandKeys: Object.keys(result.brandGroups).length,
+            hostSample: Object.keys(result.hostGroups).slice(0, 5),
+            brandSample: Object.keys(result.brandGroups).slice(0, 5),
+            firstHostData: result.hostGroups[Object.keys(result.hostGroups)[0]],
+            firstBrandData: result.brandGroups[Object.keys(result.brandGroups)[0]]
+        });
+    }, [data, isLoading, error, result.hostCount, result.brandCount]);
     
     return result;
 }
@@ -643,21 +640,40 @@ const JobItem = memo(({ job, isActive, onQuickReportClick, hostGroups, brandGrou
 
   // 🌟 LOGIC CẢI THIỆN: Tìm link Zalo cho Group Brand (với nhiều cách matching)
   const brandLink = useMemo(() => {
+      // DEBUG: Log để xem data
+      console.log('🔍 [BRAND DEBUG]', {
+        hasBrandGroups: !!brandGroups,
+        brandGroupsKeys: brandGroups ? Object.keys(brandGroups).length : 0,
+        jobStore: job.Store,
+        brandGroupsSample: brandGroups ? Object.keys(brandGroups).slice(0, 5) : []
+      });
+      
       if (!brandGroups || Object.keys(brandGroups).length === 0 || !job.Store) {
+          console.warn('❌ [BRAND] Missing data:', {
+              hasBrandGroups: !!brandGroups,
+              brandGroupsLength: brandGroups ? Object.keys(brandGroups).length : 0,
+              hasStore: !!job.Store
+          });
           return null;
       }
 
-      const normalizedStoreName = normalizeName(job.Store); 
+      const normalizedStoreName = normalizeName(job.Store);
+      console.log('🔍 [BRAND] Normalized store name:', job.Store, '->', normalizedStoreName);
+      
       if (!normalizedStoreName) {
           return null;
       }
 
       // 1. Thử exact match trước
       let brandData = brandGroups[normalizedStoreName];
+      console.log('🔍 [BRAND] Exact match check:', {
+        normalizedStoreName,
+        foundData: brandData,
+        hasLink: brandData?.link
+      });
+      
       if (brandData?.link) {
-          if (process.env.NODE_ENV === 'development') {
-              console.log('✅ [BRAND EXACT]', job.Store, '->', normalizedStoreName);
-          }
+          console.log('✅ [BRAND EXACT]', job.Store, '->', normalizedStoreName, '-> Link:', brandData.link);
           return brandData.link;
       }
 
@@ -675,10 +691,14 @@ const JobItem = memo(({ job, isActive, onQuickReportClick, hostGroups, brandGrou
 
       if (foundKey) {
           brandData = brandGroups[foundKey];
+          console.log('🔍 [BRAND] Partial match found:', {
+            foundKey,
+            brandData,
+            hasLink: brandData?.link
+          });
+          
           if (brandData?.link) {
-              if (process.env.NODE_ENV === 'development') {
-                  console.log('✅ [BRAND PARTIAL]', job.Store, '-> Norm:', normalizedStoreName, '-> Matched:', foundKey);
-              }
+              console.log('✅ [BRAND PARTIAL]', job.Store, '-> Norm:', normalizedStoreName, '-> Matched:', foundKey, '-> Link:', brandData.link);
               return brandData.link;
           }
       }
@@ -711,42 +731,69 @@ const JobItem = memo(({ job, isActive, onQuickReportClick, hostGroups, brandGrou
       if (bestMatch) {
           brandData = brandGroups[bestMatch];
           if (brandData?.link) {
-              if (process.env.NODE_ENV === 'development') {
-                  console.log('✅ [BRAND FUZZY]', job.Store, '-> Norm:', normalizedStoreName, '-> Matched:', bestMatch, '(Score:', bestScore, ')');
-              }
+              console.log('✅ [BRAND FUZZY]', job.Store, '-> Norm:', normalizedStoreName, '-> Matched:', bestMatch, '(Score:', bestScore, ') -> Link:', brandData.link);
               return brandData.link;
           }
       }
       
       // Không tìm thấy
-      if (process.env.NODE_ENV === 'development') {
-          console.warn('❌ [BRAND NOT FOUND]', job.Store, '-> Norm:', normalizedStoreName);
-          console.warn('   Brand keys sample:', sortedBrandKeys.slice(0, 10));
-      }
+      console.warn('❌ [BRAND NOT FOUND]', job.Store, '-> Norm:', normalizedStoreName);
+      console.warn('   Brand keys sample:', sortedBrandKeys.slice(0, 10));
+      console.warn('   All brand keys:', sortedBrandKeys);
       return null;
       
   }, [job.Store, brandGroups]);
 
   // Group Host (Cải thiện với nhiều cách matching)
   const hostLink = useMemo(() => {
+      // DEBUG: Log để xem data
+      console.log('🔍 [HOST DEBUG]', {
+        hasHostGroups: !!hostGroups,
+        hostGroupsKeys: hostGroups ? Object.keys(hostGroups).length : 0,
+        talent1: job['Talent 1'],
+        talent2: job['Talent 2'],
+        coord1: job['Coordinator 1'],
+        coord2: job['Coordinator 2'],
+        hostGroupsSample: hostGroups ? Object.keys(hostGroups).slice(0, 5) : []
+      });
+      
       if (!hostGroups || Object.keys(hostGroups).length === 0) {
+          console.warn('❌ [HOST] Missing data:', {
+              hasHostGroups: !!hostGroups,
+              hostGroupsLength: hostGroups ? Object.keys(hostGroups).length : 0
+          });
           return null;
       }
       
       // Thử tìm với Talent 1 trước
       const link1 = findGroupLink(job['Talent 1'], hostGroups);
-      if (link1) return link1;
+      if (link1) {
+          console.log('✅ [HOST] Found via Talent 1:', job['Talent 1'], '->', link1);
+          return link1;
+      }
       
       // Nếu không có, thử Talent 2
       const link2 = findGroupLink(job['Talent 2'], hostGroups);
-      if (link2) return link2;
+      if (link2) {
+          console.log('✅ [HOST] Found via Talent 2:', job['Talent 2'], '->', link2);
+          return link2;
+      }
       
       // Nếu vẫn không có, thử Coordinator (có thể host cũng là coordinator)
       const link3 = findGroupLink(job['Coordinator 1'], hostGroups);
-      if (link3) return link3;
+      if (link3) {
+          console.log('✅ [HOST] Found via Coordinator 1:', job['Coordinator 1'], '->', link3);
+          return link3;
+      }
       
       const link4 = findGroupLink(job['Coordinator 2'], hostGroups);
-      return link4 || null;
+      if (link4) {
+          console.log('✅ [HOST] Found via Coordinator 2:', job['Coordinator 2'], '->', link4);
+          return link4;
+      }
+      
+      console.warn('❌ [HOST] Not found for any talent/coordinator');
+      return null;
   }, [job, hostGroups]);
 
   // Handler functions
