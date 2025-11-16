@@ -91,68 +91,10 @@ const QuickReportForm = ({ isVisible, setIsVisible, job, showTempNotification })
     const reader = new FileReader();
     reader.onload = (e) => {
       setImagePreview(e.target.result);
+      setIsProcessing(false);
+      showTempNotification?.('Ảnh đã được tải lên. Vui lòng nhập thông tin thủ công từ ảnh.');
     };
     reader.readAsDataURL(file);
-
-    // Xử lý OCR
-    setIsProcessing(true);
-    try {
-      // Dynamic import Tesseract.js
-      const Tesseract = await import('tesseract.js');
-      
-      const { data: { text } } = await Tesseract.recognize(file, 'eng+vie', {
-        logger: m => {
-          if (m.status === 'recognizing text') {
-            // Có thể hiển thị progress nếu cần
-          }
-        }
-      });
-
-      // Trích xuất thông tin từ text
-      extractInfoFromText(text);
-      setIsProcessing(false);
-      showTempNotification?.('Đã trích xuất thông tin từ ảnh thành công!');
-    } catch (error) {
-      console.error('OCR Error:', error);
-      setIsProcessing(false);
-      showTempNotification?.('Lỗi khi xử lý ảnh. Vui lòng thử lại!');
-    }
-  };
-
-  // Trích xuất thông tin từ text OCR
-  const extractInfoFromText = (text) => {
-    const lines = text.split('\n').map(line => line.trim()).filter(line => line);
-    
-    // Tìm ID phiên live (có thể là số hoặc chuỗi)
-    const idPattern = /(?:ID|id|ID phiên|id phiên)[\s:]*([A-Z0-9\-_]+)/i;
-    const idMatch = text.match(idPattern);
-    if (idMatch && idMatch[1]) {
-      setFormData(prev => ({
-        ...prev,
-        idLive1: idMatch[1]
-      }));
-      setLiveIds([idMatch[1]]);
-    }
-
-    // Tìm GMV (có thể là số với dấu phẩy, chấm, hoặc không)
-    const gmvPattern = /(?:GMV|gmv|doanh thu|Doanh thu)[\s:]*([\d.,]+)/i;
-    const gmvMatch = text.match(gmvPattern);
-    if (gmvMatch && gmvMatch[1]) {
-      setFormData(prev => ({
-        ...prev,
-        gmv: gmvMatch[1].replace(/,/g, '')
-      }));
-    }
-
-    // Tìm thời gian start thực tế (format: HH:MM hoặc HH:MM:SS)
-    const timePattern = /(?:start|bắt đầu|Start|Bắt đầu|thời gian|Thời gian)[\s:]*(\d{1,2}:\d{2}(?::\d{2})?)/i;
-    const timeMatch = text.match(timePattern);
-    if (timeMatch && timeMatch[1]) {
-      setFormData(prev => ({
-        ...prev,
-        startTimeActual: timeMatch[1]
-      }));
-    }
   };
 
   // Thêm ID phiên live mới
