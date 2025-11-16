@@ -324,7 +324,7 @@ const FilterBar = ({
         const [startTimeStr, endTimeStr] = (job['Time slot'] || '00:00 - 00:00').split(' - ');
         
         const [startHour, startMinute] = startTimeStr.split(':').map(Number);
-        const [endHour, endMinute] = (endTimeStr || startTimeStr).split(':').map(Number); 
+        const [endHour, endMinute] = (endTimeStr || startTimeStr).split(':').map(Number);
 
         const startDate = new Date(0, 0, 0, startHour, startMinute);
         const endDate = new Date(0, 0, 0, endHour, endMinute);
