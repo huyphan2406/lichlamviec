@@ -51,12 +51,21 @@ async function fetchGroupsData(csvUrl) {
 }
 
 // Hàm tạo map từ tên -> link Zalo (Đã sửa lỗi dò tìm tên cột)
-function createGroupsMap(rawData) {
+function createGroupsMap(rawData, type = 'unknown') {
     const groupsMap = new Map();
     
     // Tên cột tiềm năng đã được chuẩn hóa (dùng để tìm kiếm)
-    const NAME_KEYS = ['tên host', 'ten host', 'tên brand', 'ten brand', 'name', 'tên', 'mc name']; // Thêm 'mc name' nếu cần
-    const LINK_KEYS = ['link dép lào', 'link dep lao', 'link zalo', 'zalo link', 'link'];
+    // Lưu ý: Brand sheet dùng "GROUP BRAND" và "LINK", Host sheet có thể dùng tên khác
+    const NAME_KEYS = ['group brand', 'tên host', 'ten host', 'tên brand', 'ten brand', 'name', 'tên', 'mc name', 'brand name', 'ten brand name'];
+    const LINK_KEYS = ['link', 'link dép lào', 'link dep lao', 'link zalo', 'zalo link', 'link zalo group', 'zalo group link'];
+    
+    // DEBUG: Log tên cột của row đầu tiên
+    if (rawData.length > 0) {
+        const firstRow = rawData[0];
+        const firstRowKeys = Object.keys(firstRow);
+        console.log(`🔍 [API] ${type} - First row keys:`, firstRowKeys);
+        console.log(`🔍 [API] ${type} - First row keys normalized:`, firstRowKeys.map(k => normalizeName(k)));
+    }
     
     // Hàm tìm tên cột khớp (tìm giá trị trong row dựa trên danh sách khóa tiềm năng)
     const findMatchingKey = (row, potentialKeys) => {
@@ -70,10 +79,24 @@ function createGroupsMap(rawData) {
         return '';
     };
 
-    rawData.forEach(row => {
+    let processedCount = 0;
+    let skippedCount = 0;
+    
+    rawData.forEach((row, index) => {
         // Lấy giá trị tên và link bằng cách tìm kiếm tên cột khớp
         const hostName = findMatchingKey(row, NAME_KEYS);
         const zaloLink = findMatchingKey(row, LINK_KEYS);
+        
+        // DEBUG: Log row đầu tiên để xem tại sao không match
+        if (index === 0) {
+            console.log(`🔍 [API] ${type} - First row debug:`, {
+                hostName,
+                zaloLink,
+                hasHostName: !!hostName,
+                hasZaloLink: !!zaloLink,
+                rowKeys: Object.keys(row)
+            });
+        }
         
         if (hostName && zaloLink) {
             const normalizedName = normalizeName(hostName);
@@ -82,8 +105,13 @@ function createGroupsMap(rawData) {
                 originalName: hostName,
                 link: zaloLink
             });
+            processedCount++;
+        } else {
+            skippedCount++;
         }
     });
+    
+    console.log(`🔍 [API] ${type} - Processed: ${processedCount}, Skipped: ${skippedCount}, Total rows: ${rawData.length}`);
     
     return groupsMap;
 }
@@ -114,8 +142,8 @@ export default async function handler(request, response) {
         }
         
         // 2. Tạo map từ tên -> link Zalo cho cả Host và Brand
-        const hostGroupsMap = createGroupsMap(hostData);
-        const brandGroupsMap = createGroupsMap(brandData);
+        const hostGroupsMap = createGroupsMap(hostData, 'HOST');
+        const brandGroupsMap = createGroupsMap(brandData, 'BRAND');
         
         // DEBUG: Log map sizes
         console.log('🔍 [API] Host Groups Map size:', hostGroupsMap.size);
