@@ -512,6 +512,9 @@ input:checked + .theme-toggle-slider:before {
   border: 2px solid transparent;
   position: relative;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
 }
 
 .schedule-item::before {
@@ -541,10 +544,10 @@ input:checked + .theme-toggle-slider:before {
 .job-header-row {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: var(--spacing-md);
+    align-items: center;
     gap: var(--spacing-md);
     flex-wrap: wrap;
+    margin-bottom: 0;
 }
 
 .schedule-item h4 {
@@ -590,21 +593,24 @@ input:checked + .theme-toggle-slider:before {
 
 /* Job Item Info */
 .schedule-item p {
-  margin: 12px 0; 
+  margin: 0; 
   display: flex; 
   align-items: center; 
   color: var(--color-text-secondary); 
   font-size: 0.95em; 
   font-weight: 500;
   line-height: 1.6;
+  min-height: 24px;
 }
 
 .schedule-item p svg {
-  margin-right: var(--spacing-md); 
-  font-size: 1.2em; 
+  margin-right: var(--spacing-sm); 
+  font-size: 1.1em; 
   color: var(--color-brand); 
   flex-shrink: 0;
   opacity: 0.8;
+  width: 20px;
+  text-align: center;
 }
 
 .schedule-item p.location svg { 
@@ -635,7 +641,7 @@ input:checked + .theme-toggle-slider:before {
 
 /* Job Groups Footer - Cải thiện */
 .job-groups-footer-container {
-    margin-top: var(--spacing-lg);
+    margin-top: var(--spacing-md);
     padding-top: var(--spacing-md);
     border-top: 2px solid var(--color-border);
     display: grid;
@@ -653,7 +659,7 @@ input:checked + .theme-toggle-slider:before {
     line-height: 1.6;
     flex-wrap: wrap;
     gap: var(--spacing-sm);
-    min-height: 32px;
+    min-height: 40px;
 }
 
 .job-group-icon {
@@ -668,6 +674,7 @@ input:checked + .theme-toggle-slider:before {
     font-weight: 600;
     font-size: 0.9em;
     white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .job-group-value {
@@ -676,6 +683,8 @@ input:checked + .theme-toggle-slider:before {
     font-style: italic;
     font-size: 0.9em;
     word-break: break-word;
+    flex: 1;
+    min-width: 0;
 }
 
 /* Zalo Group Link - Cải thiện */
@@ -695,6 +704,7 @@ input:checked + .theme-toggle-slider:before {
     margin-left: auto;
     flex-shrink: 0;
     white-space: nowrap;
+    min-width: fit-content;
 }
 
 .job-group-link:hover {
@@ -733,6 +743,15 @@ input:checked + .theme-toggle-slider:before {
     margin-right: 0;
 }
 
+/* Đảm bảo các job item có cùng chiều cao và spacing */
+.schedule-item > * {
+    flex-shrink: 0;
+}
+
+.schedule-item > p:last-of-type {
+    margin-bottom: 0;
+}
+
 
 /* --- POPUP MODAL - CẢI THIỆN VỚI CĂN GIỮA HOÀN HẢO --- */
 .popup-overlay {
@@ -750,6 +769,8 @@ input:checked + .theme-toggle-slider:before {
   justify-content: center;
   padding: var(--spacing-md);
   box-sizing: border-box;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .popup-modal {
@@ -1346,14 +1367,16 @@ body::-webkit-scrollbar-thumb:hover {
     
     .schedule-item p {
         font-size: 0.875em;
-        margin: 8px 0;
+        margin: 0;
         line-height: 1.5;
+        min-height: 22px;
     }
     
     .schedule-item p svg {
         font-size: 1em;
         margin-right: var(--spacing-sm);
         flex-shrink: 0;
+        width: 16px;
     }
     
     .job-groups-footer-container {

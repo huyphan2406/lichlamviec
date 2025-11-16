@@ -21,6 +21,17 @@ const QuickReportForm = ({ isVisible, setIsVisible, job, showTempNotification })
   const [liveIds, setLiveIds] = useState(['']); // Array để quản lý nhiều ID
   const fileInputRef = useRef(null);
 
+  // Lock scroll khi form mở
+  useEffect(() => {
+    if (isVisible) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [isVisible]);
+
   // Tạo key livestream từ job data
   const generateKeyLivestream = (job) => {
     if (!job) return '';

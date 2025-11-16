@@ -143,32 +143,50 @@ const findGroupLink = (name, groupsMap) => {
 // "tts" -> "tiktok", "shp" -> "shopee", "laz" -> "lazada"
 // "brand1+brand2" -> "brand1 brand2"
 // Xử lý dấu "/", "&", ngoặc đơn, v.v.
+// Xử lý các format: "ADIVA- TIKTOK", "ANESSA - TTS", "JUDYDOLLSHP", "MONDELEZ", "ROHTO - TTS (SC +HB)"
 const normalizeBrandName = (name) => {
     if (!name) return name;
     
-    // Xử lý viết tắt platform (phải làm trước khi xóa ký tự đặc biệt)
-    let normalized = name.toLowerCase()
+    let normalized = String(name).toLowerCase();
+    
+    // Bước 1: Xử lý ngoặc đơn TRƯỚC (để xử lý nội dung bên trong)
+    // "ROHTO - TTS (SC +HB)" -> "ROHTO - TTS SC +HB"
+    normalized = normalized.replace(/\(([^)]+)\)/g, (match, content) => {
+        // Xử lý nội dung trong ngoặc: thay dấu + thành space
+        const cleanedContent = content.replace(/\+/g, ' ').trim();
+        return ' ' + cleanedContent;
+    });
+    
+    // Bước 2: Xử lý viết tắt platform (phải làm trước khi xóa ký tự đặc biệt)
+    // Xử lý cả word boundary và không có word boundary (cho trường hợp "JUDYDOLLSHP")
+    // Thử word boundary trước (chính xác hơn)
+    normalized = normalized
         .replace(/\btts\b/g, 'tiktok')
         .replace(/\bshp\b/g, 'shopee')
         .replace(/\blaz\b/g, 'lazada')
         .replace(/\becom\b/g, 'ecommerce');
     
-    // Xử lý dấu ngoặc đơn: "SHIPRE(SHISEIDO)" -> "SHIPRE SHISEIDO"
-    normalized = normalized.replace(/\(([^)]+)\)/g, ' $1');
+    // Xử lý trường hợp không có word boundary (ví dụ: "judydollshp" ở cuối)
+    // Chỉ xử lý nếu không có dấu cách trước (để tránh match sai)
+    normalized = normalized
+        .replace(/([a-z])tts(?![a-z])/g, '$1tiktok')  // "judydolltts" -> "judydolltiktok" (không match)
+        .replace(/([a-z])shp(?![a-z])/g, '$1shopee')  // "judydollshp" -> "judydollshopee"
+        .replace(/([a-z])laz(?![a-z])/g, '$1lazada')
+        .replace(/([a-z])ecom(?![a-z])/g, '$1ecommerce');
     
-    // Xử lý dấu "+" (brand1+brand2 -> brand1 brand2)
+    // Bước 3: Xử lý dấu "+" (brand1+brand2 -> brand1 brand2)
     normalized = normalized.replace(/\+/g, ' ');
     
-    // Xử lý dấu "&" (SENSODYNE & CENTRUM -> SENSODYNE CENTRUM)
+    // Bước 4: Xử lý dấu "&" (SENSODYNE & CENTRUM -> SENSODYNE CENTRUM)
     normalized = normalized.replace(/&/g, ' ');
     
-    // Xử lý dấu "/" (TTS/SHP/LAZ -> TTS SHP LAZ, nhưng đã được normalize thành tiktok shopee lazada)
+    // Bước 5: Xử lý dấu "/" (TTS/SHP/LAZ -> TTS SHP LAZ)
     normalized = normalized.replace(/\//g, ' ');
     
-    // Xử lý dấu "-" và "|" thành space
+    // Bước 6: Xử lý dấu "-" và "|" thành space (xử lý cả "ADIVA- TIKTOK" và "ANESSA - TTS")
     normalized = normalized.replace(/[-|]/g, ' ');
     
-    // Loại bỏ khoảng trắng thừa
+    // Bước 7: Loại bỏ khoảng trắng thừa và trim
     normalized = normalized.replace(/\s+/g, ' ').trim();
     
     return normalized;
@@ -481,6 +499,17 @@ const NotificationPopup = ({ isVisible, setIsVisible }) => {
     const handleDismiss = () => {
         setIsVisible(false);
     };
+
+    // Lock scroll khi popup mở
+    useEffect(() => {
+        if (isVisible) {
+            const originalOverflow = document.body.style.overflow;
+            document.body.style.overflow = 'hidden';
+            return () => {
+                document.body.style.overflow = originalOverflow;
+            };
+        }
+    }, [isVisible]);
 
     return (
         <AnimatePresence>
@@ -841,44 +870,51 @@ const JobItem = memo(({ job, isActive, onQuickReportClick, hostGroups, brandGrou
       if (!storeName) return null;
 
       // 1. ƯU TIÊN 1: Tìm với tên đầy đủ (đã được normalize brand name trong findBrandLink)
-      // Format: "BRAND - PLATFORM", "BRAND PLATFORM", "BRAND1+BRAND2 - TTS/SHP"
+      // Format: "BRAND - PLATFORM", "BRAND PLATFORM", "BRAND1+BRAND2 - TTS/SHP", "JUDYDOLLSHP"
       // isBrandNameOnly = false vì đây là full name (có thể có platform)
       let link = findBrandLink(storeName, brandGroups, false);
       if (link) return link;
 
-      // 2. Tách tên theo dấu "-", "|", hoặc "+"
-      // Ví dụ: "NIVEA - SHOPEE" -> ["NIVEA", "SHOPEE"]
-      // Ví dụ: "NIVEA+SHOPEE - TTS" -> ["NIVEA+SHOPEE", "TTS"]
-      const parts = storeName.split(/[-|]/).map(p => p.trim()).filter(p => p.length > 0);
+      // 2. Xử lý các format đặc biệt
+      // 2a. Kiểm tra nếu có dấu "-" hoặc "|" để tách
+      const hasDelimiter = /[-|]/.test(storeName);
       
-      if (parts.length > 1) {
-          // ƯU TIÊN 2: Xử lý phần đầu (có thể là "BRAND" hoặc "BRAND1+BRAND2")
-          const brandPart = parts[0]; // Phần đầu có thể là "NIVEA" hoặc "NIVEA+SHOPEE"
+      if (hasDelimiter) {
+          // Tách tên theo dấu "-", "|"
+          // Ví dụ: "NIVEA - SHOPEE" -> ["NIVEA", "SHOPEE"]
+          // Ví dụ: "NIVEA+SHOPEE - TTS" -> ["NIVEA+SHOPEE", "TTS"]
+          const parts = storeName.split(/[-|]/).map(p => p.trim()).filter(p => p.length > 0);
           
-          // 2a. Thử tìm với brand part (có thể có dấu +)
-          // Ví dụ: "NIVEA+SHOPEE" -> normalize thành "NIVEA SHOPEE"
-          link = findBrandLink(brandPart, brandGroups, false);
-          if (link) return link;
-          
-          // 2b. Nếu brand part có dấu "+", thử tìm từng brand riêng
-          if (brandPart.includes('+')) {
-              const brandNames = brandPart.split('+').map(b => b.trim()).filter(b => b.length > 0);
-              // Thử tìm brand đầu tiên (brand chính)
-              if (brandNames.length > 0) {
-                  link = findBrandLink(brandNames[0], brandGroups, true);
+          if (parts.length > 1) {
+              // ƯU TIÊN 2: Xử lý phần đầu (có thể là "BRAND" hoặc "BRAND1+BRAND2")
+              const brandPart = parts[0]; // Phần đầu có thể là "NIVEA" hoặc "NIVEA+SHOPEE"
+              
+              // 2a. Thử tìm với brand part (có thể có dấu +)
+              // Ví dụ: "NIVEA+SHOPEE" -> normalize thành "NIVEA SHOPEE"
+              link = findBrandLink(brandPart, brandGroups, false);
+              if (link) return link;
+              
+              // 2b. Nếu brand part có dấu "+", thử tìm từng brand riêng
+              if (brandPart.includes('+')) {
+                  const brandNames = brandPart.split('+').map(b => b.trim()).filter(b => b.length > 0);
+                  // Thử tìm brand đầu tiên (brand chính)
+                  if (brandNames.length > 0) {
+                      link = findBrandLink(brandNames[0], brandGroups, true);
+                      if (link) return link;
+                  }
+              } else {
+                  // 2c. Nếu không có dấu "+", chỉ tìm brand name (exact only)
+                  link = findBrandLink(brandPart, brandGroups, true);
                   if (link) return link;
               }
-          } else {
-              // 2c. Nếu không có dấu "+", chỉ tìm brand name (exact only)
-              link = findBrandLink(brandPart, brandGroups, true);
-              if (link) return link;
           }
-      } else if (parts.length === 1) {
-          // Nếu chỉ có 1 phần, có thể là:
+      } else {
+          // Không có dấu "-" hoặc "|", có thể là:
           // - "NIVEA" (brand name only)
           // - "NIVEA SHOPEE" (full name không có dấu "-")
           // - "NIVEA+SHOPEE" (brand1+brand2)
-          const singlePart = parts[0];
+          // - "JUDYDOLLSHP" (không có dấu cách, không có dấu -)
+          const singlePart = storeName;
           
           // Kiểm tra xem có dấu "+" không
           if (singlePart.includes('+')) {
@@ -896,13 +932,32 @@ const JobItem = memo(({ job, isActive, onQuickReportClick, hostGroups, brandGrou
               // Không có dấu "+", kiểm tra số từ
               const words = singlePart.split(' ').filter(w => w.trim().length > 0);
               if (words.length === 1) {
-                  // Chỉ 1 từ -> brand name only, chỉ match exact
+                  // Chỉ 1 từ -> có thể là "NIVEA" hoặc "JUDYDOLLSHP"
+                  // Thử exact match trước
                   link = findBrandLink(singlePart, brandGroups, true);
+                  if (link) return link;
+                  
+                  // Nếu không match, có thể là "JUDYDOLLSHP" (cần tách platform ở cuối)
+                  // Thử tách các viết tắt ở cuối: "judydollshp" -> "judydoll" + "shopee"
+                  const platformPatterns = [
+                      { pattern: /shp$/i, replacement: ' shopee' },
+                      { pattern: /tts$/i, replacement: ' tiktok' },
+                      { pattern: /laz$/i, replacement: ' lazada' },
+                      { pattern: /ecom$/i, replacement: ' ecommerce' }
+                  ];
+                  
+                  for (const { pattern, replacement } of platformPatterns) {
+                      if (pattern.test(singlePart)) {
+                          const withSpace = singlePart.replace(pattern, replacement);
+                          link = findBrandLink(withSpace, brandGroups, false);
+                          if (link) return link;
+                      }
+                  }
               } else {
                   // Nhiều từ -> full name, có thể dùng partial match
                   link = findBrandLink(singlePart, brandGroups, false);
+                  if (link) return link;
               }
-              if (link) return link;
           }
       }
 

@@ -7,32 +7,50 @@ import Papa from 'papaparse';
 const GROUP_HOST_CSV_URL = 'https://docs.google.com/spreadsheets/d/1sgDT3E2kTsz5Ph6XeuXhZZKpdwtFDb4ncoUm6Q7UEYY/export?format=csv&gid=0';
 const GROUP_BRAND_CSV_URL = 'https://docs.google.com/spreadsheets/d/1sgDT3E2kTsz5Ph6XeuXhZZKpdwtFDb4ncoUm6Q7UEYY/export?format=csv&gid=1406781907';
 // Hàm normalize brand name - xử lý viết tắt và format đặc biệt (GIỐNG HỆT FRONTEND)
+// Xử lý các format: "ADIVA- TIKTOK", "ANESSA - TTS", "JUDYDOLLSHP", "MONDELEZ", "ROHTO - TTS (SC +HB)"
 const normalizeBrandName = (name) => {
     if (!name) return name;
     
-    // Xử lý viết tắt platform (phải làm trước khi xóa ký tự đặc biệt)
-    let normalized = String(name).toLowerCase()
+    let normalized = String(name).toLowerCase();
+    
+    // Bước 1: Xử lý ngoặc đơn TRƯỚC (để xử lý nội dung bên trong)
+    // "ROHTO - TTS (SC +HB)" -> "ROHTO - TTS SC +HB"
+    normalized = normalized.replace(/\(([^)]+)\)/g, (match, content) => {
+        // Xử lý nội dung trong ngoặc: thay dấu + thành space
+        const cleanedContent = content.replace(/\+/g, ' ').trim();
+        return ' ' + cleanedContent;
+    });
+    
+    // Bước 2: Xử lý viết tắt platform (phải làm trước khi xóa ký tự đặc biệt)
+    // Xử lý cả word boundary và không có word boundary (cho trường hợp "JUDYDOLLSHP")
+    // Thử word boundary trước (chính xác hơn)
+    normalized = normalized
         .replace(/\btts\b/g, 'tiktok')
         .replace(/\bshp\b/g, 'shopee')
         .replace(/\blaz\b/g, 'lazada')
         .replace(/\becom\b/g, 'ecommerce');
     
-    // Xử lý dấu ngoặc đơn: "SHIPRE(SHISEIDO)" -> "SHIPRE SHISEIDO"
-    normalized = normalized.replace(/\(([^)]+)\)/g, ' $1');
+    // Xử lý trường hợp không có word boundary (ví dụ: "judydollshp" ở cuối)
+    // Chỉ xử lý nếu không có dấu cách trước (để tránh match sai)
+    normalized = normalized
+        .replace(/([a-z])tts(?![a-z])/g, '$1tiktok')  // "judydolltts" -> "judydolltiktok" (không match)
+        .replace(/([a-z])shp(?![a-z])/g, '$1shopee')  // "judydollshp" -> "judydollshopee"
+        .replace(/([a-z])laz(?![a-z])/g, '$1lazada')
+        .replace(/([a-z])ecom(?![a-z])/g, '$1ecommerce');
     
-    // Xử lý dấu "+" (brand1+brand2 -> brand1 brand2)
+    // Bước 3: Xử lý dấu "+" (brand1+brand2 -> brand1 brand2)
     normalized = normalized.replace(/\+/g, ' ');
     
-    // Xử lý dấu "&" (SENSODYNE & CENTRUM -> SENSODYNE CENTRUM)
+    // Bước 4: Xử lý dấu "&" (SENSODYNE & CENTRUM -> SENSODYNE CENTRUM)
     normalized = normalized.replace(/&/g, ' ');
     
-    // Xử lý dấu "/" (TTS/SHP/LAZ -> TTS SHP LAZ)
+    // Bước 5: Xử lý dấu "/" (TTS/SHP/LAZ -> TTS SHP LAZ)
     normalized = normalized.replace(/\//g, ' ');
     
-    // Xử lý dấu "-" và "|" thành space
+    // Bước 6: Xử lý dấu "-" và "|" thành space (xử lý cả "ADIVA- TIKTOK" và "ANESSA - TTS")
     normalized = normalized.replace(/[-|]/g, ' ');
     
-    // Loại bỏ khoảng trắng thừa
+    // Bước 7: Loại bỏ khoảng trắng thừa và trim
     normalized = normalized.replace(/\s+/g, ' ').trim();
     
     return normalized;
