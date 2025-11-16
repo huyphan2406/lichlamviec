@@ -500,17 +500,6 @@ const NotificationPopup = ({ isVisible, setIsVisible }) => {
         setIsVisible(false);
     };
 
-    // Lock scroll khi popup mở
-    useEffect(() => {
-        if (isVisible) {
-            const originalOverflow = document.body.style.overflow;
-            document.body.style.overflow = 'hidden';
-            return () => {
-                document.body.style.overflow = originalOverflow;
-            };
-        }
-    }, [isVisible]);
-
     return (
         <AnimatePresence>
             {isVisible && (
