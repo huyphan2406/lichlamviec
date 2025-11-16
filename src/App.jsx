@@ -11,6 +11,7 @@ import {
   FiBarChart2
 } from 'react-icons/fi';
 import { useVirtualizer } from '@tanstack/react-virtual';
+import QuickReportForm from './QuickReportForm';
 import './App.css'; 
 
 const removeAccents = (str) => {
@@ -490,7 +491,7 @@ const EmptyState = ({ dateFilter }) => (
   </motion.div>
 );
 
-const JobItem = memo(({ job, isActive }) => {
+const JobItem = memo(({ job, isActive, onQuickReportClick }) => {
   const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } };
   const timeGroup = `${job['Time slot'] || 'N/A'}`;
   const talentDisplay = combineNames(job['Talent 1'], job['Talent 2']);
@@ -501,8 +502,13 @@ const JobItem = memo(({ job, isActive }) => {
   const defaultUpdateMessage = "Đang cập nhật...";
 
   const handleQuickReport = useCallback(() => {
-    alert(`Tính năng đang được triển khai bạn vui lòng chờ nha!!!`);
-  }, [job]);
+    console.log('Quick Report clicked!', job);
+    if (onQuickReportClick) {
+      onQuickReportClick(job);
+    } else {
+      console.warn('onQuickReportClick is not defined!');
+    }
+  }, [job, onQuickReportClick]);
 
   return (
     <motion.div 
@@ -514,7 +520,12 @@ const JobItem = memo(({ job, isActive }) => {
         
         <button 
           className="quick-report-button" 
-          onClick={handleQuickReport}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Button clicked directly!', job);
+            handleQuickReport();
+          }}
           title="Điền Report Nhanh"
         >
           <FiEdit3 size={16} />
@@ -560,6 +571,19 @@ function App() {
   const [isAuthPopupVisible, setIsAuthPopupVisible] = useState(true);
   const showAuthPopup = useCallback(() => setIsAuthPopupVisible(true), []);
   const hideAuthPopup = useCallback(() => setIsAuthPopupVisible(false), []);
+
+  const [isReportFormVisible, setIsReportFormVisible] = useState(false);
+  const [selectedJob, setSelectedJob] = useState(null);
+  const handleQuickReportClick = useCallback((job) => {
+    console.log('handleQuickReportClick called with job:', job);
+    setSelectedJob(job);
+    setIsReportFormVisible(true);
+    console.log('State updated: isReportFormVisible = true, selectedJob =', job);
+  }, []);
+  const hideReportForm = useCallback(() => {
+    setIsReportFormVisible(false);
+    setSelectedJob(null);
+  }, []);
 
   const [currentTime, setCurrentTime] = useState(new Date());
   
@@ -648,6 +672,18 @@ function App() {
   return (
     <div className="App">
         <NotificationPopup isVisible={isAuthPopupVisible} setIsVisible={hideAuthPopup} /> 
+        <QuickReportForm 
+          isVisible={isReportFormVisible} 
+          setIsVisible={hideReportForm}
+          job={selectedJob}
+        />
+        {/* Debug info */}
+        {process.env.NODE_ENV === 'development' && (
+          <div style={{ position: 'fixed', bottom: 10, right: 10, background: 'red', color: 'white', padding: '10px', zIndex: 9999, fontSize: '12px' }}>
+            Form Visible: {isReportFormVisible ? 'YES' : 'NO'}<br/>
+            Job: {selectedJob ? 'YES' : 'NO'}
+          </div>
+        )}
         
       <Header 
         theme={theme} 
@@ -731,7 +767,8 @@ function App() {
                                 ) : (
                                     <JobItem 
                                         job={item.content} 
-                                        isActive={item.isActive} 
+                                        isActive={item.isActive}
+                                        onQuickReportClick={handleQuickReportClick}
                                     />
                                 )}
                             </div>
