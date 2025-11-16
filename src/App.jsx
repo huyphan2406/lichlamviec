@@ -42,7 +42,9 @@ const findGroupLink = (name, groupsMap) => {
     // 1. Thử exact match trước
     let groupData = groupsMap[normalizedName];
     if (groupData?.link) {
-        console.log('✅ [EXACT MATCH]', name, '->', normalizedName, '-> Link:', groupData.link);
+        if (process.env.NODE_ENV === 'development') {
+            console.log('✅ [EXACT MATCH]', name, '->', normalizedName, '-> Link:', groupData.link);
+        }
         return groupData.link;
     }
     
@@ -57,7 +59,9 @@ const findGroupLink = (name, groupsMap) => {
     if (foundKey) {
         groupData = groupsMap[foundKey];
         if (groupData?.link) {
-            console.log('✅ [PARTIAL MATCH]', name, '-> Normalized:', normalizedName, '-> Matched Key:', foundKey, '-> Link:', groupData.link);
+            if (process.env.NODE_ENV === 'development') {
+                console.log('✅ [PARTIAL MATCH]', name, '-> Normalized:', normalizedName, '-> Matched Key:', foundKey, '-> Link:', groupData.link);
+            }
             return groupData.link;
         }
     }
@@ -90,14 +94,18 @@ const findGroupLink = (name, groupsMap) => {
     if (bestMatch) {
         groupData = groupsMap[bestMatch];
         if (groupData?.link) {
-            console.log('✅ [FUZZY MATCH]', name, '-> Normalized:', normalizedName, '-> Matched Key:', bestMatch, '(Score:', bestScore, ') -> Link:', groupData.link);
+            if (process.env.NODE_ENV === 'development') {
+                console.log('✅ [FUZZY MATCH]', name, '-> Normalized:', normalizedName, '-> Matched Key:', bestMatch, '(Score:', bestScore, ') -> Link:', groupData.link);
+            }
             return groupData.link;
         }
     }
     
     // Không tìm thấy
-    console.warn('❌ [NOT FOUND]', name, '-> Normalized:', normalizedName);
-    console.warn('   Available keys sample:', allKeys.slice(0, 10));
+    if (process.env.NODE_ENV === 'development') {
+        console.warn('❌ [NOT FOUND]', name, '-> Normalized:', normalizedName);
+        console.warn('   Available keys sample:', allKeys.slice(0, 10));
+    }
     return null;
 };
 
@@ -212,9 +220,9 @@ function useGroupData() {
         error
     };
     
-    // Debug: Log khi data được fetch
+    // Debug: Log khi data được fetch (chỉ trong development)
     useEffect(() => {
-        if (data && !isLoading) {
+        if (process.env.NODE_ENV === 'development' && data && !isLoading) {
             console.log('Groups Data loaded:', {
                 hostCount: result.hostCount,
                 brandCount: result.brandCount,
@@ -641,7 +649,9 @@ const JobItem = memo(({ job, isActive, onQuickReportClick, hostGroups, brandGrou
       // 1. Thử exact match trước
       let brandData = brandGroups[normalizedStoreName];
       if (brandData?.link) {
-          console.log('✅ [BRAND EXACT]', job.Store, '->', normalizedStoreName);
+          if (process.env.NODE_ENV === 'development') {
+              console.log('✅ [BRAND EXACT]', job.Store, '->', normalizedStoreName);
+          }
           return brandData.link;
       }
 
@@ -660,7 +670,9 @@ const JobItem = memo(({ job, isActive, onQuickReportClick, hostGroups, brandGrou
       if (foundKey) {
           brandData = brandGroups[foundKey];
           if (brandData?.link) {
-              console.log('✅ [BRAND PARTIAL]', job.Store, '-> Norm:', normalizedStoreName, '-> Matched:', foundKey);
+              if (process.env.NODE_ENV === 'development') {
+                  console.log('✅ [BRAND PARTIAL]', job.Store, '-> Norm:', normalizedStoreName, '-> Matched:', foundKey);
+              }
               return brandData.link;
           }
       }
@@ -693,14 +705,18 @@ const JobItem = memo(({ job, isActive, onQuickReportClick, hostGroups, brandGrou
       if (bestMatch) {
           brandData = brandGroups[bestMatch];
           if (brandData?.link) {
-              console.log('✅ [BRAND FUZZY]', job.Store, '-> Norm:', normalizedStoreName, '-> Matched:', bestMatch, '(Score:', bestScore, ')');
+              if (process.env.NODE_ENV === 'development') {
+                  console.log('✅ [BRAND FUZZY]', job.Store, '-> Norm:', normalizedStoreName, '-> Matched:', bestMatch, '(Score:', bestScore, ')');
+              }
               return brandData.link;
           }
       }
       
       // Không tìm thấy
-      console.warn('❌ [BRAND NOT FOUND]', job.Store, '-> Norm:', normalizedStoreName);
-      console.warn('   Brand keys sample:', sortedBrandKeys.slice(0, 10));
+      if (process.env.NODE_ENV === 'development') {
+          console.warn('❌ [BRAND NOT FOUND]', job.Store, '-> Norm:', normalizedStoreName);
+          console.warn('   Brand keys sample:', sortedBrandKeys.slice(0, 10));
+      }
       return null;
       
   }, [job.Store, brandGroups]);
@@ -837,18 +853,20 @@ function App() {
     const { jobs, isLoading, uniqueDates, uniqueSessions, uniqueStores, error } = useJobData();
     const { hostGroups, brandGroups, isLoading: groupsLoading, error: groupsError } = useGroupData(); // Fetch groups data
     
-    // Debug groups data
+    // Debug groups data (chỉ trong development)
     useEffect(() => {
-        if (!groupsLoading && hostGroups && brandGroups) {
-            console.log('Groups in App:', {
-                hostKeys: Object.keys(hostGroups).length,
-                brandKeys: Object.keys(brandGroups).length,
-                hostSample: Object.keys(hostGroups).slice(0, 5),
-                brandSample: Object.keys(brandGroups).slice(0, 5)
-            });
-        }
-        if (groupsError) {
-            console.error('Groups Error:', groupsError);
+        if (process.env.NODE_ENV === 'development') {
+            if (!groupsLoading && hostGroups && brandGroups) {
+                console.log('Groups in App:', {
+                    hostKeys: Object.keys(hostGroups).length,
+                    brandKeys: Object.keys(brandGroups).length,
+                    hostSample: Object.keys(hostGroups).slice(0, 5),
+                    brandSample: Object.keys(brandGroups).slice(0, 5)
+                });
+            }
+            if (groupsError) {
+                console.error('Groups Error:', groupsError);
+            }
         }
     }, [hostGroups, brandGroups, groupsLoading, groupsError]);
     
