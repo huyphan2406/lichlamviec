@@ -13,6 +13,12 @@ import {
 import QuickReportForm from './QuickReportForm';
 import './App.css'; 
 
+// Hàm bỏ dấu tiếng Việt (dùng cho filter)
+const removeAccents = (str) => {
+    if (!str) return '';
+    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D");
+};
+
 // Hàm normalize tên để so sánh (PHẢI GIỐNG HỆT VỚI API)
 const normalizeName = (name) => {
     if (!name) return '';
