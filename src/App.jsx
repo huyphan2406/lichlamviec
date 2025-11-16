@@ -28,22 +28,24 @@ const normalizeName = (name) => {
 // Hàm tìm link Zalo từ tên host/talent
 const findGroupLink = (name, groupsMap) => {
   if (!name || !groupsMap || Object.keys(groupsMap).length === 0) {
-    return null;
+      return null;
   }
   
-  const normalizedName = normalizeName(name);
+  const normalizedName = normalizeName(name); // <-- Khóa đang tìm
   const groupData = groupsMap[normalizedName];
   
-  if (groupData && groupData.link) {
-    return groupData.link;
-  }
-  
-  // Debug: Log để kiểm tra
+  // Tối ưu hóa Debug: Log rõ ràng hơn, chỉ chạy trong môi trường dev
   if (process.env.NODE_ENV === 'development') {
-    console.log('Tìm link cho:', name, '-> Normalized:', normalizedName, '-> Found:', !!groupData);
+      if (!groupData) {
+          // Log khi KHÔNG tìm thấy: Cho biết khóa nào đang được tìm kiếm và các khóa mẫu có sẵn
+          console.warn('LINK NOT FOUND for:', name, '-> Key:', normalizedName, '-> Keys Sample:', Object.keys(groupsMap).slice(0, 5));
+      } else {
+          // Log khi tìm thấy
+          console.log('LINK FOUND:', name, '-> Key:', normalizedName, '-> Link:', groupData.link);
+      }
   }
   
-  return null;
+  return groupData?.link || null;
 };
 
 const parseDate = (dateStr, timeStr) => {
@@ -594,11 +596,6 @@ const JobItem = memo(({ job, isActive, onQuickReportClick, hostGroups, brandGrou
     const link2 = findGroupLink(job['Talent 2'], brandGroups);
     const result = link1 || link2 || null;
     
-    // Debug
-    if (process.env.NODE_ENV === 'development' && !result) {
-      console.log('Brand Link not found for:', job['Talent 1'], job['Talent 2'], 'Available keys:', Object.keys(brandGroups).slice(0, 5));
-    }
-    
     return result;
   }, [job, brandGroups]);
 
@@ -610,11 +607,6 @@ const JobItem = memo(({ job, isActive, onQuickReportClick, hostGroups, brandGrou
     const link1 = findGroupLink(job['Coordinator 1'], hostGroups);
     const link2 = findGroupLink(job['Coordinator 2'], hostGroups);
     const result = link1 || link2 || null;
-    
-    // Debug
-    if (process.env.NODE_ENV === 'development' && !result) {
-      console.log('Host Link not found for:', job['Coordinator 1'], job['Coordinator 2'], 'Available keys:', Object.keys(hostGroups).slice(0, 5));
-    }
     
     return result;
   }, [job, hostGroups]);
