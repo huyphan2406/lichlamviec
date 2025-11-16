@@ -1058,7 +1058,7 @@ const JobItem = memo(({ job, isActive, onQuickReportClick, hostGroups, brandGrou
           {sessionTypeDisplay !== '—' && (
               <p className="session">
                   <FiTag size={18} />
-                  Loại ca: {sessionTypeDisplay}
+                  Loại ca: Ca nối
               </p>
           )}
 
@@ -1290,7 +1290,7 @@ function App() {
                         transition={{ duration: 0.3 }}
                     >
                         <FiFilter size={18} style={{marginRight: '8px'}}/>
-                        Tìm thấy <strong style={{color: 'var(--color-brand)'}}> {totalFilteredCount}</strong> công việc
+                        Tìm thấy <strong style={{color: 'var(--color-brand)'}}> {totalFilteredCount} </strong>công việc
                         {dateFilter ? ` cho ngày ${dateFilter}` : ' trong danh sách'}
                     </motion.div>
                 )}
