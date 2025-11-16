@@ -9,16 +9,31 @@ import Papa from 'papaparse';
 const GROUP_HOST_CSV_URL = 'https://docs.google.com/spreadsheets/d/1sgDT3E2kTsz5Ph6XeuXhZZKpdwtFDb4ncoUm6Q7UEYY/export?format=csv&gid=0';
 const GROUP_BRAND_CSV_URL = 'https://docs.google.com/spreadsheets/d/1sgDT3E2kTsz5Ph6XeuXhZZKpdwtFDb4ncoUm6Q7UEYY/export?format=csv&gid=1406781907';
 
-// Hàm normalize tên để so sánh (bỏ dấu, lowercase)
+// Hàm normalize tên để so sánh (XỬ LÝ DỮ LIỆU NHIỄU)
 const normalizeName = (name) => {
     if (!name) return '';
-    return name
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/đ/g, "d")
-        .replace(/Đ/g, "D")
-        .toLowerCase()
-        .trim();
+    
+    // Chuyển sang chuỗi (phòng trường hợp là số)
+    let str = String(name);
+    
+    // 1. Bỏ dấu
+    str = str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    
+    // 2. Chuyển đổi đ/Đ
+    str = str.replace(/đ/g, "d").replace(/Đ/g, "D");
+    
+    // 3. Chuyển sang chữ thường
+    str = str.toLowerCase();
+    
+    // 4. (QUAN TRỌNG) Xóa tất cả các ký tự không phải chữ cái hoặc khoảng trắng
+    // Điều này sẽ xóa: 374, _, -, . , ( ), v.v.
+    str = str.replace(/[^a-z\s]/g, '');
+    
+    // 5. Thay thế nhiều khoảng trắng bằng 1 khoảng trắng
+    str = str.replace(/\s+/g, ' ');
+    
+    // 6. Cắt khoảng trắng đầu/cuối
+    return str.trim();
 };
 
 // Hàm fetch và parse CSV

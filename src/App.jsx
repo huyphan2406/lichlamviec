@@ -566,143 +566,146 @@ const EmptyState = ({ dateFilter }) => (
 );
 
 const JobItem = memo(({ job, isActive, onQuickReportClick, hostGroups, brandGroups }) => {
-    const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } };
-    const timeGroup = `${job['Time slot'] || 'N/A'}`;
-    const talentDisplay = combineNames(job['Talent 1'], job['Talent 2']);
-    const coordDisplay = combineNames(job['Coordinator 1'], job['Coordinator 2']);
-    const locationDisplay = combineLocation(job);
-    const sessionTypeDisplay = job['Type of session'] && job['Type of session'].trim() !== '' ? job['Type of session'] : '—';
-    
-    const defaultUpdateMessage = "Đang cập nhật...";
+  const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } };
+  const timeGroup = `${job['Time slot'] || 'N/A'}`;
+  const talentDisplay = combineNames(job['Talent 1'], job['Talent 2']);
+  const coordDisplay = combineNames(job['Coordinator 1'], job['Coordinator 2']);
+  const locationDisplay = combineLocation(job);
+  const sessionTypeDisplay = job['Type of session'] && job['Type of session'].trim() !== '' ? job['Type of session'] : '—';
+  
+  const defaultUpdateMessage = "Đang cập nhật...";
 
-    // Tìm link Zalo cho Group Brand (Talent 1 hoặc Talent 2)
-    const brandLink = useMemo(() => {
-        if (!brandGroups || Object.keys(brandGroups).length === 0) {
-            return null;
-        }
-        const link1 = findGroupLink(job['Talent 1'], brandGroups);
-        const link2 = findGroupLink(job['Talent 2'], brandGroups);
-        return link1 || link2 || null;
-    }, [job, brandGroups]);
+  // 🌟 LOGIC ĐÃ SỬA: Tìm link Zalo cho Group Brand (dùng Tên Store)
+  const brandLink = useMemo(() => {
+      if (!brandGroups || Object.keys(brandGroups).length === 0) {
+          return null;
+      }
+      // Tìm bằng Store
+      const link = findGroupLink(job.Store, brandGroups); 
+      return link || null;
+  }, [job.Store, brandGroups]); // 👈 Thay đổi dependency
 
-    // Tìm link Zalo cho Group Host (Coordinator 1 hoặc Coordinator 2)
-    const hostLink = useMemo(() => {
-        if (!hostGroups || Object.keys(hostGroups).length === 0) {
-            return null;
-        }
-        const link1 = findGroupLink(job['Coordinator 1'], hostGroups);
-        const link2 = findGroupLink(job['Coordinator 2'], hostGroups);
-        return link1 || link2 || null;
-    }, [job, hostGroups]);
+  // 🌟 LOGIC ĐÃ SỬA: Tìm link Zalo cho Group Host (dùng Tên Talent/MC)
+  const hostLink = useMemo(() => {
+      if (!hostGroups || Object.keys(hostGroups).length === 0) {
+          return null;
+      }
+      // Tìm bằng Talent 1 hoặc Talent 2
+      const link1 = findGroupLink(job['Talent 1'], hostGroups);
+      const link2 = findGroupLink(job['Talent 2'], hostGroups);
+      return link1 || link2 || null;
+  }, [job, hostGroups]); // 👈 Thay đổi dependency
 
-    const handleQuickReport = useCallback(() => {
-        console.log('Quick Report clicked!', job);
-        if (onQuickReportClick) {
-            onQuickReportClick(job);
-        } else {
-            console.warn('onQuickReportClick is not defined!');
-        }
-    }, [job, onQuickReportClick]);
+  const handleQuickReport = useCallback(() => {
+      console.log('Quick Report clicked!', job);
+      if (onQuickReportClick) {
+          onQuickReportClick(job);
+      } else {
+          console.warn('onQuickReportClick is not defined!');
+      }
+  }, [job, onQuickReportClick]);
 
-    const handleGroupClick = useCallback((link, e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (link) {
-            window.open(link, '_blank', 'noopener,noreferrer');
-        }
-    }, []);
+  const handleGroupClick = useCallback((link, e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (link) {
+          window.open(link, '_blank', 'noopener,noreferrer');
+      }
+  }, []);
 
-    return (
-        <motion.div 
-            className={`schedule-item ${isActive ? 'job-active' : ''}`}
-            variants={itemVariants}
-        >
-            <div className="job-header-row">
-                <h4 className="job-title-with-button">{job.Store || 'Unnamed Job'}</h4> 
-                
-                <button 
-                    className="quick-report-button" 
-                    onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        console.log('Button clicked directly!', job);
-                        handleQuickReport();
-                    }}
-                    title="Điền Report Nhanh"
-                >
-                    <FiEdit3 size={16} />
-                    Điền Report Nhanh
-                </button>
-            </div>
-            
-            <p className="time"><FiClock /> {timeGroup}</p>
-            <p className="location"><FiMapPin /> {locationDisplay}</p>
-            <p className="session"><FiMic /> Loại Ca: {sessionTypeDisplay}</p> 
-            <p className="mc"><FiUser /> {talentDisplay}</p>
-            <p className="standby"><FiMonitor /> {coordDisplay}</p>
+  return (
+      <motion.div 
+          className={`schedule-item ${isActive ? 'job-active' : ''}`}
+          variants={itemVariants}
+      >
+          <div className="job-header-row">
+              <h4 className="job-title-with-button">{job.Store || 'Unnamed Job'}</h4> 
+              
+              <button 
+                  className="quick-report-button" 
+                  onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      console.log('Button clicked directly!', job);
+                      handleQuickReport();
+                  }}
+                  title="Điền Report Nhanh"
+              >
+                  <FiEdit3 size={16} />
+                  Điền Report Nhanh
+              </button>
+          </div>
+          
+          <p className="time"><FiClock /> {timeGroup}</p>
+          <p className="location"><FiMapPin /> {locationDisplay}</p>
+          <p className="session"><FiMic /> Loại Ca: {sessionTypeDisplay}</p> 
+          <p className="mc"><FiUser /> {talentDisplay}</p>
+          <p className="standby"><FiMonitor /> {coordDisplay}</p>
 
-            <div className="job-groups-footer-container">
-                <div className="group-brand job-group-item">
-                    <FiUsers size={18} className="job-group-icon" /> 
-                    <span className="job-group-label">Group Brand:</span>
-                    {brandLink ? (
-                        <a 
-                            href={brandLink} 
-                            onClick={(e) => handleGroupClick(brandLink, e)}
-                            className="job-group-link"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            title="Mở Group Brand trên Zalo"
-                        >
-                            <span className="job-group-link-text">Tham gia Group</span>
-                            <FiExternalLink size={14} className="job-group-link-icon" />
-                        </a>
-                    ) : (
-                        <span className="job-group-value">{defaultUpdateMessage}</span>
-                    )}
-                </div>
-                <div className="group-host job-group-item">
-                    <FiUserCheck size={18} className="job-group-icon" />
-                    <span className="job-group-label">Group Host:</span>
-                    {hostLink ? (
-                        <a 
-                            href={hostLink} 
-                            onClick={(e) => handleGroupClick(hostLink, e)}
-                            className="job-group-link"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            title="Mở Group Host trên Zalo"
-                        >
-                            <span className="job-group-link-text">Tham gia Group</span>
-                            <FiExternalLink size={14} className="job-group-link-icon" />
-                        </a>
-                    ) : (
-                        <span className="job-group-value">{defaultUpdateMessage}</span>
-                    )}
-                </div>
-            </div>
-            
-            {/* Debug info - chỉ hiện trong development */}
-            {process.env.NODE_ENV === 'development' && (
-                <div style={{ 
-                    marginTop: '10px', 
-                    padding: '8px', 
-                    background: '#f0f0f0', 
-                    borderRadius: '4px', 
-                    fontSize: '11px',
-                    fontFamily: 'monospace'
-                }}>
-                    <div>Brand Groups: {Object.keys(brandGroups || {}).length} keys</div>
-                    <div>Host Groups: {Object.keys(hostGroups || {}).length} keys</div>
-                    <div>Brand Link: {brandLink ? '✓ Found' : '✗ Not found'}</div>
-                    <div>Host Link: {hostLink ? '✓ Found' : '✗ Not found'}</div>
-                    <div>Talent 1: {job['Talent 1'] || 'N/A'}</div>
-                    <div>Coordinator 1: {job['Coordinator 1'] || 'N/A'}</div>
-                </div>
-            )}
+          <div className="job-groups-footer-container">
+              <div className="group-brand job-group-item">
+                  <FiUsers size={18} className="job-group-icon" /> 
+                  <span className="job-group-label">Group Brand:</span>
+                  {brandLink ? (
+                      <a 
+                          href={brandLink} 
+                          onClick={(e) => handleGroupClick(brandLink, e)}
+                          className="job-group-link"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="Mở Group Brand trên Zalo"
+                      >
+                          <span className="job-group-link-text">Tham gia Group</span>
+                          <FiExternalLink size={14} className="job-group-link-icon" />
+                      </a>
+                  ) : (
+                      <span className="job-group-value">{defaultUpdateMessage}</span>
+                  )}
+              </div>
+              <div className="group-host job-group-item">
+                  <FiUserCheck size={18} className="job-group-icon" />
+                  <span className="job-group-label">Group Host:</span>
+                  {hostLink ? (
+                      <a 
+                          href={hostLink} 
+                          onClick={(e) => handleGroupClick(hostLink, e)}
+                          className="job-group-link"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="Mở Group Host trên Zalo"
+                      >
+                          <span className="job-group-link-text">Tham gia Group</span>
+                          <FiExternalLink size={14} className="job-group-link-icon" />
+                      </a>
+                  ) : (
+                      <span className="job-group-value">{defaultUpdateMessage}</span>
+                  )}
+              </div>
+          </div>
+          
+          {/* 🌟 DEBUG INFO ĐÃ CẬP NHẬT LOGIC MỚI */}
+          {process.env.NODE_ENV === 'development' && (
+              <div style={{ 
+                  marginTop: '10px', 
+                  padding: '8px', 
+                  background: '#f0f0f0', 
+                  borderRadius: '4px', 
+                  fontSize: '11px',
+                  fontFamily: 'monospace'
+              }}>
+                  <div>Brand Key (Store): {normalizeName(job.Store)}</div>
+                  <div>Host Key (Talent 1): {normalizeName(job['Talent 1'])}</div>
+                  <div>Brand Link: {brandLink ? '✓ Found' : '✗ Not found'}</div>
+                  <div>Host Link: {hostLink ? '✓ Found' : '✗ Not found'}</div>
+                  <div>---</div>
+                  <div>Store: {job.Store || 'N/A'}</div>
+                  <div>Talent 1: {job['Talent 1'] || 'N/A'}</div>
+                  <div>Coordinator 1: {job['Coordinator 1'] || 'N/A'}</div>
+              </div>
+          )}
 
-        </motion.div>
-    );
+      </motion.div>
+  );
 });
 
 // --- COMPONENT APP CHÍNH ---
