@@ -8,7 +8,7 @@ import {
   FiCalendar, FiInfo, FiTag, FiAward,
   FiLogIn, FiUserPlus,
   FiFilter, FiUsers, FiUserCheck, FiEdit3, 
-  FiBarChart2
+  FiBarChart2, FiExternalLink
 } from 'react-icons/fi';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import QuickReportForm from './QuickReportForm';
@@ -17,6 +17,26 @@ import './App.css';
 const removeAccents = (str) => {
   if (!str) return '';
   return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D");
+};
+
+// Hàm normalize tên để so sánh (giống như trong API)
+const normalizeName = (name) => {
+  if (!name) return '';
+  return removeAccents(name).toLowerCase().trim();
+};
+
+// Hàm tìm link Zalo từ tên host/talent
+const findGroupLink = (name, groupsMap) => {
+  if (!name || !groupsMap || Object.keys(groupsMap).length === 0) return null;
+  
+  const normalizedName = normalizeName(name);
+  const groupData = groupsMap[normalizedName];
+  
+  if (groupData && groupData.link) {
+    return groupData.link;
+  }
+  
+  return null;
 };
 
 const parseDate = (dateStr, timeStr) => {
@@ -105,6 +125,27 @@ function useJobData() {
     uniqueStores: data?.stores || [],
     isLoading: isLoading, // Giữ nguyên trạng thái loading của SWR
     error 
+  };
+}
+
+// 🌟 HÀM useGroupData ĐỂ FETCH GROUPS (HOST & BRAND)
+function useGroupData() {
+  const API_URL = '/api/get-groups';
+
+  const { data, error, isLoading } = useSWR(
+    API_URL,
+    jsonFetcher,
+    {
+      refreshInterval: 60000, // Refresh mỗi 60s
+      revalidateOnFocus: true
+    }
+  );
+
+  return {
+    groups: data?.groups || {},
+    count: data?.count || 0,
+    isLoading: isLoading,
+    error
   };
 }
 
@@ -491,7 +532,7 @@ const EmptyState = ({ dateFilter }) => (
   </motion.div>
 );
 
-const JobItem = memo(({ job, isActive, onQuickReportClick }) => {
+const JobItem = memo(({ job, isActive, onQuickReportClick, groupsMap }) => {
   const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } };
   const timeGroup = `${job['Time slot'] || 'N/A'}`;
   const talentDisplay = combineNames(job['Talent 1'], job['Talent 2']);
@@ -501,6 +542,20 @@ const JobItem = memo(({ job, isActive, onQuickReportClick }) => {
   
   const defaultUpdateMessage = "Đang cập nhật...";
 
+  // Tìm link Zalo cho Group Brand (Talent 1 hoặc Talent 2)
+  const brandLink = useMemo(() => {
+    const link1 = findGroupLink(job['Talent 1'], groupsMap);
+    const link2 = findGroupLink(job['Talent 2'], groupsMap);
+    return link1 || link2 || null;
+  }, [job, groupsMap]);
+
+  // Tìm link Zalo cho Group Host (Coordinator 1 hoặc Coordinator 2)
+  const hostLink = useMemo(() => {
+    const link1 = findGroupLink(job['Coordinator 1'], groupsMap);
+    const link2 = findGroupLink(job['Coordinator 2'], groupsMap);
+    return link1 || link2 || null;
+  }, [job, groupsMap]);
+
   const handleQuickReport = useCallback(() => {
     console.log('Quick Report clicked!', job);
     if (onQuickReportClick) {
@@ -509,6 +564,14 @@ const JobItem = memo(({ job, isActive, onQuickReportClick }) => {
       console.warn('onQuickReportClick is not defined!');
     }
   }, [job, onQuickReportClick]);
+
+  const handleGroupClick = useCallback((link, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (link) {
+      window.open(link, '_blank', 'noopener,noreferrer');
+    }
+  }, []);
 
   return (
     <motion.div 
@@ -542,11 +605,41 @@ const JobItem = memo(({ job, isActive, onQuickReportClick }) => {
       <div className="job-groups-footer-container">
           <div className="group-brand job-group-item">
             <FiUsers size={18} className="job-group-icon" /> 
-            Group Brand: <span className="job-group-value">{defaultUpdateMessage}</span>
+            <span className="job-group-label">Group Brand:</span>
+            {brandLink ? (
+              <a 
+                href={brandLink} 
+                onClick={(e) => handleGroupClick(brandLink, e)}
+                className="job-group-link"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Mở Group Brand trên Zalo"
+              >
+                <span className="job-group-link-text">Tham gia Group</span>
+                <FiExternalLink size={14} className="job-group-link-icon" />
+              </a>
+            ) : (
+              <span className="job-group-value">{defaultUpdateMessage}</span>
+            )}
           </div>
           <div className="group-host job-group-item">
             <FiUserCheck size={18} className="job-group-icon" />
-            Group Host: <span className="job-group-value">{defaultUpdateMessage}</span>
+            <span className="job-group-label">Group Host:</span>
+            {hostLink ? (
+              <a 
+                href={hostLink} 
+                onClick={(e) => handleGroupClick(hostLink, e)}
+                className="job-group-link"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Mở Group Host trên Zalo"
+              >
+                <span className="job-group-link-text">Tham gia Group</span>
+                <FiExternalLink size={14} className="job-group-link-icon" />
+              </a>
+            ) : (
+              <span className="job-group-value">{defaultUpdateMessage}</span>
+            )}
           </div>
       </div>
 
@@ -558,6 +651,7 @@ const JobItem = memo(({ job, isActive, onQuickReportClick }) => {
 function App() {
   const [theme, toggleTheme] = useDarkMode();
   const { jobs, isLoading, uniqueDates, uniqueSessions, uniqueStores, error } = useJobData();
+  const { groups: groupsMap } = useGroupData(); // Fetch groups data
   
   const [dateFilter, setDateFilter] = useState(() => getFormattedToday());
   const [nameFilter, setNameFilter] = useState(''); 
@@ -769,6 +863,7 @@ function App() {
                                         job={item.content} 
                                         isActive={item.isActive}
                                         onQuickReportClick={handleQuickReportClick}
+                                        groupsMap={groupsMap}
                                     />
                                 )}
                             </div>
