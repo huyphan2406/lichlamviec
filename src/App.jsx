@@ -139,6 +139,100 @@ const findGroupLink = (name, groupsMap) => {
     return null;
 };
 
+// 🌟 Hàm tìm Brand Link - CHẶT CHẼ HƠN, chỉ dùng exact/partial match nghiêm ngặt
+// Không dùng fuzzy match để tránh match sai (ví dụ: "NIVEA SHOPEE" với "NIVEA LZD")
+// Tham số: isBrandNameOnly = true nếu đây là brand name (chỉ 1 từ), false nếu là full name (có platform)
+const findBrandLink = (name, groupsMap, isBrandNameOnly = false) => {
+    if (!name || !groupsMap || Object.keys(groupsMap).length === 0) {
+        return null;
+    }
+    
+    // Cache normalize để tăng tốc
+    let normalizedName = normalizeCache.get(name);
+    if (!normalizedName) {
+        normalizedName = normalizeName(name);
+        if (normalizedName) {
+            normalizeCache.set(name, normalizedName);
+        }
+    }
+    if (!normalizedName) return null;
+    
+    // 1. EXACT MATCH - Nhanh nhất, kiểm tra trước
+    const exactMatch = groupsMap[normalizedName];
+    if (exactMatch?.link) {
+        if (process.env.NODE_ENV === 'development') {
+            console.log('✅ [BRAND EXACT]', name, '->', normalizedName);
+        }
+        return exactMatch.link;
+    }
+    
+    // 2. Nếu là brand name only (chỉ 1 từ), CHỈ dùng exact match - không dùng partial
+    // Tránh match "NIVEA" với "NIVEA LZD" (platform khác)
+    const nameWords = normalizedName.split(' ').filter(w => w.length > 2);
+    if (isBrandNameOnly || nameWords.length === 1) {
+        // Chỉ match exact, không dùng partial
+        if (process.env.NODE_ENV === 'development') {
+            console.warn('❌ [BRAND NOT FOUND - EXACT ONLY]', name, '->', normalizedName);
+        }
+        return null;
+    }
+    
+    // 3. PARTIAL MATCH NGHIÊM NGẶT - Chỉ match nếu tất cả từ đều có trong key
+    // Chỉ dùng cho full name (có nhiều từ, ví dụ: "NIVEA SHOPEE")
+    const allKeys = Object.keys(groupsMap);
+    if (allKeys.length === 0) return null;
+    
+    // Sắp xếp keys theo độ dài (dài trước) để match chính xác hơn
+    const sortedKeys = [...allKeys].sort((a, b) => b.length - a.length);
+    
+    // Tìm partial match: name chứa key HOẶC key chứa name (nhưng phải đảm bảo tất cả từ đều match)
+    for (const key of sortedKeys) {
+        if (!key) continue;
+        
+        // Kiểm tra 2 chiều: name chứa key hoặc key chứa name
+        if (normalizedName.includes(key) || key.includes(normalizedName)) {
+            // NGHIÊM NGẶT: Kiểm tra xem tất cả từ trong name có trong key không
+            // Ví dụ: "NIVEA SHOPEE" không match "NIVEA LZD" vì "SHOPEE" không có trong "NIVEA LZD"
+            const keyWords = key.split(' ').filter(w => w.length > 2);
+            let allWordsMatch = true;
+            
+            // Kiểm tra tất cả từ trong name phải có trong key
+            for (const nw of nameWords) {
+                let wordFound = false;
+                // Kiểm tra exact match hoặc partial match của từ
+                for (const kw of keyWords) {
+                    if (nw === kw || kw.includes(nw) || nw.includes(kw)) {
+                        wordFound = true;
+                        break;
+                    }
+                }
+                if (!wordFound) {
+                    allWordsMatch = false;
+                    break;
+                }
+            }
+            
+            // Chỉ match nếu tất cả từ đều có trong key
+            if (allWordsMatch) {
+                const match = groupsMap[key];
+                if (match?.link) {
+                    if (process.env.NODE_ENV === 'development') {
+                        console.log('✅ [BRAND PARTIAL]', name, '->', key);
+                    }
+                    return match.link;
+                }
+            }
+        }
+    }
+    
+    // 4. KHÔNG dùng fuzzy match - quá rủi ro, có thể match sai
+    // Không tìm thấy -> return null
+    if (process.env.NODE_ENV === 'development') {
+        console.warn('❌ [BRAND NOT FOUND]', name, '->', normalizedName);
+    }
+    return null;
+};
+
 const parseDate = (dateStr, timeStr) => {
     try {
         const [day, month, year] = dateStr.split('/');
@@ -688,8 +782,10 @@ const JobItem = memo(({ job, isActive, onQuickReportClick, hostGroups, brandGrou
       const storeName = job.Store.trim();
       if (!storeName) return null;
 
-      // 1. ƯU TIÊN 1: Tìm với tên đầy đủ "BRAND - PLATFORM" (ví dụ: "NIVEA - SHOPEE")
-      let link = findGroupLink(storeName, brandGroups);
+      // 1. ƯU TIÊN 1: Tìm với tên đầy đủ "BRAND - PLATFORM" hoặc "BRAND PLATFORM" (ví dụ: "NIVEA - SHOPEE" hoặc "NIVEA SHOPEE")
+      // Dùng findBrandLink (chặt chẽ hơn) thay vì findGroupLink để tránh match sai
+      // isBrandNameOnly = false vì đây là full name (có thể có platform)
+      let link = findBrandLink(storeName, brandGroups, false);
       if (link) return link;
 
       // 2. Tách tên theo dấu "-" hoặc "|"
@@ -699,14 +795,23 @@ const JobItem = memo(({ job, isActive, onQuickReportClick, hostGroups, brandGrou
       if (parts.length > 1) {
           // ƯU TIÊN 2: Chỉ tìm phần đầu (BRAND name) - KHÔNG tìm platform riêng
           // Ví dụ: "NIVEA - SHOPEE" -> chỉ tìm "NIVEA" (không tìm "SHOPEE")
+          // isBrandNameOnly = true vì đây chỉ là brand name (1 từ), chỉ match exact
           const brandName = parts[0]; // Phần đầu là brand name
           if (brandName) {
-              link = findGroupLink(brandName, brandGroups);
+              link = findBrandLink(brandName, brandGroups, true);
               if (link) return link;
           }
       } else if (parts.length === 1) {
-          // Nếu chỉ có 1 phần (không có dấu "-"), tìm trực tiếp
-          link = findGroupLink(parts[0], brandGroups);
+          // Nếu chỉ có 1 phần (không có dấu "-"), có thể là brand name hoặc full name
+          // Kiểm tra xem có nhiều từ không (ví dụ: "NIVEA SHOPEE" không có dấu "-")
+          const words = parts[0].split(' ').filter(w => w.trim().length > 0);
+          if (words.length === 1) {
+              // Chỉ 1 từ -> brand name only, chỉ match exact
+              link = findBrandLink(parts[0], brandGroups, true);
+          } else {
+              // Nhiều từ -> full name, có thể dùng partial match
+              link = findBrandLink(parts[0], brandGroups, false);
+          }
           if (link) return link;
       }
 
