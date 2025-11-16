@@ -575,30 +575,38 @@ const JobItem = memo(({ job, isActive, onQuickReportClick, hostGroups, brandGrou
   
   const defaultUpdateMessage = "Đang cập nhật...";
 
-  // 🌟 LOGIC ĐÃ SỬA: Tìm link Zalo cho Group Brand (So Khớp Một Phần)
+  // 🌟 LOGIC ĐÃ SỬA: Tìm link Zalo cho Group Brand (So Khớp Hai Chiều)
   const brandLink = useMemo(() => {
       if (!brandGroups || Object.keys(brandGroups).length === 0 || !job.Store) {
           return null;
       }
 
-      // 1. Chuẩn hóa tên store (ví dụ: "nivea shopee")
+      // 1. Chuẩn hóa tên store (ví dụ: "kenvue tiktok")
       const normalizedStoreName = normalizeName(job.Store); 
       if (!normalizedStoreName) {
           return null;
       }
 
-      // 2. Lấy tất cả các khóa brand (ví dụ: ["nivea", "shopee", "lazada", "tiki"])
+      // 2. Lấy tất cả các khóa brand (ví dụ: ["kenvue", "neutrogena", "shiseido premium"])
       const allBrandKeys = Object.keys(brandGroups);
 
       // 3. Sắp xếp các khóa từ DÀI NHẤT đến NGẮN NHẤT
-      //    (Để "shopee express" được khớp trước "shopee")
+      //    (Để "shiseido premium" được khớp trước "shiseido")
       const sortedBrandKeys = allBrandKeys.sort((a, b) => b.length - a.length);
 
-      // 4. Tìm khóa brand ĐẦU TIÊN mà (tên store) CÓ CHỨA (khóa brand)
-      //    Ví dụ: "nivea shopee" CÓ CHỨA "nivea" -> KHỚP!
-      const foundKey = sortedBrandKeys.find(brandKey => 
-          normalizedStoreName.includes(brandKey)
-      );
+      // 4. (LOGIC MỚI) Tìm khóa brand khớp theo 2 chiều
+      const foundKey = sortedBrandKeys.find(brandKey => {
+          if (!brandKey) return false;
+          // Chiều 1: Tên store chứa Khóa brand
+          // ( "kenvue tiktok".includes("kenvue") )
+          const case1 = normalizedStoreName.includes(brandKey);
+          
+          // Chiều 2: Khóa brand chứa Tên store
+          // ( "kenvue official".includes("kenvue") )
+          const case2 = brandKey.includes(normalizedStoreName);
+          
+          return case1 || case2;
+      });
 
       if (foundKey) {
           return brandGroups[foundKey].link;
@@ -606,18 +614,17 @@ const JobItem = memo(({ job, isActive, onQuickReportClick, hostGroups, brandGrou
       
       return null; // Không tìm thấy
       
-  }, [job.Store, brandGroups]); // 👈 Dependency chính xác
+  }, [job.Store, brandGroups]);
 
-  // 🌟 LOGIC ĐÃ SỬA: Tìm link Zalo cho Group Host (dùng Tên Talent/MC)
+  // Group Host (Đã hoạt động tốt, giữ nguyên)
   const hostLink = useMemo(() => {
       if (!hostGroups || Object.keys(hostGroups).length === 0) {
           return null;
       }
-      // Tìm bằng Talent 1 hoặc Talent 2
       const link1 = findGroupLink(job['Talent 1'], hostGroups);
       const link2 = findGroupLink(job['Talent 2'], hostGroups);
       return link1 || link2 || null;
-  }, [job, hostGroups]); // 👈 Dependency chính xác
+  }, [job, hostGroups]);
 
   const handleQuickReport = useCallback(() => {
       console.log('Quick Report clicked!', job);
@@ -706,7 +713,7 @@ const JobItem = memo(({ job, isActive, onQuickReportClick, hostGroups, brandGrou
               </div>
           </div>
           
-          {/* 🌟 DEBUG INFO ĐÃ CẬP NHẬT LOGIC MỚI */}
+          {/* DEBUG INFO */}
           {process.env.NODE_ENV === 'development' && (
               <div style={{ 
                   marginTop: '10px', 
