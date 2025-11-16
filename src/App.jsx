@@ -1279,10 +1279,7 @@ function App() {
                         transition={{ duration: 0.3 }}
                     >
                         <FiFilter size={18} style={{marginRight: '8px'}}/>
-                        {'Tìm thấy '}
-                        <strong style={{color: 'var(--color-brand)'}}>{totalFilteredCount}</strong>
-                        {' công việc'}
-                        {dateFilter ? ` cho ngày ${dateFilter}` : ' trong danh sách'}
+                        <span>Tìm thấy <strong style={{color: 'var(--color-brand)'}}>{totalFilteredCount}</strong> công việc{dateFilter ? ` cho ngày ${dateFilter}` : ' trong danh sách'}</span>
                     </motion.div>
                 )}
                 

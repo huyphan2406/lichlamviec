@@ -507,10 +507,12 @@ input:checked + .theme-toggle-slider:before {
   transition: color var(--transition-speed), border-color var(--transition-speed);
   position: sticky;
   top: 0;
-  background: var(--color-bg);
-  backdrop-filter: blur(10px);
+  background: var(--color-bg) !important;
+  backdrop-filter: none;
   z-index: 10;
   padding-top: var(--spacing-lg);
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .time-group-container:first-child .schedule-group-title { 
@@ -1052,6 +1054,12 @@ input:checked + .theme-toggle-slider:before {
     box-shadow: 0 2px 8px var(--color-shadow);
     width: 100%;
     box-sizing: border-box;
+    white-space: normal;
+    word-spacing: normal;
+}
+
+.job-count-summary strong {
+    white-space: nowrap;
 }
 
 .job-count-summary svg {
