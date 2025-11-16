@@ -206,11 +206,23 @@ const findBrandLink = (name, groupsMap, isBrandNameOnly = false) => {
     
     // 2. Nếu là brand name only (chỉ 1 từ), CHỈ dùng exact match - không dùng partial
     // Tránh match "NIVEA" với "NIVEA LZD" (platform khác)
-    const nameWords = normalizedName.split(' ').filter(w => w.length > 2);
-    if (isBrandNameOnly || nameWords.length === 1) {
+    // Kiểm tra số từ thực tế (không filter) để xác định brand name only
+    const allNameWords = normalizedName.split(' ').filter(w => w.trim().length > 0);
+    if (isBrandNameOnly || allNameWords.length === 1) {
         // Chỉ match exact, không dùng partial
         if (process.env.NODE_ENV === 'development') {
             console.warn('❌ [BRAND NOT FOUND - EXACT ONLY]', name, '->', normalizedName);
+        }
+        return null;
+    }
+    
+    // Lọc từ có độ dài > 2 để dùng cho partial match (bỏ qua từ ngắn như "ui", "a", v.v.)
+    const nameWords = normalizedName.split(' ').filter(w => w.length > 2);
+    
+    // Nếu không có từ nào đủ dài (> 2 ký tự), không thể dùng partial match
+    if (nameWords.length === 0) {
+        if (process.env.NODE_ENV === 'development') {
+            console.warn('❌ [BRAND NOT FOUND - NO VALID WORDS]', name, '->', normalizedName);
         }
         return null;
     }
@@ -232,6 +244,10 @@ const findBrandLink = (name, groupsMap, isBrandNameOnly = false) => {
             // NGHIÊM NGẶT: Kiểm tra xem tất cả từ trong name có trong key không
             // Ví dụ: "NIVEA SHOPEE" không match "NIVEA LZD" vì "SHOPEE" không có trong "NIVEA LZD"
             const keyWords = key.split(' ').filter(w => w.length > 2);
+            
+            // Nếu key không có từ nào đủ dài, bỏ qua
+            if (keyWords.length === 0) continue;
+            
             let allWordsMatch = true;
             
             // Kiểm tra tất cả từ trong name phải có trong key
@@ -911,17 +927,23 @@ const JobItem = memo(({ job, isActive, onQuickReportClick, hostGroups, brandGrou
       // Nếu vẫn không có, thử Coordinator (có thể host cũng là coordinator)
       const link3 = findGroupLink(job['Coordinator 1'], hostGroups);
       if (link3) {
-          console.log('✅ [HOST] Found via Coordinator 1:', job['Coordinator 1'], '->', link3);
+          if (process.env.NODE_ENV === 'development') {
+              console.log('✅ [HOST] Found via Coordinator 1:', job['Coordinator 1'], '->', link3);
+          }
           return link3;
       }
       
       const link4 = findGroupLink(job['Coordinator 2'], hostGroups);
       if (link4) {
-          console.log('✅ [HOST] Found via Coordinator 2:', job['Coordinator 2'], '->', link4);
+          if (process.env.NODE_ENV === 'development') {
+              console.log('✅ [HOST] Found via Coordinator 2:', job['Coordinator 2'], '->', link4);
+          }
           return link4;
       }
       
-      console.warn('❌ [HOST] Not found for any talent/coordinator');
+      if (process.env.NODE_ENV === 'development') {
+          console.warn('❌ [HOST] Not found for any talent/coordinator');
+      }
       return null;
   }, [job, hostGroups]);
 

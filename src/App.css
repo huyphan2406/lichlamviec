@@ -1031,10 +1031,65 @@ body::-webkit-scrollbar-thumb:hover {
     background: var(--color-grey);
 }
 
-/* --- RESPONSIVE IMPROVEMENTS --- */
+/* --- RESPONSIVE IMPROVEMENTS - COMPREHENSIVE --- */
+
+/* Tablet Landscape & Small Desktop (1024px - 1200px) */
+@media (max-width: 1200px) {
+    .App {
+        max-width: 95%;
+    }
+    
+    .form-group-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .form-group-grid .full-width {
+        grid-column: span 2;
+    }
+}
+
+/* Tablet Portrait (768px - 1024px) */
+@media (max-width: 1024px) {
+    .App {
+        max-width: 100%;
+        padding: 0 var(--spacing-md);
+    }
+    
+    .app-header h1 {
+        font-size: 1.6rem;
+    }
+    
+    .filter-container {
+        padding: var(--spacing-lg);
+    }
+    
+    .form-group-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--spacing-md);
+    }
+    
+    .form-group-grid .full-width {
+        grid-column: span 2;
+    }
+    
+    .schedule-item {
+        padding: var(--spacing-lg);
+    }
+    
+    .schedule-item h4 {
+        font-size: 1.25em;
+    }
+    
+    .job-groups-footer-container {
+        gap: var(--spacing-lg);
+    }
+}
+
+/* Mobile & Tablet Portrait (max-width: 768px) */
 @media (max-width: 768px) {
     body {
         padding: var(--spacing-sm) var(--spacing-md);
+        font-size: 15px;
     }
     
     .App {
@@ -1050,20 +1105,31 @@ body::-webkit-scrollbar-thumb:hover {
     .app-header h1 {
         font-size: 1.5rem;
         margin-bottom: var(--spacing-md);
+        line-height: 1.3;
     }
     
     .header-controls {
         flex-direction: column;
         gap: var(--spacing-sm);
+        width: 100%;
     }
     
     .auth-buttons {
         width: 100%;
         justify-content: center;
+        max-width: 100%;
     }
     
     .auth-button {
         flex: 1;
+        min-height: 44px; /* Touch target size */
+        padding: var(--spacing-md) var(--spacing-lg);
+    }
+    
+    .theme-toggle {
+        width: 100%;
+        justify-content: center;
+        padding: var(--spacing-sm) var(--spacing-md);
     }
     
     .filter-container {
@@ -1081,6 +1147,23 @@ body::-webkit-scrollbar-thumb:hover {
         grid-column: span 1;
     }
     
+    .form-group input,
+    .form-group select {
+        min-height: 44px; /* Touch target size */
+        font-size: 16px; /* Prevents zoom on iOS */
+    }
+    
+    .download-button {
+        min-height: 48px;
+        font-size: 1rem;
+    }
+    
+    .schedule-group-title {
+        font-size: 0.95em;
+        padding: var(--spacing-md) 0 var(--spacing-sm) 0;
+        margin-top: var(--spacing-md);
+    }
+    
     .schedule-item {
         padding: var(--spacing-md);
         margin: var(--spacing-md) 0;
@@ -1090,6 +1173,7 @@ body::-webkit-scrollbar-thumb:hover {
     .schedule-item h4 {
         font-size: 1.15em;
         min-width: auto;
+        line-height: 1.4;
     }
     
     .job-header-row {
@@ -1101,6 +1185,19 @@ body::-webkit-scrollbar-thumb:hover {
     .quick-report-button {
         width: 100%;
         justify-content: center;
+        min-height: 44px;
+        padding: 12px 20px;
+    }
+    
+    .schedule-item p {
+        font-size: 0.9em;
+        margin: 10px 0;
+        flex-wrap: wrap;
+    }
+    
+    .schedule-item p svg {
+        font-size: 1.1em;
+        margin-right: var(--spacing-sm);
     }
     
     .job-groups-footer-container {
@@ -1122,10 +1219,25 @@ body::-webkit-scrollbar-thumb:hover {
         margin-right: auto;
     }
     
+    .job-group-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-xs);
+    }
+    
+    .job-group-link {
+        width: 100%;
+        justify-content: center;
+        min-height: 44px;
+        margin-left: 0;
+        margin-top: var(--spacing-sm);
+    }
+    
     .popup-modal {
         width: 95%;
         max-width: none;
         max-height: 90vh;
+        margin: var(--spacing-md);
     }
     
     .popup-content {
@@ -1135,49 +1247,118 @@ body::-webkit-scrollbar-thumb:hover {
     .job-count-summary {
         padding: var(--spacing-sm) var(--spacing-md);
         font-size: 0.875rem;
+        flex-wrap: wrap;
+        text-align: center;
+    }
+    
+    .temporary-notification {
+        left: 50%;
+        right: auto;
+        transform: translateX(-50%);
+        max-width: calc(100% - var(--spacing-md) * 2);
+        min-width: 280px;
     }
 }
 
+/* Small Mobile (max-width: 480px) */
 @media (max-width: 480px) {
     body {
-        padding: var(--spacing-xs);
+        padding: var(--spacing-xs) var(--spacing-sm);
+        font-size: 14px;
     }
     
     .App {
-        padding: 0 var(--spacing-xs);
+        padding: 0;
+    }
+    
+    .app-header {
+        padding: var(--spacing-sm) 0;
+        margin-bottom: var(--spacing-sm);
     }
     
     .app-header h1 {
         font-size: 1.3rem;
+        line-height: 1.2;
+        margin-bottom: var(--spacing-sm);
+    }
+    
+    .header-controls {
+        gap: var(--spacing-xs);
+    }
+    
+    .auth-button {
+        font-size: 0.8rem;
+        padding: var(--spacing-sm) var(--spacing-md);
     }
     
     .filter-container {
-        padding: var(--spacing-sm);
+        padding: var(--spacing-sm) var(--spacing-md);
+        margin-bottom: var(--spacing-sm);
+        border-radius: var(--radius-sm);
+    }
+    
+    .form-group label {
+        font-size: 0.85em;
+        margin-bottom: var(--spacing-xs);
     }
     
     .form-group input,
     .form-group select {
         padding: 10px 12px;
-        font-size: 0.9rem;
+        font-size: 16px; /* Prevents zoom on iOS */
+        min-height: 44px;
+    }
+    
+    .download-button {
+        padding: 14px;
+        font-size: 0.95rem;
+        min-height: 48px;
+    }
+    
+    .schedule-group-title {
+        font-size: 0.9em;
+        padding: var(--spacing-sm) 0;
+        margin-top: var(--spacing-sm);
+        margin-bottom: var(--spacing-sm);
     }
     
     .schedule-item {
-        padding: var(--spacing-sm);
+        padding: var(--spacing-sm) var(--spacing-md);
         margin: var(--spacing-sm) 0;
+        border-radius: var(--radius-sm);
     }
     
     .schedule-item h4 {
         font-size: 1.1em;
+        line-height: 1.3;
+        margin-bottom: var(--spacing-sm);
+    }
+    
+    .job-header-row {
+        gap: var(--spacing-sm);
+    }
+    
+    .quick-report-button {
+        padding: 10px 16px;
+        font-size: 0.85em;
+        min-height: 44px;
     }
     
     .schedule-item p {
         font-size: 0.875em;
         margin: 8px 0;
+        line-height: 1.5;
     }
     
     .schedule-item p svg {
         font-size: 1em;
         margin-right: var(--spacing-sm);
+        flex-shrink: 0;
+    }
+    
+    .job-groups-footer-container {
+        gap: var(--spacing-sm);
+        padding-top: var(--spacing-sm);
     }
     
     .job-group-item {
@@ -1185,6 +1366,15 @@ body::-webkit-scrollbar-thumb:hover {
         flex-direction: column;
         align-items: flex-start;
         gap: var(--spacing-xs);
+        min-height: auto;
+    }
+    
+    .job-group-label {
+        font-size: 0.85em;
+    }
+    
+    .job-group-value {
+        font-size: 0.8em;
     }
     
     .job-group-link {
@@ -1192,11 +1382,19 @@ body::-webkit-scrollbar-thumb:hover {
         justify-content: center;
         padding: 10px 12px;
         font-size: 0.8em;
+        min-height: 44px;
+        margin-top: var(--spacing-xs);
+    }
+    
+    .popup-overlay {
+        padding: var(--spacing-xs);
     }
     
     .popup-modal {
         width: 98%;
         max-height: 95vh;
+        border-radius: var(--radius-md);
+        margin: var(--spacing-xs);
     }
     
     .popup-header {
@@ -1207,6 +1405,24 @@ body::-webkit-scrollbar-thumb:hover {
         font-size: 1rem;
     }
     
+    .popup-content {
+        padding: var(--spacing-md);
+    }
+    
+    .popup-main-title {
+        font-size: 1.05em;
+        margin-bottom: var(--spacing-md);
+    }
+    
+    .popup-content-text {
+        font-size: 0.85rem;
+    }
+    
+    .report-form-modal {
+        max-width: 98%;
+        max-height: 95vh;
+    }
+    
     .report-form-content {
         padding: var(--spacing-md);
         gap: var(--spacing-md);
@@ -1214,6 +1430,124 @@ body::-webkit-scrollbar-thumb:hover {
     
     .form-section-title {
         font-size: 1rem;
+        margin-bottom: var(--spacing-sm);
+        padding-bottom: var(--spacing-sm);
+    }
+    
+    .form-actions {
+        flex-direction: column;
+        gap: var(--spacing-sm);
+    }
+    
+    .form-button {
+        width: 100%;
+        min-height: 44px;
+    }
+    
+    .temporary-notification {
+        max-width: calc(100% - var(--spacing-sm) * 2);
+        min-width: 200px;
+        padding: var(--spacing-xs) var(--spacing-sm);
+        font-size: 0.85rem;
+        top: var(--spacing-xs);
+        border-radius: var(--radius-md);
+    }
+    
+    .job-count-summary {
+        padding: var(--spacing-xs) var(--spacing-sm);
+        font-size: 0.8rem;
+        flex-direction: column;
+        gap: var(--spacing-xs);
+        text-align: center;
+    }
+}
+
+/* Extra Small Mobile (max-width: 360px) */
+@media (max-width: 360px) {
+    body {
+        padding: var(--spacing-xs);
+        font-size: 13px;
+    }
+    
+    .app-header h1 {
+        font-size: 1.2rem;
+    }
+    
+    .schedule-item h4 {
+        font-size: 1.05em;
+    }
+    
+    .form-group input,
+    .form-group select {
+        padding: 8px 10px;
+        font-size: 16px;
+    }
+    
+    .popup-modal {
+        width: 100%;
+        max-height: 98vh;
+        margin: 0;
+        border-radius: var(--radius-sm);
+    }
+    
+    .temporary-notification {
+        max-width: calc(100% - var(--spacing-xs) * 2);
+        min-width: 180px;
+        font-size: 0.8rem;
+    }
+}
+
+/* Landscape Orientation (Mobile) */
+@media (max-width: 768px) and (orientation: landscape) {
+    .app-header h1 {
+        font-size: 1.4rem;
+    }
+    
+    .filter-container {
+        padding: var(--spacing-md);
+    }
+    
+    .schedule-item {
+        padding: var(--spacing-md);
+    }
+    
+    .popup-modal {
+        max-height: 85vh;
+    }
+}
+
+/* High DPI Displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .schedule-item {
+        border-width: 1px;
+    }
+    
+    .form-group input,
+    .form-group select {
+        border-width: 1.5px;
+    }
+}
+
+/* Print Styles */
+@media print {
+    body {
+        background: white;
+        padding: 0;
+    }
+    
+    .header-controls,
+    .filter-container,
+    .quick-report-button,
+    .job-group-link,
+    .download-button {
+        display: none;
+    }
+    
+    .schedule-item {
+        break-inside: avoid;
+        page-break-inside: avoid;
+        box-shadow: none;
+        border: 1px solid #ddd;
     }
 }
 
