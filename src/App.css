@@ -8,31 +8,31 @@
 /* --- BIẾN MÀU (CSS VARIABLES) - CẢI THIỆN --- */
 :root {
   --font-main: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --color-bg: #f5f7fa;
+  --color-bg: #f7f8fa;
   --color-card: #ffffff;
-  --color-text-primary: #1a1d29;
-  --color-text-secondary: #6b7280;
-  --color-border: #e5e7eb;
-  --color-input-bg: #ffffff;
-  --color-shadow: rgba(0, 0, 0, 0.06);
-  --color-shadow-hover: rgba(0, 0, 0, 0.12);
-  --color-brand: #3b82f6;
-  --color-brand-hover: #2563eb;
-  --color-brand-active: #1d4ed8;
-  --color-brand-light: rgba(59, 130, 246, 0.1);
-  --color-danger: #ef4444;
-  --color-grey: #6b7280;
-  --transition-speed: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --color-text-primary: #1a1a1a;
+  --color-text-secondary: #555;
+  --color-border: #eee;
+  --color-input-bg: #fdfdfd;
+  --color-shadow: rgba(0, 0, 0, 0.04);
+  --color-shadow-hover: rgba(0, 0, 0, 0.07);
+  --color-brand: #007bff;
+  --color-brand-hover: #0067d7;
+  --color-brand-active: #0056b3;
+  --color-brand-light: rgba(0,123,255,0.1);
+  --color-danger: #dc3545;
+  --color-grey: #6c757d;
+  --transition-speed: 0.3s ease;
   
-  /* Màu Report và Warning - Cải thiện */
-  --color-warning: #f59e0b;
-  --color-warning-light: #fef3c7; 
-  --color-report-primary: #10b981; 
-  --color-report-hover: #059669;
-  --color-report-active: #047857;
-  --color-report-shadow-rgb: 16, 185, 129;
-  --color-brand-rgb: 59, 130, 246; 
-  --color-grey-hover: #4b5563;
+  /* Màu Report và Warning */
+  --color-warning: #ffc107;
+  --color-warning-light: #fff3cd; 
+  --color-report-primary: #28a745; 
+  --color-report-hover: #218838;
+  --color-report-active: #19692c;
+  --color-report-shadow-rgb: 40, 167, 69;
+  --color-brand-rgb: 0, 123, 255; 
+  --color-grey-hover: #5a6268;
   
   /* Spacing System */
   --spacing-xs: 4px;
@@ -48,27 +48,27 @@
   --radius-xl: 18px;
 }
 
-/* Chế độ Tối (Dark Mode) - Cải thiện */
+/* Chế độ Tối (Dark Mode) */
 body[data-theme='dark'] {
-  --color-bg: #0f172a;
-  --color-card: #1e293b;
-  --color-text-primary: #f1f5f9;
-  --color-text-secondary: #94a3b8;
-  --color-border: #334155;
-  --color-input-bg: #1e293b;
-  --color-shadow: rgba(0, 0, 0, 0.3);
-  --color-shadow-hover: rgba(0, 0, 0, 0.5);
-  --color-brand: #60a5fa;
-  --color-brand-hover: #3b82f6;
-  --color-brand-active: #2563eb;
-  --color-brand-light: rgba(96, 165, 250, 0.15);
-  --color-warning: #fbbf24;
-  --color-warning-light: #78350f;
-  --color-report-primary: #34d399; 
-  --color-report-hover: #10b981;
-  --color-report-active: #059669;
-  --color-report-shadow-rgb: 52, 211, 153;
-  --color-brand-rgb: 96, 165, 250;
+  --color-bg: #121212;
+  --color-card: #1e1e1e;
+  --color-text-primary: #f1f1f1;
+  --color-text-secondary: #aaa;
+  --color-border: #333;
+  --color-input-bg: #2a2a2a;
+  --color-shadow: rgba(0, 0, 0, 0.2);
+  --color-shadow-hover: rgba(0, 0, 0, 0.3);
+  --color-brand: #0d8eff;
+  --color-brand-hover: #0a70cc;
+  --color-brand-active: #085399;
+  --color-brand-light: rgba(13,142,255,0.15);
+  --color-warning: #ffb800;
+  --color-warning-light: #4a3400;
+  --color-report-primary: #17ad35; 
+  --color-report-hover: #138c2c;
+  --color-report-active: #106f23;
+  --color-report-shadow-rgb: 23, 173, 53;
+  --color-brand-rgb: 13, 142, 255;
 }
 
 /* --- CÀI ĐẶT CƠ BẢN - CẢI THIỆN --- */
@@ -78,8 +78,7 @@ body[data-theme='dark'] {
 
 body {
   font-family: var(--font-main);
-  background: linear-gradient(135deg, var(--color-bg) 0%, #e0e7ff 100%);
-  background-attachment: fixed;
+  background: var(--color-bg);
   color: var(--color-text-primary);
   margin: 0;
   padding: var(--spacing-md);
@@ -87,20 +86,23 @@ body {
   -moz-osx-font-smoothing: grayscale;
   transition: background-color var(--transition-speed), color var(--transition-speed);
   min-height: 100vh;
+  overflow-x: hidden;
 }
 
 body[data-theme='dark'] {
-  background: linear-gradient(135deg, var(--color-bg) 0%, #1e1b4b 100%);
+  background: var(--color-bg);
 }
 
 .App { 
   max-width: 800px; 
   margin: 0 auto; 
   position: relative;
+  padding-bottom: var(--spacing-xl);
 }
 
 main { 
-  padding: 0; 
+  padding: 0;
+  position: relative;
 }
 
 /* 🌟 Temporary Notification - Cải thiện */
@@ -140,27 +142,19 @@ main {
   display: flex;
   flex-direction: column; 
   align-items: center;
-  padding: var(--spacing-lg) 0;
-  margin-bottom: var(--spacing-xl);
+  padding: var(--spacing-md) 0;
+  margin-bottom: var(--spacing-md);
   width: 100%;
-  background: var(--color-card);
-  border-radius: var(--radius-xl);
-  box-shadow: 0 4px 20px var(--color-shadow);
-  padding: var(--spacing-lg);
 }
 
 .app-header h1 {
   margin: 0 0 var(--spacing-md) 0;
   width: 100%;
   color: var(--color-text-primary);
-  font-size: 2rem;
-  font-weight: 800;
+  font-size: 1.8rem;
+  font-weight: 700;
   text-align: center;
-  background: linear-gradient(135deg, var(--color-brand) 0%, var(--color-brand-hover) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  letter-spacing: -0.5px;
+  letter-spacing: 0;
 }
 
 .header-controls {
@@ -289,13 +283,11 @@ input:checked + .theme-toggle-slider:before {
 
 /* --- FILTER BAR - CẢI THIỆN --- */
 .filter-container {
-  padding: var(--spacing-xl); 
+  padding: 20px; 
   background: var(--color-card); 
-  border-radius: var(--radius-xl);
-  box-shadow: 0 8px 24px var(--color-shadow); 
-  margin-bottom: var(--spacing-xl);
-  border: 1px solid var(--color-border);
-  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px var(--color-shadow); 
+  margin-bottom: 25px;
 }
 
 .form-group-grid { 
@@ -426,29 +418,15 @@ input:checked + .theme-toggle-slider:before {
 }
 
 .schedule-group-title {
-  font-size: 1.15em; 
-  font-weight: 700; 
+  font-size: 1.1em; 
+  font-weight: 600; 
   color: var(--color-brand); 
-  padding: var(--spacing-lg) 0 var(--spacing-md) 0;
-  border-top: 2px solid var(--color-border); 
-  margin-top: var(--spacing-xl); 
+  padding: 15px 0 10px 0;
+  border-top: 1px solid var(--color-border); 
+  margin-top: 20px; 
   text-transform: uppercase; 
-  letter-spacing: 1px; 
-  transition: all var(--transition-speed);
-  position: relative;
-  padding-left: var(--spacing-md);
-}
-
-.schedule-group-title::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 4px;
-  height: 24px;
-  background: linear-gradient(135deg, var(--color-brand) 0%, var(--color-brand-hover) 100%);
-  border-radius: 2px;
+  letter-spacing: 0.5px; 
+  transition: color var(--transition-speed), border-color var(--transition-speed);
 }
 
 .time-group-container:first-child .schedule-group-title { 
@@ -458,36 +436,16 @@ input:checked + .theme-toggle-slider:before {
 
 .schedule-item {
   background: var(--color-card); 
-  border-radius: var(--radius-xl); 
-  box-shadow: 0 4px 16px var(--color-shadow);
-  padding: var(--spacing-xl); 
-  margin: var(--spacing-lg) 0; 
-  transition: all var(--transition-speed);
-  border: 1px solid var(--color-border);
-  position: relative;
-  overflow: hidden;
-}
-
-.schedule-item::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 4px;
-  height: 100%;
-  background: linear-gradient(180deg, var(--color-brand) 0%, var(--color-brand-hover) 100%);
-  opacity: 0;
-  transition: opacity var(--transition-speed);
-}
-
-.schedule-item:hover::before {
-  opacity: 1;
+  border-radius: 12px; 
+  box-shadow: 0 4px 12px var(--color-shadow);
+  padding: 20px; 
+  margin: 15px 0; 
+  transition: transform 0.2s ease-out, box-shadow var(--transition-speed), background-color var(--transition-speed);
 }
 
 .schedule-item:hover { 
-    transform: translateY(-4px); 
-    box-shadow: 0 12px 32px var(--color-shadow-hover);
-    border-color: var(--color-brand);
+    transform: translateY(-3px); 
+    box-shadow: 0 6px 16px var(--color-shadow-hover);
 }
 
 /* Job Item Header */
@@ -542,13 +500,12 @@ input:checked + .theme-toggle-slider:before {
 
 /* Job Item Info */
 .schedule-item p {
-  margin: 12px 0; 
+  margin: 10px 0; 
   display: flex; 
   align-items: center; 
   color: var(--color-text-secondary); 
   font-size: 0.95em; 
   font-weight: 500;
-  line-height: 1.5;
 }
 
 .schedule-item p svg {
@@ -571,26 +528,18 @@ input:checked + .theme-toggle-slider:before {
     color: var(--color-warning);
 }
 
-/* Job Active State - Cải thiện */
+/* Job Active State */
 .schedule-item.job-active { 
     border: 2px solid var(--color-warning); 
-    background: linear-gradient(135deg, var(--color-warning-light) 0%, var(--color-card) 100%);
-    box-shadow: 0 8px 24px rgba(245, 158, 11, 0.3); 
-    animation: pulse-glow 2s infinite ease-in-out;
-    position: relative;
+    background-color: var(--color-warning-light); 
+    box-shadow: 0 4px 15px rgba(255, 193, 7, 0.4); 
+    animation: pulse-border 2s infinite ease-in-out;
 }
 
-body[data-theme='dark'] .schedule-item.job-active {
-    background: linear-gradient(135deg, var(--color-warning-light) 0%, var(--color-card) 100%);
-}
-
-@keyframes pulse-glow { 
-    0%, 100% { 
-        box-shadow: 0 8px 24px rgba(245, 158, 11, 0.3);
-    }
-    50% { 
-        box-shadow: 0 8px 32px rgba(245, 158, 11, 0.5);
-    }
+@keyframes pulse-border { 
+    0% { box-shadow: 0 4px 15px rgba(255, 193, 7, 0.4); }
+    50% { box-shadow: 0 4px 20px rgba(255, 193, 7, 0.6); }
+    100% { box-shadow: 0 4px 15px rgba(255, 193, 7, 0.4); }
 }
 
 /* Job Groups Footer - Cải thiện */
@@ -945,29 +894,37 @@ body[data-theme='dark'] .schedule-item.job-active {
     color: var(--color-brand);
 }
 
-/* Virtual List Container */
+/* Virtual List Container - Sửa scroll */
 .virtual-list-container {
+    width: 100%;
+    height: auto;
     min-height: 400px;
-    max-height: calc(100vh - 400px);
+    max-height: none;
+    overflow: visible;
+    padding: 0;
+    position: relative;
+}
+
+/* Scroll cho toàn bộ page */
+html, body {
+    overflow-x: hidden;
     overflow-y: auto;
-    padding: var(--spacing-sm);
 }
 
-.virtual-list-container::-webkit-scrollbar {
-    width: 8px;
+body::-webkit-scrollbar {
+    width: 10px;
 }
 
-.virtual-list-container::-webkit-scrollbar-track {
+body::-webkit-scrollbar-track {
     background: var(--color-bg);
-    border-radius: 4px;
 }
 
-.virtual-list-container::-webkit-scrollbar-thumb {
+body::-webkit-scrollbar-thumb {
     background: var(--color-border);
-    border-radius: 4px;
+    border-radius: 5px;
 }
 
-.virtual-list-container::-webkit-scrollbar-thumb:hover {
+body::-webkit-scrollbar-thumb:hover {
     background: var(--color-grey);
 }
 

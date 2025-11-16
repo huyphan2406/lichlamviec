@@ -788,20 +788,16 @@ function App() {
   }, [groupedJobs]);
 
 
-  // 🌟 TỐI ƯU HÓA 2: Khởi tạo Virtualizer
+  // 🌟 TỐI ƯU HÓA 2: Khởi tạo Virtualizer (Tạm thời disable để scroll tự nhiên)
   const parentRef = useRef(null);
   
-  const rowVirtualizer = useVirtualizer({
-    count: flatRowItems.length, 
-    getScrollElement: () => parentRef.current,
-    estimateSize: (index) => {
-        const itemType = flatRowItems[index]?.type;
-        return itemType === 'HEADER' ? 50 : 360; // 50px cho Header, 360px cho JobItem
-    },
-    overscan: 5, 
-  });
-
-  const virtualItems = rowVirtualizer.getVirtualItems();
+  // Tạm thời render tất cả items để scroll tự nhiên
+  const virtualItems = flatRowItems.map((_, index) => ({
+    index,
+    start: 0,
+    size: 0,
+    end: 0
+  }));
   const totalFilteredCount = filteredJobs.length;
 
   // Giao diện
@@ -867,46 +863,27 @@ function App() {
           ) : (jobs.length > 0 && flatRowItems.length === 0) ? (
             <EmptyState dateFilter={dateFilter} />
           ) : (
-            // 🌟 TỐI ƯU HÓA 2: ÁP DỤNG VIRTUALIZER
-            <div 
-                ref={parentRef} 
-                className="virtual-list-container" // 👈 Container cuộn
-            >
-                <div style={{ height: `${rowVirtualizer.getTotalSize()}px`, width: '100%', position: 'relative' }}>
-                    {virtualItems.map((virtualItem) => {
-                        const item = flatRowItems[virtualItem.index];
-                        
-                        if (!item) {
-                            return null; 
-                        }
-                        
-                        return (
-                            <div
-                                key={item.id}
-                                style={{
-                                    position: 'absolute',
-                                    top: 0,
-                                    left: 0,
-                                    width: '100%',
-                                    transform: `translateY(${virtualItem.start}px)`,
-                                    paddingBottom: '15px' // 👈 Thêm padding dưới để tạo khoảng cách
-                                }}
-                            >
-                                {item.type === 'HEADER' ? (
-                                    <h3 className="schedule-group-title">{item.content}</h3>
-                                ) : (
-                                    <JobItem 
-                                        job={item.content} 
-                                        isActive={item.isActive}
-                                        onQuickReportClick={handleQuickReportClick}
-                                        hostGroups={hostGroups}
-                                        brandGroups={brandGroups}
-                                    />
-                                )}
-                            </div>
-                        );
-                    })}
-                </div>
+            // Render tất cả items để scroll tự nhiên
+            <div className="schedule-list">
+                {flatRowItems.map((item) => {
+                    if (!item) return null;
+                    
+                    return (
+                        <div key={item.id}>
+                            {item.type === 'HEADER' ? (
+                                <h3 className="schedule-group-title">{item.content}</h3>
+                            ) : (
+                                <JobItem 
+                                    job={item.content} 
+                                    isActive={item.isActive}
+                                    onQuickReportClick={handleQuickReportClick}
+                                    hostGroups={hostGroups}
+                                    brandGroups={brandGroups}
+                                />
+                            )}
+                        </div>
+                    );
+                })}
             </div>
           )}
         </div>
