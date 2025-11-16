@@ -677,8 +677,9 @@ const JobItem = memo(({ job, isActive, onQuickReportClick, hostGroups, brandGrou
   
   const defaultUpdateMessage = "Đang cập nhật...";
 
-  // 🌟 TỐI ƯU: Tìm link Zalo cho Group Brand với logic thông minh
-  // Ví dụ: "NIVEA - SHOPEE" sẽ tìm: "NIVEA - SHOPEE" -> "NIVEA SHOPEE" -> "NIVEA" -> "SHOPEE"
+  // 🌟 TỐI ƯU: Tìm link Zalo cho Group Brand với logic chính xác
+  // Format: "BRAND - PLATFORM" (ví dụ: "NIVEA - SHOPEE")
+  // Ưu tiên: 1) "BRAND - PLATFORM" -> 2) "BRAND" -> 3) null (hiện "Đang cập nhật")
   const brandLink = useMemo(() => {
       if (!brandGroups || Object.keys(brandGroups).length === 0 || !job.Store) {
           return null;
@@ -687,28 +688,29 @@ const JobItem = memo(({ job, isActive, onQuickReportClick, hostGroups, brandGrou
       const storeName = job.Store.trim();
       if (!storeName) return null;
 
-      // 1. Thử tìm với tên đầy đủ trước (ví dụ: "NIVEA - SHOPEE")
+      // 1. ƯU TIÊN 1: Tìm với tên đầy đủ "BRAND - PLATFORM" (ví dụ: "NIVEA - SHOPEE")
       let link = findGroupLink(storeName, brandGroups);
       if (link) return link;
 
-      // 2. Tách tên theo dấu "-" hoặc "|" và tìm từng phần
+      // 2. Tách tên theo dấu "-" hoặc "|"
       // Ví dụ: "NIVEA - SHOPEE" -> ["NIVEA", "SHOPEE"]
       const parts = storeName.split(/[-|]/).map(p => p.trim()).filter(p => p.length > 0);
       
       if (parts.length > 1) {
-          // 2a. Thử kết hợp các phần (bỏ dấu "-"): "NIVEA SHOPEE"
-          const combined = parts.join(' ');
-          link = findGroupLink(combined, brandGroups);
-          if (link) return link;
-
-          // 2b. Thử từng phần theo thứ tự ưu tiên (phần đầu thường là brand name)
-          for (const part of parts) {
-              link = findGroupLink(part, brandGroups);
+          // ƯU TIÊN 2: Chỉ tìm phần đầu (BRAND name) - KHÔNG tìm platform riêng
+          // Ví dụ: "NIVEA - SHOPEE" -> chỉ tìm "NIVEA" (không tìm "SHOPEE")
+          const brandName = parts[0]; // Phần đầu là brand name
+          if (brandName) {
+              link = findGroupLink(brandName, brandGroups);
               if (link) return link;
           }
+      } else if (parts.length === 1) {
+          // Nếu chỉ có 1 phần (không có dấu "-"), tìm trực tiếp
+          link = findGroupLink(parts[0], brandGroups);
+          if (link) return link;
       }
 
-      // 3. Nếu vẫn không tìm thấy, thử với tên gốc đã normalize
+      // 3. Không tìm thấy -> return null (sẽ hiện "Đang cập nhật")
       return null;
   }, [job.Store, brandGroups]);
 
