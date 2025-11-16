@@ -27,13 +27,20 @@ const normalizeName = (name) => {
 
 // Hàm tìm link Zalo từ tên host/talent
 const findGroupLink = (name, groupsMap) => {
-  if (!name || !groupsMap || Object.keys(groupsMap).length === 0) return null;
+  if (!name || !groupsMap || Object.keys(groupsMap).length === 0) {
+    return null;
+  }
   
   const normalizedName = normalizeName(name);
   const groupData = groupsMap[normalizedName];
   
   if (groupData && groupData.link) {
     return groupData.link;
+  }
+  
+  // Debug: Log để kiểm tra
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Tìm link cho:', name, '-> Normalized:', normalizedName, '-> Found:', !!groupData);
   }
   
   return null;
@@ -141,7 +148,7 @@ function useGroupData() {
     }
   );
 
-  return {
+  const result = {
     hostGroups: data?.hostGroups || {},
     brandGroups: data?.brandGroups || {},
     hostCount: data?.hostCount || 0,
@@ -149,6 +156,20 @@ function useGroupData() {
     isLoading: isLoading,
     error
   };
+  
+  // Debug: Log khi data được fetch
+  useEffect(() => {
+    if (data && !isLoading) {
+      console.log('Groups Data loaded:', {
+        hostCount: result.hostCount,
+        brandCount: result.brandCount,
+        hostSample: Object.keys(result.hostGroups).slice(0, 3),
+        brandSample: Object.keys(result.brandGroups).slice(0, 3)
+      });
+    }
+  }, [data, isLoading]);
+  
+  return result;
 }
 
 // --- HÀM HELPER CHO GIAO DIỆN ---
@@ -566,16 +587,36 @@ const JobItem = memo(({ job, isActive, onQuickReportClick, hostGroups, brandGrou
 
   // Tìm link Zalo cho Group Brand (Talent 1 hoặc Talent 2) - từ brandGroups
   const brandLink = useMemo(() => {
+    if (!brandGroups || Object.keys(brandGroups).length === 0) {
+      return null;
+    }
     const link1 = findGroupLink(job['Talent 1'], brandGroups);
     const link2 = findGroupLink(job['Talent 2'], brandGroups);
-    return link1 || link2 || null;
+    const result = link1 || link2 || null;
+    
+    // Debug
+    if (process.env.NODE_ENV === 'development' && !result) {
+      console.log('Brand Link not found for:', job['Talent 1'], job['Talent 2'], 'Available keys:', Object.keys(brandGroups).slice(0, 5));
+    }
+    
+    return result;
   }, [job, brandGroups]);
 
   // Tìm link Zalo cho Group Host (Coordinator 1 hoặc Coordinator 2) - từ hostGroups
   const hostLink = useMemo(() => {
+    if (!hostGroups || Object.keys(hostGroups).length === 0) {
+      return null;
+    }
     const link1 = findGroupLink(job['Coordinator 1'], hostGroups);
     const link2 = findGroupLink(job['Coordinator 2'], hostGroups);
-    return link1 || link2 || null;
+    const result = link1 || link2 || null;
+    
+    // Debug
+    if (process.env.NODE_ENV === 'development' && !result) {
+      console.log('Host Link not found for:', job['Coordinator 1'], job['Coordinator 2'], 'Available keys:', Object.keys(hostGroups).slice(0, 5));
+    }
+    
+    return result;
   }, [job, hostGroups]);
 
   const handleQuickReport = useCallback(() => {
@@ -664,6 +705,25 @@ const JobItem = memo(({ job, isActive, onQuickReportClick, hostGroups, brandGrou
             )}
           </div>
       </div>
+      
+      {/* Debug info - chỉ hiện trong development */}
+      {process.env.NODE_ENV === 'development' && (
+        <div style={{ 
+          marginTop: '10px', 
+          padding: '8px', 
+          background: '#f0f0f0', 
+          borderRadius: '4px', 
+          fontSize: '11px',
+          fontFamily: 'monospace'
+        }}>
+          <div>Brand Groups: {Object.keys(brandGroups || {}).length} keys</div>
+          <div>Host Groups: {Object.keys(hostGroups || {}).length} keys</div>
+          <div>Brand Link: {brandLink ? '✓ Found' : '✗ Not found'}</div>
+          <div>Host Link: {hostLink ? '✓ Found' : '✗ Not found'}</div>
+          <div>Talent 1: {job['Talent 1'] || 'N/A'}</div>
+          <div>Coordinator 1: {job['Coordinator 1'] || 'N/A'}</div>
+        </div>
+      )}
 
     </motion.div>
   );
@@ -673,7 +733,22 @@ const JobItem = memo(({ job, isActive, onQuickReportClick, hostGroups, brandGrou
 function App() {
   const [theme, toggleTheme] = useDarkMode();
   const { jobs, isLoading, uniqueDates, uniqueSessions, uniqueStores, error } = useJobData();
-  const { hostGroups, brandGroups } = useGroupData(); // Fetch groups data
+  const { hostGroups, brandGroups, isLoading: groupsLoading, error: groupsError } = useGroupData(); // Fetch groups data
+  
+  // Debug groups data
+  useEffect(() => {
+    if (!groupsLoading && hostGroups && brandGroups) {
+      console.log('Groups in App:', {
+        hostKeys: Object.keys(hostGroups).length,
+        brandKeys: Object.keys(brandGroups).length,
+        hostSample: Object.keys(hostGroups).slice(0, 5),
+        brandSample: Object.keys(brandGroups).slice(0, 5)
+      });
+    }
+    if (groupsError) {
+      console.error('Groups Error:', groupsError);
+    }
+  }, [hostGroups, brandGroups, groupsLoading, groupsError]);
   
   const [dateFilter, setDateFilter] = useState(() => getFormattedToday());
   // 🌟 Lưu tên tìm kiếm vào localStorage

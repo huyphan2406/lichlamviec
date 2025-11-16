@@ -440,12 +440,15 @@ input:checked + .theme-toggle-slider:before {
   box-shadow: 0 4px 12px var(--color-shadow);
   padding: 20px; 
   margin: 15px 0; 
-  transition: transform 0.2s ease-out, box-shadow var(--transition-speed), background-color var(--transition-speed);
+  transition: transform 0.2s ease-out, box-shadow var(--transition-speed), background-color var(--transition-speed), border-color var(--transition-speed);
+  border: 2px solid transparent;
 }
 
 .schedule-item:hover { 
     transform: translateY(-3px); 
     box-shadow: 0 6px 16px var(--color-shadow-hover);
+    background-color: var(--color-brand-light);
+    border-color: var(--color-brand);
 }
 
 /* Job Item Header */
