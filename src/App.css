@@ -491,6 +491,7 @@ input:checked + .theme-toggle-slider:before {
     flex-direction: column;
     gap: 0;
     box-sizing: border-box;
+    background: var(--color-bg);
 }
 
 .schedule-group-title {

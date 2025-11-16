@@ -1158,7 +1158,7 @@ function App() {
     const showTempNotification = useCallback((message) => setTempNotification(message), []);
     const dismissTempNotification = useCallback(() => setTempNotification(null), []);
 
-    const [isAuthPopupVisible, setIsAuthPopupVisible] = useState(false); // Tắt popup thông báo khi mới vào web
+    const [isAuthPopupVisible, setIsAuthPopupVisible] = useState(true); // Popup thông báo khi mới vào web
     const showAuthPopup = useCallback(() => setIsAuthPopupVisible(true), []);
     const hideAuthPopup = useCallback(() => setIsAuthPopupVisible(false), []);
 
@@ -1290,7 +1290,7 @@ function App() {
                         transition={{ duration: 0.3 }}
                     >
                         <FiFilter size={18} style={{marginRight: '8px'}}/>
-                        Tìm thấy <strong style={{color: 'var(--color-brand)'}}> {totalFilteredCount} </strong> công việc
+                        {'Tìm thấy '}<strong style={{color: 'var(--color-brand)'}}> {totalFilteredCount} </strong>{' công việc'}
                         {dateFilter ? ` cho ngày ${dateFilter}` : ' trong danh sách'}
                     </motion.div>
                 )}
