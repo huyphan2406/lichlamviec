@@ -37,73 +37,105 @@ const normalizeName = (name) => {
 };
 
 // Hàm tìm link Zalo từ tên host/talent (CẢI THIỆN VỚI FUZZY MATCHING)
+// 🌟 TỐI ƯU: Cache để tránh tính lại normalize nhiều lần
+const normalizeCache = new Map();
+
+// 🌟 TỐI ƯU: Hàm tìm kiếm group link với nhiều cải tiến
 const findGroupLink = (name, groupsMap) => {
     if (!name || !groupsMap || Object.keys(groupsMap).length === 0) {
         return null;
     }
     
-    const normalizedName = normalizeName(name);
+    // Cache normalize để tăng tốc
+    let normalizedName = normalizeCache.get(name);
+    if (!normalizedName) {
+        normalizedName = normalizeName(name);
+        if (normalizedName) {
+            normalizeCache.set(name, normalizedName);
+        }
+    }
     if (!normalizedName) return null;
     
-    // 1. Thử exact match trước
-    let groupData = groupsMap[normalizedName];
-    if (groupData?.link) {
-        console.log('✅ [EXACT MATCH]', name, '->', normalizedName, '-> Link:', groupData.link);
-        return groupData.link;
+    // 1. EXACT MATCH - Nhanh nhất, kiểm tra trước
+    const exactMatch = groupsMap[normalizedName];
+    if (exactMatch?.link) {
+        if (process.env.NODE_ENV === 'development') {
+            console.log('✅ [EXACT]', name, '->', normalizedName);
+        }
+        return exactMatch.link;
     }
     
-    // 2. Thử partial match (tên chứa key hoặc key chứa tên)
+    // 2. PARTIAL MATCH - Sắp xếp keys từ dài đến ngắn để match chính xác hơn
     const allKeys = Object.keys(groupsMap);
-    const foundKey = allKeys.find(key => {
-        if (!key) return false;
-        // Tên chứa key hoặc key chứa tên
-        return normalizedName.includes(key) || key.includes(normalizedName);
-    });
+    if (allKeys.length === 0) return null;
     
-    if (foundKey) {
-        groupData = groupsMap[foundKey];
-        if (groupData?.link) {
-            console.log('✅ [PARTIAL MATCH]', name, '-> Normalized:', normalizedName, '-> Matched Key:', foundKey, '-> Link:', groupData.link);
-            return groupData.link;
+    // Sắp xếp keys theo độ dài (dài trước) để match "shopee express" trước "shopee"
+    const sortedKeys = [...allKeys].sort((a, b) => b.length - a.length);
+    
+    // Tìm partial match 2 chiều
+    for (const key of sortedKeys) {
+        if (!key) continue;
+        
+        // Kiểm tra 2 chiều: name chứa key hoặc key chứa name
+        if (normalizedName.includes(key) || key.includes(normalizedName)) {
+            const match = groupsMap[key];
+            if (match?.link) {
+                if (process.env.NODE_ENV === 'development') {
+                    console.log('✅ [PARTIAL]', name, '->', key);
+                }
+                return match.link;
+            }
         }
     }
     
-    // 3. Thử fuzzy match (tìm key có độ tương đồng cao nhất)
+    // 3. FUZZY MATCH - Chỉ chạy nếu không tìm thấy exact/partial
+    const nameWords = normalizedName.split(' ').filter(w => w.length > 2);
+    if (nameWords.length === 0) return null;
+    
     let bestMatch = null;
     let bestScore = 0;
+    const minScore = 5; // Ngưỡng tối thiểu
     
-    allKeys.forEach(key => {
-        if (!key) return;
+    for (const key of sortedKeys) {
+        if (!key) continue;
         
-        // Tính điểm tương đồng đơn giản
-        const nameWords = normalizedName.split(' ').filter(w => w.length > 2);
         const keyWords = key.split(' ').filter(w => w.length > 2);
+        if (keyWords.length === 0) continue;
         
         let score = 0;
-        nameWords.forEach(nw => {
-            keyWords.forEach(kw => {
-                if (nw === kw) score += 10; // Từ khớp hoàn toàn
-                else if (nw.includes(kw) || kw.includes(nw)) score += 5; // Từ chứa nhau
-            });
-        });
         
-        if (score > bestScore && score >= 5) {
+        // Tính điểm: từ khớp hoàn toàn = 10, từ chứa nhau = 5
+        for (const nw of nameWords) {
+            for (const kw of keyWords) {
+                if (nw === kw) {
+                    score += 10; // Exact word match
+                } else if (nw.includes(kw) || kw.includes(nw)) {
+                    score += 5; // Partial word match
+                }
+            }
+        }
+        
+        // Cập nhật best match nếu score cao hơn và đạt ngưỡng
+        if (score > bestScore && score >= minScore) {
             bestScore = score;
             bestMatch = key;
         }
-    });
+    }
     
     if (bestMatch) {
-        groupData = groupsMap[bestMatch];
-        if (groupData?.link) {
-            console.log('✅ [FUZZY MATCH]', name, '-> Normalized:', normalizedName, '-> Matched Key:', bestMatch, '(Score:', bestScore, ') -> Link:', groupData.link);
-            return groupData.link;
+        const match = groupsMap[bestMatch];
+        if (match?.link) {
+            if (process.env.NODE_ENV === 'development') {
+                console.log('✅ [FUZZY]', name, '->', bestMatch, `(Score: ${bestScore})`);
+            }
+            return match.link;
         }
     }
     
     // Không tìm thấy
-    console.warn('❌ [NOT FOUND]', name, '-> Normalized:', normalizedName);
-    console.warn('   Available keys sample:', allKeys.slice(0, 10));
+    if (process.env.NODE_ENV === 'development') {
+        console.warn('❌ [NOT FOUND]', name, '->', normalizedName);
+    }
     return null;
 };
 
@@ -645,153 +677,54 @@ const JobItem = memo(({ job, isActive, onQuickReportClick, hostGroups, brandGrou
   
   const defaultUpdateMessage = "Đang cập nhật...";
 
-  // 🌟 LOGIC CẢI THIỆN: Tìm link Zalo cho Group Brand (với nhiều cách matching)
+  // 🌟 TỐI ƯU: Tìm link Zalo cho Group Brand với logic thông minh
+  // Ví dụ: "NIVEA - SHOPEE" sẽ tìm: "NIVEA - SHOPEE" -> "NIVEA SHOPEE" -> "NIVEA" -> "SHOPEE"
   const brandLink = useMemo(() => {
-      // DEBUG: Log để xem data chi tiết
-      const brandKeysCount = brandGroups ? Object.keys(brandGroups).length : 0;
-      console.log('🔍 [BRAND DEBUG]', {
-        hasBrandGroups: !!brandGroups,
-        brandGroupsType: typeof brandGroups,
-        brandGroupsIsArray: Array.isArray(brandGroups),
-        brandGroupsKeys: brandKeysCount,
-        jobStore: job.Store,
-        brandGroupsSample: brandGroups ? Object.keys(brandGroups).slice(0, 10) : [],
-        firstBrandKey: brandGroups && brandKeysCount > 0 ? Object.keys(brandGroups)[0] : null,
-        firstBrandData: brandGroups && brandKeysCount > 0 ? brandGroups[Object.keys(brandGroups)[0]] : null
-      });
-      
-      if (!brandGroups || brandKeysCount === 0 || !job.Store) {
-          console.warn('❌ [BRAND] Missing data:', {
-              hasBrandGroups: !!brandGroups,
-              brandGroupsType: typeof brandGroups,
-              brandGroupsLength: brandKeysCount,
-              hasStore: !!job.Store,
-              storeValue: job.Store
-          });
+      if (!brandGroups || Object.keys(brandGroups).length === 0 || !job.Store) {
           return null;
       }
 
-      const normalizedStoreName = normalizeName(job.Store);
-      console.log('🔍 [BRAND] Normalized store name:', job.Store, '->', normalizedStoreName);
+      const storeName = job.Store.trim();
+      if (!storeName) return null;
+
+      // 1. Thử tìm với tên đầy đủ trước (ví dụ: "NIVEA - SHOPEE")
+      let link = findGroupLink(storeName, brandGroups);
+      if (link) return link;
+
+      // 2. Tách tên theo dấu "-" hoặc "|" và tìm từng phần
+      // Ví dụ: "NIVEA - SHOPEE" -> ["NIVEA", "SHOPEE"]
+      const parts = storeName.split(/[-|]/).map(p => p.trim()).filter(p => p.length > 0);
       
-      if (!normalizedStoreName) {
-          return null;
-      }
+      if (parts.length > 1) {
+          // 2a. Thử kết hợp các phần (bỏ dấu "-"): "NIVEA SHOPEE"
+          const combined = parts.join(' ');
+          link = findGroupLink(combined, brandGroups);
+          if (link) return link;
 
-      // 1. Thử exact match trước
-      let brandData = brandGroups[normalizedStoreName];
-      console.log('🔍 [BRAND] Exact match check:', {
-        normalizedStoreName,
-        foundData: brandData,
-        hasLink: brandData?.link
-      });
-      
-      if (brandData?.link) {
-          console.log('✅ [BRAND EXACT]', job.Store, '->', normalizedStoreName, '-> Link:', brandData.link);
-          return brandData.link;
-      }
-
-      const allBrandKeys = Object.keys(brandGroups);
-      
-      // 2. Sắp xếp các khóa từ DÀI NHẤT đến NGẮN NHẤT (để match "shopee express" trước "shopee")
-      const sortedBrandKeys = allBrandKeys.sort((a, b) => b.length - a.length);
-
-      // 3. Tìm khóa brand khớp theo 2 chiều (bidirectional partial match)
-      let foundKey = sortedBrandKeys.find(brandKey => {
-          if (!brandKey) return false;
-          // So sánh 2 chiều: (Tên Store CHỨA Khóa Brand) HOẶC (Khóa Brand CHỨA Tên Store)
-          return normalizedStoreName.includes(brandKey) || brandKey.includes(normalizedStoreName);
-      });
-
-      if (foundKey) {
-          brandData = brandGroups[foundKey];
-          console.log('🔍 [BRAND] Partial match found:', {
-            foundKey,
-            brandData,
-            hasLink: brandData?.link
-          });
-          
-          if (brandData?.link) {
-              console.log('✅ [BRAND PARTIAL]', job.Store, '-> Norm:', normalizedStoreName, '-> Matched:', foundKey, '-> Link:', brandData.link);
-              return brandData.link;
+          // 2b. Thử từng phần theo thứ tự ưu tiên (phần đầu thường là brand name)
+          for (const part of parts) {
+              link = findGroupLink(part, brandGroups);
+              if (link) return link;
           }
       }
 
-      // 4. Thử fuzzy match (tìm từ khóa có nhiều từ khớp nhất)
-      let bestMatch = null;
-      let bestScore = 0;
-      
-      const storeWords = normalizedStoreName.split(' ').filter(w => w.length > 2);
-      
-      sortedBrandKeys.forEach(brandKey => {
-          if (!brandKey) return;
-          
-          const keyWords = brandKey.split(' ').filter(w => w.length > 2);
-          let score = 0;
-          
-          storeWords.forEach(sw => {
-              keyWords.forEach(kw => {
-                  if (sw === kw) score += 10; // Từ khớp hoàn toàn
-                  else if (sw.includes(kw) || kw.includes(sw)) score += 5; // Từ chứa nhau
-              });
-          });
-          
-          if (score > bestScore && score >= 5) {
-              bestScore = score;
-              bestMatch = brandKey;
-          }
-      });
-
-      if (bestMatch) {
-          brandData = brandGroups[bestMatch];
-          if (brandData?.link) {
-              console.log('✅ [BRAND FUZZY]', job.Store, '-> Norm:', normalizedStoreName, '-> Matched:', bestMatch, '(Score:', bestScore, ') -> Link:', brandData.link);
-              return brandData.link;
-          }
-      }
-      
-      // Không tìm thấy
-      console.warn('❌ [BRAND NOT FOUND]', job.Store, '-> Norm:', normalizedStoreName);
-      console.warn('   Brand keys sample:', sortedBrandKeys.slice(0, 10));
-      console.warn('   All brand keys:', sortedBrandKeys);
+      // 3. Nếu vẫn không tìm thấy, thử với tên gốc đã normalize
       return null;
-      
   }, [job.Store, brandGroups]);
 
-  // Group Host (Cải thiện với nhiều cách matching)
+  // 🌟 TỐI ƯU: Tìm link Zalo cho Group Host (sử dụng hàm findGroupLink đã tối ưu)
   const hostLink = useMemo(() => {
-      // DEBUG: Log để xem data
-      console.log('🔍 [HOST DEBUG]', {
-        hasHostGroups: !!hostGroups,
-        hostGroupsKeys: hostGroups ? Object.keys(hostGroups).length : 0,
-        talent1: job['Talent 1'],
-        talent2: job['Talent 2'],
-        coord1: job['Coordinator 1'],
-        coord2: job['Coordinator 2'],
-        hostGroupsSample: hostGroups ? Object.keys(hostGroups).slice(0, 5) : []
-      });
-      
       if (!hostGroups || Object.keys(hostGroups).length === 0) {
-          console.warn('❌ [HOST] Missing data:', {
-              hasHostGroups: !!hostGroups,
-              hostGroupsLength: hostGroups ? Object.keys(hostGroups).length : 0
-          });
           return null;
       }
       
-      // Thử tìm với Talent 1 trước
+      // Thử tìm với Talent 1 trước (ưu tiên cao nhất)
       const link1 = findGroupLink(job['Talent 1'], hostGroups);
-      if (link1) {
-          console.log('✅ [HOST] Found via Talent 1:', job['Talent 1'], '->', link1);
-          return link1;
-      }
+      if (link1) return link1;
       
       // Nếu không có, thử Talent 2
       const link2 = findGroupLink(job['Talent 2'], hostGroups);
-      if (link2) {
-          console.log('✅ [HOST] Found via Talent 2:', job['Talent 2'], '->', link2);
-          return link2;
-      }
+      if (link2) return link2;
       
       // Nếu vẫn không có, thử Coordinator (có thể host cũng là coordinator)
       const link3 = findGroupLink(job['Coordinator 1'], hostGroups);
