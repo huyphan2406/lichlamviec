@@ -1,51 +1,65 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiX, FiSave, FiClock, FiMapPin, FiUser, FiMonitor, FiFileText } from 'react-icons/fi';
+import { 
+  FiX, FiSave, FiClock, FiMapPin, FiUser, FiMonitor, 
+  FiFileText, FiImage, FiPlus, FiTrash2, FiMail,
+  FiDollarSign, FiHash, FiUpload
+} from 'react-icons/fi';
 
-const QuickReportForm = ({ isVisible, setIsVisible, job }) => {
+const QuickReportForm = ({ isVisible, setIsVisible, job, showTempNotification }) => {
   const [formData, setFormData] = useState({
-    jobDate: '',
-    jobTime: '',
-    store: '',
-    location: '',
-    mc: '',
-    standby: '',
-    notes: '',
-    rating: '',
-    status: 'completed'
+    email: '',
+    keyLivestream: '',
+    idLive1: '',
+    idLive2: '',
+    gmv: '',
+    startTimeActual: ''
   });
+
+  const [imagePreview, setImagePreview] = useState(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [liveIds, setLiveIds] = useState(['']); // Array để quản lý nhiều ID
+  const fileInputRef = useRef(null);
+
+  // Tạo key livestream từ job data
+  const generateKeyLivestream = (job) => {
+    if (!job) return '';
+    const date = (job['Date livestream'] || '').replace(/\//g, '');
+    const store = (job.Store || '').replace(/\s+/g, '').substring(0, 10);
+    const time = (job['Time slot'] || '').split(' - ')[0].replace(/:/g, '');
+    return `${date}_${store}_${time}`.toUpperCase();
+  };
 
   // Điền dữ liệu từ job vào form khi mở
   useEffect(() => {
     if (job && isVisible) {
+      const keyLivestream = generateKeyLivestream(job);
       setFormData({
-        jobDate: job['Date livestream'] || '',
-        jobTime: job['Time slot'] || '',
-        store: job.Store || '',
-        location: `${job.Address || ''}${job['Studio/Room'] ? ' | ' + job['Studio/Room'] : ''}`.trim(),
-        mc: `${job['Talent 1'] || ''}${job['Talent 2'] ? ' | ' + job['Talent 2'] : ''}`.trim(),
-        standby: `${job['Coordinator 1'] || ''}${job['Coordinator 2'] ? ' | ' + job['Coordinator 2'] : ''}`.trim(),
-        notes: '',
-        rating: '',
-        status: 'completed'
+        email: '',
+        keyLivestream: keyLivestream,
+        idLive1: '',
+        idLive2: '',
+        gmv: '',
+        startTimeActual: ''
       });
+      setLiveIds(['']);
+      setImagePreview(null);
     }
   }, [job, isVisible]);
 
   const handleDismiss = () => {
     setIsVisible(false);
-    // Reset form khi đóng
     setFormData({
-      jobDate: '',
-      jobTime: '',
-      store: '',
-      location: '',
-      mc: '',
-      standby: '',
-      notes: '',
-      rating: '',
-      status: 'completed'
+      email: '',
+      keyLivestream: '',
+      idLive1: '',
+      idLive2: '',
+      gmv: '',
+      startTimeActual: ''
     });
+    setLiveIds(['']);
+    setImagePreview(null);
+    setIsProcessing(false);
   };
 
   const handleChange = (e) => {
@@ -56,28 +70,194 @@ const QuickReportForm = ({ isVisible, setIsVisible, job }) => {
     }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    
-    // TODO: Xử lý submit form ở đây
-    console.log('Form Data:', formData);
-    
-    // Hiển thị thông báo tạm thời (sẽ được xử lý sau)
-    alert('Form đã được gửi thành công! (Tính năng đang được phát triển)');
-    
-    // Đóng form sau khi submit
-    handleDismiss();
+  // Xử lý upload ảnh
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Kiểm tra loại file
+    if (!file.type.startsWith('image/')) {
+      showTempNotification?.('Vui lòng chọn file ảnh hợp lệ!');
+      return;
+    }
+
+    // Kiểm tra kích thước (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      showTempNotification?.('Kích thước ảnh không được vượt quá 5MB!');
+      return;
+    }
+
+    // Hiển thị preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setImagePreview(e.target.result);
+    };
+    reader.readAsDataURL(file);
+
+    // Xử lý OCR
+    setIsProcessing(true);
+    try {
+      // Dynamic import Tesseract.js
+      const Tesseract = await import('tesseract.js');
+      
+      const { data: { text } } = await Tesseract.recognize(file, 'eng+vie', {
+        logger: m => {
+          if (m.status === 'recognizing text') {
+            // Có thể hiển thị progress nếu cần
+          }
+        }
+      });
+
+      // Trích xuất thông tin từ text
+      extractInfoFromText(text);
+      setIsProcessing(false);
+      showTempNotification?.('Đã trích xuất thông tin từ ảnh thành công!');
+    } catch (error) {
+      console.error('OCR Error:', error);
+      setIsProcessing(false);
+      showTempNotification?.('Lỗi khi xử lý ảnh. Vui lòng thử lại!');
+    }
   };
 
-  // Debug: Log khi component render
-  useEffect(() => {
-    console.log('QuickReportForm render - isVisible:', isVisible, 'job:', job);
-  }, [isVisible, job]);
+  // Trích xuất thông tin từ text OCR
+  const extractInfoFromText = (text) => {
+    const lines = text.split('\n').map(line => line.trim()).filter(line => line);
+    
+    // Tìm ID phiên live (có thể là số hoặc chuỗi)
+    const idPattern = /(?:ID|id|ID phiên|id phiên)[\s:]*([A-Z0-9\-_]+)/i;
+    const idMatch = text.match(idPattern);
+    if (idMatch && idMatch[1]) {
+      setFormData(prev => ({
+        ...prev,
+        idLive1: idMatch[1]
+      }));
+      setLiveIds([idMatch[1]]);
+    }
 
-  // Không return null sớm, để AnimatePresence có thể xử lý animation
+    // Tìm GMV (có thể là số với dấu phẩy, chấm, hoặc không)
+    const gmvPattern = /(?:GMV|gmv|doanh thu|Doanh thu)[\s:]*([\d.,]+)/i;
+    const gmvMatch = text.match(gmvPattern);
+    if (gmvMatch && gmvMatch[1]) {
+      setFormData(prev => ({
+        ...prev,
+        gmv: gmvMatch[1].replace(/,/g, '')
+      }));
+    }
+
+    // Tìm thời gian start thực tế (format: HH:MM hoặc HH:MM:SS)
+    const timePattern = /(?:start|bắt đầu|Start|Bắt đầu|thời gian|Thời gian)[\s:]*(\d{1,2}:\d{2}(?::\d{2})?)/i;
+    const timeMatch = text.match(timePattern);
+    if (timeMatch && timeMatch[1]) {
+      setFormData(prev => ({
+        ...prev,
+        startTimeActual: timeMatch[1]
+      }));
+    }
+  };
+
+  // Thêm ID phiên live mới
+  const handleAddLiveId = () => {
+    setLiveIds([...liveIds, '']);
+  };
+
+  // Xóa ID phiên live
+  const handleRemoveLiveId = (index) => {
+    if (liveIds.length > 1) {
+      const newIds = liveIds.filter((_, i) => i !== index);
+      setLiveIds(newIds);
+      setFormData(prev => ({
+        ...prev,
+        idLive2: newIds.slice(1).join(', ')
+      }));
+    }
+  };
+
+  // Cập nhật ID phiên live
+  const handleLiveIdChange = (index, value) => {
+    const newIds = [...liveIds];
+    newIds[index] = value;
+    setLiveIds(newIds);
+    
+    if (index === 0) {
+      setFormData(prev => ({ ...prev, idLive1: value }));
+    } else {
+      setFormData(prev => ({ 
+        ...prev, 
+        idLive2: newIds.slice(1).filter(id => id).join(', ') 
+      }));
+    }
+  };
+
+  // Submit form đến Google Forms
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!formData.email) {
+      showTempNotification?.('Vui lòng nhập email!');
+      return;
+    }
+
+    if (!formData.idLive1) {
+      showTempNotification?.('Vui lòng nhập ID phiên live 1!');
+      return;
+    }
+
+    setIsProcessing(true);
+
+    try {
+      // Google Forms entry URL
+      const formUrl = 'https://docs.google.com/forms/d/e/1FAIpQLSeZAOqU-pF3DEa7PB_GL4xzWg5K1lhIqy0m2LuUnDf_HV4_QA/formResponse';
+      
+      // Tạo form data
+      const formDataToSubmit = new FormData();
+      
+      // Entry IDs (cần điều chỉnh theo form thực tế)
+      // Email field
+      formDataToSubmit.append('entry.123456789', formData.email); // Thay bằng entry ID thực tế
+      // Key livestream
+      formDataToSubmit.append('entry.987654321', formData.keyLivestream); // Thay bằng entry ID thực tế
+      // ID phiên live 1
+      formDataToSubmit.append('entry.111111111', formData.idLive1); // Thay bằng entry ID thực tế
+      // ID phiên live 2 (nếu có)
+      if (formData.idLive2) {
+        formDataToSubmit.append('entry.222222222', formData.idLive2); // Thay bằng entry ID thực tế
+      }
+      // GMV
+      if (formData.gmv) {
+        formDataToSubmit.append('entry.333333333', formData.gmv); // Thay bằng entry ID thực tế
+      }
+      // Start time thực tế
+      if (formData.startTimeActual) {
+        formDataToSubmit.append('entry.444444444', formData.startTimeActual); // Thay bằng entry ID thực tế
+      }
+
+      // Submit form
+      const response = await fetch(formUrl, {
+        method: 'POST',
+        mode: 'no-cors', // Google Forms không trả về CORS
+        body: formDataToSubmit
+      });
+
+      setIsProcessing(false);
+      showTempNotification?.('Đã gửi form thành công!');
+      
+      // Đóng form sau 1 giây
+      setTimeout(() => {
+        handleDismiss();
+      }, 1000);
+
+    } catch (error) {
+      console.error('Submit Error:', error);
+      setIsProcessing(false);
+      showTempNotification?.('Lỗi khi gửi form. Vui lòng thử lại!');
+    }
+  };
+
+  if (!isVisible || !job) return null;
+
   return (
     <AnimatePresence mode="wait">
-      {isVisible && job && (
+      {isVisible && (
         <>
           <motion.div
             className="popup-overlay"
@@ -114,7 +294,7 @@ const QuickReportForm = ({ isVisible, setIsVisible, job }) => {
                     Ngày & Giờ
                   </label>
                   <div className="form-readonly-info">
-                    {formData.jobDate} - {formData.jobTime}
+                    {job['Date livestream'] || 'N/A'} - {job['Time slot'] || 'N/A'}
                   </div>
                 </div>
 
@@ -124,37 +304,49 @@ const QuickReportForm = ({ isVisible, setIsVisible, job }) => {
                     Cửa Hàng
                   </label>
                   <div className="form-readonly-info">
-                    {formData.store || 'N/A'}
+                    {job.Store || 'N/A'}
                   </div>
                 </div>
+              </div>
 
+              {/* Upload Ảnh */}
+              <div className="form-section">
+                <h4 className="form-section-title">Upload Ảnh Dashboard</h4>
+                
                 <div className="form-group">
-                  <label>
-                    <FiMapPin size={16} style={{ marginRight: '8px' }} />
-                    Địa Điểm
+                  <label htmlFor="imageUpload">
+                    <FiImage size={16} style={{ marginRight: '8px' }} />
+                    Chọn ảnh từ Dashboard
                   </label>
-                  <div className="form-readonly-info">
-                    {formData.location || 'N/A'}
-                  </div>
-                </div>
-
-                <div className="form-group">
-                  <label>
-                    <FiUser size={16} style={{ marginRight: '8px' }} />
-                    MC/Talent
-                  </label>
-                  <div className="form-readonly-info">
-                    {formData.mc || 'N/A'}
-                  </div>
-                </div>
-
-                <div className="form-group">
-                  <label>
-                    <FiMonitor size={16} style={{ marginRight: '8px' }} />
-                    Standby/Coordinator
-                  </label>
-                  <div className="form-readonly-info">
-                    {formData.standby || 'N/A'}
+                  <div className="image-upload-container">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      id="imageUpload"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      style={{ display: 'none' }}
+                    />
+                    <button
+                      type="button"
+                      className="image-upload-button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isProcessing}
+                    >
+                      <FiUpload size={18} />
+                      {isProcessing ? 'Đang xử lý...' : 'Chọn ảnh'}
+                    </button>
+                    {imagePreview && (
+                      <div className="image-preview">
+                        <img src={imagePreview} alt="Preview" />
+                        {isProcessing && (
+                          <div className="processing-overlay">
+                            <div className="spinner"></div>
+                            <p>Đang trích xuất thông tin...</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -164,46 +356,117 @@ const QuickReportForm = ({ isVisible, setIsVisible, job }) => {
                 <h4 className="form-section-title">Thông Tin Report</h4>
                 
                 <div className="form-group">
-                  <label htmlFor="status">Trạng Thái *</label>
-                  <select 
-                    id="status" 
-                    name="status" 
-                    value={formData.status} 
+                  <label htmlFor="email">
+                    <FiMail size={16} style={{ marginRight: '8px' }} />
+                    Email *
+                  </label>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    value={formData.email}
                     onChange={handleChange}
+                    placeholder="your.email@example.com"
                     required
-                  >
-                    <option value="completed">Hoàn Thành</option>
-                    <option value="in-progress">Đang Thực Hiện</option>
-                    <option value="cancelled">Đã Hủy</option>
-                    <option value="delayed">Bị Trễ</option>
-                  </select>
+                  />
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="rating">Đánh Giá</label>
-                  <select 
-                    id="rating" 
-                    name="rating" 
-                    value={formData.rating} 
+                  <label htmlFor="keyLivestream">
+                    <FiHash size={16} style={{ marginRight: '8px' }} />
+                    Key Livestream
+                  </label>
+                  <input
+                    type="text"
+                    id="keyLivestream"
+                    name="keyLivestream"
+                    value={formData.keyLivestream}
                     onChange={handleChange}
-                  >
-                    <option value="">Chọn đánh giá</option>
-                    <option value="excellent">Xuất Sắc ⭐⭐⭐⭐⭐</option>
-                    <option value="good">Tốt ⭐⭐⭐⭐</option>
-                    <option value="average">Bình Thường ⭐⭐⭐</option>
-                    <option value="poor">Cần Cải Thiện ⭐⭐</option>
-                  </select>
+                    readOnly
+                    className="readonly-input"
+                  />
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="notes">Ghi Chú</label>
-                  <textarea 
-                    id="notes" 
-                    name="notes" 
-                    value={formData.notes} 
+                  <label>
+                    <FiHash size={16} style={{ marginRight: '8px' }} />
+                    ID Phiên Live 1 *
+                  </label>
+                  <input
+                    type="text"
+                    value={liveIds[0] || ''}
+                    onChange={(e) => handleLiveIdChange(0, e.target.value)}
+                    placeholder="Nhập ID phiên live 1"
+                    required
+                  />
+                </div>
+
+                {liveIds.map((id, index) => {
+                  if (index === 0) return null;
+                  return (
+                    <div key={index} className="form-group">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                        <label style={{ margin: 0, flex: 1 }}>
+                          <FiHash size={16} style={{ marginRight: '8px' }} />
+                          ID Phiên Live {index + 1}
+                        </label>
+                        <button
+                          type="button"
+                          className="remove-button"
+                          onClick={() => handleRemoveLiveId(index)}
+                          title="Xóa"
+                        >
+                          <FiTrash2 size={16} />
+                        </button>
+                      </div>
+                      <input
+                        type="text"
+                        value={id}
+                        onChange={(e) => handleLiveIdChange(index, e.target.value)}
+                        placeholder={`Nhập ID phiên live ${index + 1}`}
+                      />
+                    </div>
+                  );
+                })}
+
+                <div className="form-group">
+                  <button
+                    type="button"
+                    className="add-button"
+                    onClick={handleAddLiveId}
+                  >
+                    <FiPlus size={16} />
+                    Thêm ID Phiên Live
+                  </button>
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="gmv">
+                    <FiDollarSign size={16} style={{ marginRight: '8px' }} />
+                    GMV
+                  </label>
+                  <input
+                    type="text"
+                    id="gmv"
+                    name="gmv"
+                    value={formData.gmv}
                     onChange={handleChange}
-                    placeholder="Nhập ghi chú về buổi livestream..."
-                    rows="4"
+                    placeholder="Nhập GMV (từ ảnh hoặc tự nhập)"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="startTimeActual">
+                    <FiClock size={16} style={{ marginRight: '8px' }} />
+                    Giờ Start Time Thực Tế (Dashboard)
+                  </label>
+                  <input
+                    type="text"
+                    id="startTimeActual"
+                    name="startTimeActual"
+                    value={formData.startTimeActual}
+                    onChange={handleChange}
+                    placeholder="HH:MM (từ ảnh hoặc tự nhập)"
                   />
                 </div>
               </div>
@@ -214,15 +477,26 @@ const QuickReportForm = ({ isVisible, setIsVisible, job }) => {
                   type="button" 
                   className="form-button form-button-cancel"
                   onClick={handleDismiss}
+                  disabled={isProcessing}
                 >
                   Hủy
                 </button>
                 <button 
                   type="submit" 
                   className="form-button form-button-submit"
+                  disabled={isProcessing}
                 >
-                  <FiSave size={18} style={{ marginRight: '8px' }} />
-                  Lưu Report
+                  {isProcessing ? (
+                    <>
+                      <div className="spinner-small"></div>
+                      Đang xử lý...
+                    </>
+                  ) : (
+                    <>
+                      <FiSave size={18} />
+                      Gửi Report
+                    </>
+                  )}
                 </button>
               </div>
             </form>
@@ -234,4 +508,3 @@ const QuickReportForm = ({ isVisible, setIsVisible, job }) => {
 };
 
 export default QuickReportForm;
-

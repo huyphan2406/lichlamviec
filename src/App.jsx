@@ -142,8 +142,10 @@ function useGroupData() {
   );
 
   return {
-    groups: data?.groups || {},
-    count: data?.count || 0,
+    hostGroups: data?.hostGroups || {},
+    brandGroups: data?.brandGroups || {},
+    hostCount: data?.hostCount || 0,
+    brandCount: data?.brandCount || 0,
     isLoading: isLoading,
     error
   };
@@ -341,7 +343,14 @@ const FilterBar = ({
 }) => {
   
   // 🌟 TỐI ƯU HÓA 4: Tách state 'inputValue' vào FilterBar
-  const [inputValue, setInputValue] = useState(''); 
+  // 🌟 Load từ localStorage nếu có
+  const [inputValue, setInputValue] = useState(() => {
+    try {
+      return localStorage.getItem('searchNameCache') || '';
+    } catch (e) {
+      return '';
+    }
+  }); 
 
   // 🌟 TỐI ƯU HÓA 4: Debounce (làm trễ) việc cập nhật bộ lọc
   useEffect(() => {
@@ -352,7 +361,20 @@ const FilterBar = ({
     return () => {
         clearTimeout(timerId); // Xóa timer nếu người dùng gõ tiếp
     };
-  }, [inputValue, setNameFilter]); 
+  }, [inputValue, setNameFilter]);
+
+  // 🌟 Lưu inputValue vào localStorage khi thay đổi
+  useEffect(() => {
+    try {
+      if (inputValue.trim()) {
+        localStorage.setItem('searchNameCache', inputValue);
+      } else {
+        localStorage.removeItem('searchNameCache');
+      }
+    } catch (e) {
+      console.warn('Không thể lưu vào localStorage:', e);
+    }
+  }, [inputValue]); 
   
   
   // 🌟 TỐI ƯU HÓA 3: Tải lười (Lazy Loading) thư viện 'ics'
@@ -532,7 +554,7 @@ const EmptyState = ({ dateFilter }) => (
   </motion.div>
 );
 
-const JobItem = memo(({ job, isActive, onQuickReportClick, groupsMap }) => {
+const JobItem = memo(({ job, isActive, onQuickReportClick, hostGroups, brandGroups }) => {
   const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } };
   const timeGroup = `${job['Time slot'] || 'N/A'}`;
   const talentDisplay = combineNames(job['Talent 1'], job['Talent 2']);
@@ -542,19 +564,19 @@ const JobItem = memo(({ job, isActive, onQuickReportClick, groupsMap }) => {
   
   const defaultUpdateMessage = "Đang cập nhật...";
 
-  // Tìm link Zalo cho Group Brand (Talent 1 hoặc Talent 2)
+  // Tìm link Zalo cho Group Brand (Talent 1 hoặc Talent 2) - từ brandGroups
   const brandLink = useMemo(() => {
-    const link1 = findGroupLink(job['Talent 1'], groupsMap);
-    const link2 = findGroupLink(job['Talent 2'], groupsMap);
+    const link1 = findGroupLink(job['Talent 1'], brandGroups);
+    const link2 = findGroupLink(job['Talent 2'], brandGroups);
     return link1 || link2 || null;
-  }, [job, groupsMap]);
+  }, [job, brandGroups]);
 
-  // Tìm link Zalo cho Group Host (Coordinator 1 hoặc Coordinator 2)
+  // Tìm link Zalo cho Group Host (Coordinator 1 hoặc Coordinator 2) - từ hostGroups
   const hostLink = useMemo(() => {
-    const link1 = findGroupLink(job['Coordinator 1'], groupsMap);
-    const link2 = findGroupLink(job['Coordinator 2'], groupsMap);
+    const link1 = findGroupLink(job['Coordinator 1'], hostGroups);
+    const link2 = findGroupLink(job['Coordinator 2'], hostGroups);
     return link1 || link2 || null;
-  }, [job, groupsMap]);
+  }, [job, hostGroups]);
 
   const handleQuickReport = useCallback(() => {
     console.log('Quick Report clicked!', job);
@@ -651,12 +673,32 @@ const JobItem = memo(({ job, isActive, onQuickReportClick, groupsMap }) => {
 function App() {
   const [theme, toggleTheme] = useDarkMode();
   const { jobs, isLoading, uniqueDates, uniqueSessions, uniqueStores, error } = useJobData();
-  const { groups: groupsMap } = useGroupData(); // Fetch groups data
+  const { hostGroups, brandGroups } = useGroupData(); // Fetch groups data
   
   const [dateFilter, setDateFilter] = useState(() => getFormattedToday());
-  const [nameFilter, setNameFilter] = useState(''); 
+  // 🌟 Lưu tên tìm kiếm vào localStorage
+  const [nameFilter, setNameFilter] = useState(() => {
+    try {
+      return localStorage.getItem('searchNameCache') || '';
+    } catch (e) {
+      return '';
+    }
+  }); 
   const [sessionFilter, setSessionFilter] = useState('');
   const [storeFilter, setStoreFilter] = useState('');
+
+  // 🌟 Lưu nameFilter vào localStorage khi thay đổi
+  useEffect(() => {
+    try {
+      if (nameFilter.trim()) {
+        localStorage.setItem('searchNameCache', nameFilter);
+      } else {
+        localStorage.removeItem('searchNameCache');
+      }
+    } catch (e) {
+      console.warn('Không thể lưu vào localStorage:', e);
+    }
+  }, [nameFilter]);
 
   const [tempNotification, setTempNotification] = useState(null); 
   const showTempNotification = useCallback((message) => setTempNotification(message), []);
@@ -770,14 +812,8 @@ function App() {
           isVisible={isReportFormVisible} 
           setIsVisible={hideReportForm}
           job={selectedJob}
+          showTempNotification={showTempNotification}
         />
-        {/* Debug info */}
-        {process.env.NODE_ENV === 'development' && (
-          <div style={{ position: 'fixed', bottom: 10, right: 10, background: 'red', color: 'white', padding: '10px', zIndex: 9999, fontSize: '12px' }}>
-            Form Visible: {isReportFormVisible ? 'YES' : 'NO'}<br/>
-            Job: {selectedJob ? 'YES' : 'NO'}
-          </div>
-        )}
         
       <Header 
         theme={theme} 
@@ -863,7 +899,8 @@ function App() {
                                         job={item.content} 
                                         isActive={item.isActive}
                                         onQuickReportClick={handleQuickReportClick}
-                                        groupsMap={groupsMap}
+                                        hostGroups={hostGroups}
+                                        brandGroups={brandGroups}
                                     />
                                 )}
                             </div>
