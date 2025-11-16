@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback, memo, useRef } from 'react';
+import { useState, useMemo, useEffect, useCallback, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import useSWR from 'swr';
 import { 
@@ -10,42 +10,95 @@ import {
     FiFilter, FiUsers, FiUserCheck, FiEdit3, 
     FiBarChart2, FiExternalLink
 } from 'react-icons/fi';
-import { useVirtualizer } from '@tanstack/react-virtual';
 import QuickReportForm from './QuickReportForm';
 import './App.css'; 
 
-const removeAccents = (str) => {
-    if (!str) return '';
-    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D");
-};
-
-// Hàm normalize tên để so sánh (giống như trong API)
+// Hàm normalize tên để so sánh (PHẢI GIỐNG HỆT VỚI API)
 const normalizeName = (name) => {
     if (!name) return '';
-    return removeAccents(name).toLowerCase().trim();
+    
+    let str = String(name);
+    str = str.normalize("NFD").replace(/[\u0300-\u036f]/g, ""); // Bỏ dấu
+    str = str.replace(/đ/g, "d").replace(/Đ/g, "D"); // Chuyển đổi đ/Đ
+    str = str.toLowerCase(); // Chuyển sang chữ thường
+    
+    // (QUAN TRỌNG) Xóa tất cả các ký tự không phải chữ cái hoặc khoảng trắng
+    // Loại bỏ: số (374), gạch dưới (_), gạch ngang (-), chấm (.), v.v.
+    str = str.replace(/[^a-z\s]/g, ''); 
+    
+    str = str.replace(/\s+/g, ' '); // Thay thế nhiều khoảng trắng bằng 1
+    return str.trim();
 };
 
-// Hàm tìm link Zalo từ tên host/talent (ĐÃ TỐI ƯU DEBUG)
+// Hàm tìm link Zalo từ tên host/talent (CẢI THIỆN VỚI FUZZY MATCHING)
 const findGroupLink = (name, groupsMap) => {
     if (!name || !groupsMap || Object.keys(groupsMap).length === 0) {
         return null;
     }
     
     const normalizedName = normalizeName(name);
-    const groupData = groupsMap[normalizedName];
+    if (!normalizedName) return null;
     
-    // Tối ưu hóa Debug: Log rõ ràng hơn, chỉ chạy trong môi trường dev
-    if (process.env.NODE_ENV === 'development') {
-        if (!groupData) {
-            // Log khi KHÔNG tìm thấy: Cho biết khóa nào đang được tìm kiếm và các khóa mẫu có sẵn
-            console.warn('LINK NOT FOUND for:', name, '-> Key:', normalizedName, '-> Keys Sample:', Object.keys(groupsMap).slice(0, 5));
-        } else {
-            // Log khi tìm thấy
-            console.log('LINK FOUND:', name, '-> Key:', normalizedName, '-> Link:', groupData.link);
+    // 1. Thử exact match trước
+    let groupData = groupsMap[normalizedName];
+    if (groupData?.link) {
+        console.log('✅ [EXACT MATCH]', name, '->', normalizedName, '-> Link:', groupData.link);
+        return groupData.link;
+    }
+    
+    // 2. Thử partial match (tên chứa key hoặc key chứa tên)
+    const allKeys = Object.keys(groupsMap);
+    const foundKey = allKeys.find(key => {
+        if (!key) return false;
+        // Tên chứa key hoặc key chứa tên
+        return normalizedName.includes(key) || key.includes(normalizedName);
+    });
+    
+    if (foundKey) {
+        groupData = groupsMap[foundKey];
+        if (groupData?.link) {
+            console.log('✅ [PARTIAL MATCH]', name, '-> Normalized:', normalizedName, '-> Matched Key:', foundKey, '-> Link:', groupData.link);
+            return groupData.link;
         }
     }
     
-    return groupData?.link || null;
+    // 3. Thử fuzzy match (tìm key có độ tương đồng cao nhất)
+    let bestMatch = null;
+    let bestScore = 0;
+    
+    allKeys.forEach(key => {
+        if (!key) return;
+        
+        // Tính điểm tương đồng đơn giản
+        const nameWords = normalizedName.split(' ').filter(w => w.length > 2);
+        const keyWords = key.split(' ').filter(w => w.length > 2);
+        
+        let score = 0;
+        nameWords.forEach(nw => {
+            keyWords.forEach(kw => {
+                if (nw === kw) score += 10; // Từ khớp hoàn toàn
+                else if (nw.includes(kw) || kw.includes(nw)) score += 5; // Từ chứa nhau
+            });
+        });
+        
+        if (score > bestScore && score >= 5) {
+            bestScore = score;
+            bestMatch = key;
+        }
+    });
+    
+    if (bestMatch) {
+        groupData = groupsMap[bestMatch];
+        if (groupData?.link) {
+            console.log('✅ [FUZZY MATCH]', name, '-> Normalized:', normalizedName, '-> Matched Key:', bestMatch, '(Score:', bestScore, ') -> Link:', groupData.link);
+            return groupData.link;
+        }
+    }
+    
+    // Không tìm thấy
+    console.warn('❌ [NOT FOUND]', name, '-> Normalized:', normalizedName);
+    console.warn('   Available keys sample:', allKeys.slice(0, 10));
+    return null;
 };
 
 const parseDate = (dateStr, timeStr) => {
@@ -205,18 +258,16 @@ const TemporaryNotification = ({ message, onDismiss }) => {
             {message && (
                 <motion.div
                     className="temporary-notification"
-                    initial={{ y: -50, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    exit={{ y: -50, opacity: 0 }}
+                    initial={{ y: -50, opacity: 0, scale: 0.95 }}
+                    animate={{ y: 0, opacity: 1, scale: 1 }}
+                    exit={{ y: -50, opacity: 0, scale: 0.95 }}
+                    transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                 >
-                    {message}
+                    <span className="temporary-notification-text">{message}</span>
                     <button 
-                        onClick={onDismiss} 
-                        style={{ 
-                            marginLeft: '10px', background: 'none', border: 'none', 
-                            color: 'inherit', cursor: 'pointer', display: 'flex',
-                            alignItems: 'center'
-                        }}
+                        className="temporary-notification-close"
+                        onClick={onDismiss}
+                        aria-label="Đóng thông báo"
                     >
                         <FiX size={16} />
                     </button>
@@ -247,10 +298,11 @@ const NotificationPopup = ({ isVisible, setIsVisible }) => {
                     
                     <motion.div 
                         className="popup-modal"
-                        initial={{ opacity: 0, x: "-50%", y: "calc(-50% + 50px)" }}
-                        animate={{ opacity: 1, x: "-50%", y: "-50%" }}
-                        exit={{ opacity: 0, x: "-50%", y: "calc(-50% + 50px)" }}
-                        transition={{ type: 'spring', stiffness: 100, damping: 20 }}
+                        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                        onClick={(e) => e.stopPropagation()}
                     >
                         <div className="popup-header">
                             <FiZap size={22} className="popup-icon-zap" />
@@ -575,7 +627,7 @@ const JobItem = memo(({ job, isActive, onQuickReportClick, hostGroups, brandGrou
   
   const defaultUpdateMessage = "Đang cập nhật...";
 
-  // 🌟 LOGIC MỚI: Tìm link Zalo cho Group Brand (So Khớp Một Phần Cực Đoan)
+  // 🌟 LOGIC CẢI THIỆN: Tìm link Zalo cho Group Brand (với nhiều cách matching)
   const brandLink = useMemo(() => {
       if (!brandGroups || Object.keys(brandGroups).length === 0 || !job.Store) {
           return null;
@@ -586,107 +638,195 @@ const JobItem = memo(({ job, isActive, onQuickReportClick, hostGroups, brandGrou
           return null;
       }
 
+      // 1. Thử exact match trước
+      let brandData = brandGroups[normalizedStoreName];
+      if (brandData?.link) {
+          console.log('✅ [BRAND EXACT]', job.Store, '->', normalizedStoreName);
+          return brandData.link;
+      }
+
       const allBrandKeys = Object.keys(brandGroups);
       
-      // Sắp xếp các khóa từ DÀI NHẤT đến NGẮN NHẤT
-      // Điều này đảm bảo "shopee express" được khớp trước "shopee"
+      // 2. Sắp xếp các khóa từ DÀI NHẤT đến NGẮN NHẤT (để match "shopee express" trước "shopee")
       const sortedBrandKeys = allBrandKeys.sort((a, b) => b.length - a.length);
 
-      // Tìm khóa brand khớp theo 2 chiều (bidirectional partial match)
-      const foundKey = sortedBrandKeys.find(brandKey => {
+      // 3. Tìm khóa brand khớp theo 2 chiều (bidirectional partial match)
+      let foundKey = sortedBrandKeys.find(brandKey => {
           if (!brandKey) return false;
-          
           // So sánh 2 chiều: (Tên Store CHỨA Khóa Brand) HOẶC (Khóa Brand CHỨA Tên Store)
-          const case1 = normalizedStoreName.includes(brandKey); 
-          const case2 = brandKey.includes(normalizedStoreName); 
-          
-          return case1 || case2;
+          return normalizedStoreName.includes(brandKey) || brandKey.includes(normalizedStoreName);
       });
-      
-      // 🌟 LOG DEBUG CHUYÊN BIỆT CHO BRAND 🌟
-      if (process.env.NODE_ENV === 'development') {
-          const resultStatus = foundKey ? '✅ FOUND' : '❌ NOT FOUND';
-          console.log(`[BRAND DEBUG] ${resultStatus} - Store: "${job.Store}" -> Norm: "${normalizedStoreName}"`);
-          if (foundKey) {
-              console.log(`  -> Matched Key: "${foundKey}"`);
-          } else {
-               // Log 5 khóa mẫu để so sánh
-              console.log(`  -> Store does not contain any key. Brand Keys Sample: [${sortedBrandKeys.slice(0, 5).join(', ')}]`);
+
+      if (foundKey) {
+          brandData = brandGroups[foundKey];
+          if (brandData?.link) {
+              console.log('✅ [BRAND PARTIAL]', job.Store, '-> Norm:', normalizedStoreName, '-> Matched:', foundKey);
+              return brandData.link;
           }
       }
 
-      if (foundKey) {
-          return brandGroups[foundKey].link;
+      // 4. Thử fuzzy match (tìm từ khóa có nhiều từ khớp nhất)
+      let bestMatch = null;
+      let bestScore = 0;
+      
+      const storeWords = normalizedStoreName.split(' ').filter(w => w.length > 2);
+      
+      sortedBrandKeys.forEach(brandKey => {
+          if (!brandKey) return;
+          
+          const keyWords = brandKey.split(' ').filter(w => w.length > 2);
+          let score = 0;
+          
+          storeWords.forEach(sw => {
+              keyWords.forEach(kw => {
+                  if (sw === kw) score += 10; // Từ khớp hoàn toàn
+                  else if (sw.includes(kw) || kw.includes(sw)) score += 5; // Từ chứa nhau
+              });
+          });
+          
+          if (score > bestScore && score >= 5) {
+              bestScore = score;
+              bestMatch = brandKey;
+          }
+      });
+
+      if (bestMatch) {
+          brandData = brandGroups[bestMatch];
+          if (brandData?.link) {
+              console.log('✅ [BRAND FUZZY]', job.Store, '-> Norm:', normalizedStoreName, '-> Matched:', bestMatch, '(Score:', bestScore, ')');
+              return brandData.link;
+          }
       }
       
+      // Không tìm thấy
+      console.warn('❌ [BRAND NOT FOUND]', job.Store, '-> Norm:', normalizedStoreName);
+      console.warn('   Brand keys sample:', sortedBrandKeys.slice(0, 10));
       return null;
       
   }, [job.Store, brandGroups]);
 
-  // Group Host (Giữ nguyên vì đã hoạt động)
+  // Group Host (Cải thiện với nhiều cách matching)
   const hostLink = useMemo(() => {
       if (!hostGroups || Object.keys(hostGroups).length === 0) {
           return null;
       }
+      
+      // Thử tìm với Talent 1 trước
       const link1 = findGroupLink(job['Talent 1'], hostGroups);
+      if (link1) return link1;
+      
+      // Nếu không có, thử Talent 2
       const link2 = findGroupLink(job['Talent 2'], hostGroups);
-      return link1 || link2 || null;
+      if (link2) return link2;
+      
+      // Nếu vẫn không có, thử Coordinator (có thể host cũng là coordinator)
+      const link3 = findGroupLink(job['Coordinator 1'], hostGroups);
+      if (link3) return link3;
+      
+      const link4 = findGroupLink(job['Coordinator 2'], hostGroups);
+      return link4 || null;
   }, [job, hostGroups]);
 
-  // ... (Giữ nguyên các hàm handleQuickReport, handleGroupClick, và phần return HTML/JSX) ...
+  // Handler functions
+  const handleQuickReport = useCallback(() => {
+      if (onQuickReportClick) {
+          onQuickReportClick(job);
+      }
+  }, [onQuickReportClick, job]);
+
+  const handleGroupClick = useCallback((link, e) => {
+      e.stopPropagation();
+      if (link) {
+          window.open(link, '_blank', 'noopener,noreferrer');
+      }
+  }, []);
   
   return (
       <motion.div 
           className={`schedule-item ${isActive ? 'job-active' : ''}`}
           variants={itemVariants}
+          initial="hidden"
+          animate="visible"
       >
-      {/* ... (Phần hiển thị job info) ... */}
-      
-      <div className="job-groups-footer-container">
-          <div className="group-brand job-group-item">
-              <FiUsers size={18} className="job-group-icon" /> 
-              <span className="job-group-label">Group Brand:</span>
-              {brandLink ? (
-                  <a /* ... (Link hiển thị nếu foundKey) ... */
-                      href={brandLink} 
-                      onClick={(e) => handleGroupClick(brandLink, e)}
-                      className="job-group-link"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      title="Mở Group Brand trên Zalo"
-                  >
-                      <span className="job-group-link-text">Tham gia Group</span>
-                      <FiExternalLink size={14} className="job-group-link-icon" />
-                  </a>
-              ) : (
-                  <span className="job-group-value">{defaultUpdateMessage}</span>
-              )}
+          <div className="job-header-row">
+              <h4>{job.Store || 'N/A'}</h4>
+              <button 
+                  className="quick-report-button"
+                  onClick={handleQuickReport}
+                  title="Điền Report Nhanh"
+              >
+                  <FiEdit3 size={16} />
+                  Điền Report Nhanh
+              </button>
           </div>
-          <div className="group-host job-group-item">
-              <FiUserCheck size={18} className="job-group-icon" />
-              <span className="job-group-label">Group Host:</span>
-              {/* ... (Phần Host Group) ... */}
-              {hostLink ? (
-                  <a /* ... (Link hiển thị nếu foundKey) ... */
-                      href={hostLink} 
-                      onClick={(e) => handleGroupClick(hostLink, e)}
-                      className="job-group-link"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      title="Mở Group Host trên Zalo"
-                  >
-                      <span className="job-group-link-text">Tham gia Group</span>
-                      <FiExternalLink size={14} className="job-group-link-icon" />
-                  </a>
-              ) : (
-                  <span className="job-group-value">Đã sẵn sàng</span>
-              )}
-          </div>
-      </div>
-      
-      {/* Debug info */}
-      {/* ... (Giữ lại phần Debug Info chung, nó sẽ hiển thị Brand Key và Host Key đã chuẩn hóa) ... */}
 
+          <p className="location">
+              <FiMapPin size={18} />
+              {locationDisplay}
+          </p>
+
+          <p className="time">
+              <FiClock size={18} />
+              {job['Time slot'] || 'N/A'}
+          </p>
+
+          <p>
+              <FiMic size={18} />
+              MC: {talentDisplay}
+          </p>
+
+          <p>
+              <FiUser size={18} />
+              Coordinator: {coordDisplay}
+          </p>
+
+          {sessionTypeDisplay !== '—' && (
+              <p className="session">
+                  <FiTag size={18} />
+                  Loại ca: {sessionTypeDisplay}
+              </p>
+          )}
+
+          <div className="job-groups-footer-container">
+              <div className="group-brand job-group-item">
+                  <FiUsers size={18} className="job-group-icon" /> 
+                  <span className="job-group-label">Group Brand:</span>
+                  {brandLink ? (
+                      <a 
+                          href={brandLink} 
+                          onClick={(e) => handleGroupClick(brandLink, e)}
+                          className="job-group-link"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="Mở Group Brand trên Zalo"
+                      >
+                          <span className="job-group-link-text">Tham gia Group</span>
+                          <FiExternalLink size={14} className="job-group-link-icon" />
+                      </a>
+                  ) : (
+                      <span className="job-group-value">{defaultUpdateMessage}</span>
+                  )}
+              </div>
+              <div className="group-host job-group-item">
+                  <FiUserCheck size={18} className="job-group-icon" />
+                  <span className="job-group-label">Group Host:</span>
+                  {hostLink ? (
+                      <a 
+                          href={hostLink} 
+                          onClick={(e) => handleGroupClick(hostLink, e)}
+                          className="job-group-link"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="Mở Group Host trên Zalo"
+                      >
+                          <span className="job-group-link-text">Tham gia Group</span>
+                          <FiExternalLink size={14} className="job-group-link-icon" />
+                      </a>
+                  ) : (
+                      <span className="job-group-value">{defaultUpdateMessage}</span>
+                  )}
+              </div>
+          </div>
       </motion.div>
   );
 });
@@ -825,16 +965,6 @@ function App() {
     }, [groupedJobs]);
 
 
-    // 🌟 TỐI ƯU HÓA 2: Khởi tạo Virtualizer (Tạm thời disable để scroll tự nhiên)
-    const parentRef = useRef(null);
-    
-    // Tạm thời render tất cả items để scroll tự nhiên
-    const virtualItems = flatRowItems.map((_, index) => ({
-        index,
-        start: 0,
-        size: 0,
-        end: 0
-    }));
     const totalFilteredCount = filteredJobs.length;
 
     // Giao diện

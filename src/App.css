@@ -78,7 +78,7 @@ body[data-theme='dark'] {
 
 body {
   font-family: var(--font-main);
-  background: var(--color-bg);
+  background: linear-gradient(135deg, var(--color-bg) 0%, rgba(247, 248, 250, 0.95) 100%);
   color: var(--color-text-primary);
   margin: 0;
   padding: var(--spacing-md);
@@ -90,8 +90,9 @@ body {
 }
 
 body[data-theme='dark'] {
-  background: var(--color-bg);
+  background: linear-gradient(135deg, var(--color-bg) 0%, rgba(18, 18, 18, 0.98) 100%);
 }
+
 
 .App { 
   max-width: 800px; 
@@ -105,35 +106,73 @@ main {
   position: relative;
 }
 
-/* 🌟 Temporary Notification - Cải thiện */
+/* 🌟 Temporary Notification - Cải thiện với căn giữa hoàn hảo */
 .temporary-notification {
     position: fixed; 
     top: var(--spacing-md); 
     left: 50%; 
-    transform: translateX(-50%); 
+    transform: translateX(-50%);
     z-index: 9999;
     padding: var(--spacing-md) var(--spacing-lg); 
     background: linear-gradient(135deg, var(--color-brand) 0%, var(--color-brand-hover) 100%);
     color: #ffffff;
     border-radius: var(--radius-lg);
-    box-shadow: 0 8px 24px rgba(var(--color-brand-rgb), 0.4);
+    box-shadow: 0 8px 32px rgba(var(--color-brand-rgb), 0.5);
     font-size: 0.95rem; 
     font-weight: 600; 
     display: flex; 
     align-items: center;
+    justify-content: center;
     gap: var(--spacing-md);
     backdrop-filter: blur(10px);
-    animation: slideDown 0.3s ease-out;
+    animation: slideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    max-width: 90%;
+    min-width: 280px;
+    text-align: center;
+    word-wrap: break-word;
+    box-sizing: border-box;
+}
+
+.temporary-notification-text {
+    flex: 1;
+    text-align: center;
+    word-wrap: break-word;
+}
+
+.temporary-notification-close {
+    margin-left: var(--spacing-sm);
+    background: rgba(255, 255, 255, 0.2) !important;
+    border: none !important;
+    color: #ffffff !important;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+}
+
+.temporary-notification-close:hover {
+    background: rgba(255, 255, 255, 0.3) !important;
+    transform: scale(1.1);
+}
+
+.temporary-notification-close:active {
+    transform: scale(0.95);
 }
 
 @keyframes slideDown {
   from {
     opacity: 0;
-    transform: translateX(-50%) translateY(-20px);
+    transform: translateX(-50%) translateY(-30px) scale(0.95);
   }
   to {
     opacity: 1;
-    transform: translateX(-50%) translateY(0);
+    transform: translateX(-50%) translateY(0) scale(1);
   }
 }
 
@@ -154,7 +193,19 @@ main {
   font-size: 1.8rem;
   font-weight: 700;
   text-align: center;
-  letter-spacing: 0;
+  letter-spacing: -0.5px;
+  background: linear-gradient(135deg, var(--color-brand) 0%, var(--color-brand-hover) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  transition: all var(--transition-speed);
+}
+
+body[data-theme='dark'] .app-header h1 {
+  background: linear-gradient(135deg, #0d8eff 0%, #0a70cc 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .header-controls {
@@ -285,9 +336,15 @@ input:checked + .theme-toggle-slider:before {
 .filter-container {
   padding: 20px; 
   background: var(--color-card); 
-  border-radius: 12px;
-  box-shadow: 0 4px 12px var(--color-shadow); 
+  border-radius: var(--radius-lg);
+  box-shadow: 0 4px 16px var(--color-shadow);
   margin-bottom: 25px;
+  border: 1px solid var(--color-border);
+  transition: box-shadow var(--transition-speed);
+}
+
+.filter-container:hover {
+  box-shadow: 0 6px 20px var(--color-shadow-hover);
 }
 
 .form-group-grid { 
@@ -414,7 +471,11 @@ input:checked + .theme-toggle-slider:before {
 
 /* --- SCHEDULE LIST & JOB ITEM - CẢI THIỆN --- */
 .schedule-list { 
-    padding: 0; 
+    padding: 0;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
 }
 
 .schedule-group-title {
@@ -422,11 +483,17 @@ input:checked + .theme-toggle-slider:before {
   font-weight: 600; 
   color: var(--color-brand); 
   padding: 15px 0 10px 0;
-  border-top: 1px solid var(--color-border); 
+  border-top: 2px solid var(--color-border); 
   margin-top: 20px; 
+  margin-bottom: 10px;
   text-transform: uppercase; 
   letter-spacing: 0.5px; 
   transition: color var(--transition-speed), border-color var(--transition-speed);
+  position: sticky;
+  top: 0;
+  background: var(--color-bg);
+  z-index: 10;
+  padding-top: 20px;
 }
 
 .time-group-container:first-child .schedule-group-title { 
@@ -436,18 +503,36 @@ input:checked + .theme-toggle-slider:before {
 
 .schedule-item {
   background: var(--color-card); 
-  border-radius: 12px; 
+  border-radius: var(--radius-lg); 
   box-shadow: 0 4px 12px var(--color-shadow);
   padding: 20px; 
   margin: 15px 0; 
   transition: transform 0.2s ease-out, box-shadow var(--transition-speed), background-color var(--transition-speed), border-color var(--transition-speed);
   border: 2px solid transparent;
+  position: relative;
+  overflow: hidden;
+}
+
+.schedule-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--color-brand) 0%, var(--color-brand-hover) 100%);
+  opacity: 0;
+  transition: opacity var(--transition-speed);
+}
+
+.schedule-item:hover::before {
+  opacity: 1;
 }
 
 .schedule-item:hover { 
     transform: translateY(-3px); 
-    box-shadow: 0 6px 16px var(--color-shadow-hover);
-    background-color: var(--color-brand-light);
+    box-shadow: 0 8px 24px var(--color-shadow-hover);
+    background: linear-gradient(135deg, var(--color-brand-light) 0%, var(--color-card) 100%);
     border-color: var(--color-brand);
 }
 
@@ -641,71 +726,67 @@ input:checked + .theme-toggle-slider:before {
     margin-right: 0;
 }
 
-/* Responsive cho Job Groups */
-@media (max-width: 480px) {
-    .job-groups-footer-container {
-        grid-template-columns: 1fr;
-        gap: var(--spacing-md);
-    }
-    .group-host {
-        justify-self: start; 
-        text-align: left;
-    }
-    .group-host .job-group-item {
-        justify-content: flex-start;
-    }
-    .group-host .job-group-link {
-        margin-left: 0;
-    }
-    .job-header-row {
-        flex-direction: column;
-    }
-    .quick-report-button {
-        width: 100%;
-        justify-content: center;
-    }
-}
 
-/* --- POPUP MODAL - CẢI THIỆN --- */
+/* --- POPUP MODAL - CẢI THIỆN VỚI CĂN GIỮA HOÀN HẢO --- */
 .popup-overlay {
   position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background-color: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(4px);
+  top: 0; 
+  left: 0; 
+  right: 0; 
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
   z-index: 1000;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-md);
+  box-sizing: border-box;
 }
 
 .popup-modal {
-  position: fixed; 
-  top: 50%; 
-  left: 50%;
+  position: relative;
   background: var(--color-card);
   border-radius: var(--radius-xl);
   border: 1px solid var(--color-border); 
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
-  width: 90%; 
-  max-width: 450px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
   z-index: 1001; 
   overflow: hidden; 
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  margin: auto;
+  cursor: default;
 }
 
 .popup-header {
   display: flex; 
   align-items: center; 
+  justify-content: center;
   padding: var(--spacing-lg) var(--spacing-xl);
   border-bottom: 2px solid var(--color-border);
   position: relative; 
   background: linear-gradient(135deg, var(--color-brand-light) 0%, transparent 100%);
+  text-align: center;
+  flex-shrink: 0;
 }
 
 .popup-header h3 { 
     margin: 0; 
-    font-size: 1.2rem; 
+    font-size: 1.25rem; 
     font-weight: 700; 
     color: var(--color-text-primary); 
-    word-break: break-word; 
+    word-break: break-word;
+    text-align: center;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
 }
 
 .popup-icon-zap { 
@@ -738,15 +819,24 @@ input:checked + .theme-toggle-slider:before {
 
 .popup-content { 
     padding: var(--spacing-xl); 
-    line-height: 1.6; 
+    line-height: 1.7; 
+    overflow-y: auto;
+    flex: 1;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
 }
 
 .popup-main-title {
-    font-size: 1.2em; 
-    margin: 0 0 var(--spacing-md) 0; 
+    font-size: 1.3em; 
+    margin: 0 0 var(--spacing-lg) 0; 
     color: var(--color-text-primary);
     text-align: center; 
     font-weight: 700;
+    width: 100%;
+    line-height: 1.4;
 }
 
 .popup-main-title strong { 
@@ -757,6 +847,9 @@ input:checked + .theme-toggle-slider:before {
     font-size: 0.95rem; 
     color: var(--color-text-secondary); 
     margin: 0 0 var(--spacing-md) 0;
+    text-align: center;
+    width: 100%;
+    line-height: 1.7;
 }
 
 .popup-content-text strong { 
@@ -787,22 +880,26 @@ input:checked + .theme-toggle-slider:before {
 }
 
 .popup-footer-area {
-    text-align: left; 
-    font-size: 0.875em; 
+    text-align: center; 
+    font-size: 0.9em; 
     color: var(--color-text-secondary); 
     margin-bottom: 0;
+    width: 100%;
+    line-height: 1.6;
 }
 
 .popup-author-simple {
     display: flex; 
     align-items: center; 
     gap: var(--spacing-sm); 
-    margin-top: var(--spacing-md); 
+    margin-top: var(--spacing-lg); 
     font-style: italic;
     color: var(--color-grey); 
-    text-align: right; 
+    text-align: center; 
     width: 100%; 
-    justify-content: flex-end;
+    justify-content: center;
+    padding-top: var(--spacing-md);
+    border-top: 1px solid var(--color-border);
 }
 
 /* --- EMPTY STATE & SKELETON - CẢI THIỆN --- */
@@ -897,21 +994,17 @@ input:checked + .theme-toggle-slider:before {
     color: var(--color-brand);
 }
 
-/* Virtual List Container - Sửa scroll */
-.virtual-list-container {
-    width: 100%;
-    height: auto;
-    min-height: 400px;
-    max-height: none;
-    overflow: visible;
-    padding: 0;
-    position: relative;
-}
 
 /* Scroll cho toàn bộ page */
-html, body {
+html {
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+}
+
+body {
     overflow-x: hidden;
     overflow-y: auto;
+    position: relative;
 }
 
 body::-webkit-scrollbar {
@@ -932,17 +1025,18 @@ body::-webkit-scrollbar-thumb:hover {
 }
 
 /* --- RESPONSIVE IMPROVEMENTS --- */
-@media (max-width: 640px) {
+@media (max-width: 768px) {
     body {
         padding: var(--spacing-sm);
     }
     
     .App {
         max-width: 100%;
+        padding: 0 var(--spacing-sm);
     }
     
     .app-header {
-        padding: var(--spacing-md);
+        padding: var(--spacing-md) var(--spacing-sm);
         margin-bottom: var(--spacing-md);
     }
     
@@ -950,32 +1044,179 @@ body::-webkit-scrollbar-thumb:hover {
         font-size: 1.5rem;
     }
     
+    .header-controls {
+        flex-direction: column;
+        gap: var(--spacing-sm);
+    }
+    
+    .auth-buttons {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .auth-button {
+        flex: 1;
+    }
+    
     .filter-container {
         padding: var(--spacing-md);
         margin-bottom: var(--spacing-md);
+        border-radius: var(--radius-md);
+    }
+    
+    .form-group-grid {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-md);
+    }
+    
+    .form-group-grid .full-width {
+        grid-column: span 1;
     }
     
     .schedule-item {
         padding: var(--spacing-md);
         margin: var(--spacing-md) 0;
+        border-radius: var(--radius-md);
     }
     
     .schedule-item h4 {
         font-size: 1.15em;
+        min-width: auto;
+    }
+    
+    .job-header-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--spacing-md);
+    }
+    
+    .quick-report-button {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .job-groups-footer-container {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-md);
+    }
+    
+    .group-host {
+        justify-self: start;
+        text-align: left;
+    }
+    
+    .group-host .job-group-item {
+        justify-content: flex-start;
+    }
+    
+    .group-host .job-group-link {
+        margin-left: 0;
+        margin-right: auto;
     }
     
     .popup-modal {
         width: 95%;
         max-width: none;
+        max-height: 90vh;
+    }
+    
+    .popup-content {
+        padding: var(--spacing-md);
+    }
+    
+    .job-count-summary {
+        padding: var(--spacing-sm) var(--spacing-md);
+        font-size: 0.875rem;
     }
 }
 
-/* --- REPORT FORM MODAL - CẢI THIỆN --- */
+@media (max-width: 480px) {
+    body {
+        padding: var(--spacing-xs);
+    }
+    
+    .App {
+        padding: 0 var(--spacing-xs);
+    }
+    
+    .app-header h1 {
+        font-size: 1.3rem;
+    }
+    
+    .filter-container {
+        padding: var(--spacing-sm);
+    }
+    
+    .form-group input,
+    .form-group select {
+        padding: 10px 12px;
+        font-size: 0.9rem;
+    }
+    
+    .schedule-item {
+        padding: var(--spacing-sm);
+        margin: var(--spacing-sm) 0;
+    }
+    
+    .schedule-item h4 {
+        font-size: 1.1em;
+    }
+    
+    .schedule-item p {
+        font-size: 0.875em;
+        margin: 8px 0;
+    }
+    
+    .schedule-item p svg {
+        font-size: 1em;
+        margin-right: var(--spacing-sm);
+    }
+    
+    .job-group-item {
+        font-size: 0.85em;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-xs);
+    }
+    
+    .job-group-link {
+        width: 100%;
+        justify-content: center;
+        padding: 10px 12px;
+        font-size: 0.8em;
+    }
+    
+    .popup-modal {
+        width: 98%;
+        max-height: 95vh;
+    }
+    
+    .popup-header {
+        padding: var(--spacing-md);
+    }
+    
+    .popup-header h3 {
+        font-size: 1rem;
+    }
+    
+    .report-form-content {
+        padding: var(--spacing-md);
+        gap: var(--spacing-md);
+    }
+    
+    .form-section-title {
+        font-size: 1rem;
+    }
+}
+
+/* --- REPORT FORM MODAL - CẢI THIỆN VỚI CĂN GIỮA --- */
 .report-form-modal {
     max-width: 650px;
     max-height: 90vh;
-    overflow-y: auto;
+    overflow: hidden;
     z-index: 1002 !important;
+    display: flex;
+    flex-direction: column;
 }
 
 .report-form-content {
@@ -983,6 +1224,9 @@ body::-webkit-scrollbar-thumb:hover {
     display: flex;
     flex-direction: column;
     gap: var(--spacing-xl);
+    overflow-y: auto;
+    flex: 1;
+    text-align: left;
 }
 
 .form-section {
@@ -999,6 +1243,7 @@ body::-webkit-scrollbar-thumb:hover {
     padding-bottom: var(--spacing-md);
     border-bottom: 2px solid var(--color-border);
     position: relative;
+    text-align: center;
 }
 
 .form-section-title::after {
@@ -1112,15 +1357,54 @@ body::-webkit-scrollbar-thumb:hover {
     transform: translateY(0);
 }
 
-/* Responsive cho Report Form */
-@media (max-width: 600px) {
+/* Responsive cho Popup và Notification */
+@media (max-width: 768px) {
+    .popup-overlay {
+        padding: var(--spacing-sm);
+    }
+    
+    .popup-modal {
+        max-width: 95%;
+        max-height: 95vh;
+        border-radius: var(--radius-lg);
+    }
+    
+    .popup-header {
+        padding: var(--spacing-md) var(--spacing-lg);
+    }
+    
+    .popup-header h3 {
+        font-size: 1.1rem;
+    }
+    
+    .popup-content {
+        padding: var(--spacing-lg);
+    }
+    
+    .popup-main-title {
+        font-size: 1.15em;
+    }
+    
+    .popup-content-text {
+        font-size: 0.9rem;
+    }
+    
+    .temporary-notification {
+        max-width: 95%;
+        min-width: 250px;
+        padding: var(--spacing-sm) var(--spacing-md);
+        font-size: 0.9rem;
+        top: var(--spacing-sm);
+    }
+    
     .report-form-modal {
-        width: 95%;
+        max-width: 95%;
         max-height: 95vh;
     }
     
     .report-form-content {
         padding: var(--spacing-md);
+        gap: var(--spacing-md);
     }
     
     .form-actions {
@@ -1129,6 +1413,57 @@ body::-webkit-scrollbar-thumb:hover {
     
     .form-button {
         width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .popup-modal {
+        max-width: 98%;
+        max-height: 98vh;
+        border-radius: var(--radius-md);
+    }
+    
+    .popup-header {
+        padding: var(--spacing-md);
+    }
+    
+    .popup-header h3 {
+        font-size: 1rem;
+    }
+    
+    .popup-content {
+        padding: var(--spacing-md);
+    }
+    
+    .popup-main-title {
+        font-size: 1.05em;
+        margin-bottom: var(--spacing-md);
+    }
+    
+    .popup-content-text {
+        font-size: 0.85rem;
+    }
+    
+    .temporary-notification {
+        max-width: 98%;
+        min-width: 200px;
+        padding: var(--spacing-xs) var(--spacing-sm);
+        font-size: 0.85rem;
+        top: var(--spacing-xs);
+        border-radius: var(--radius-md);
+    }
+    
+    .report-form-modal {
+        max-width: 98%;
+        max-height: 98vh;
+    }
+    
+    .report-form-content {
+        padding: var(--spacing-sm);
+    }
+    
+    .form-section-title {
+        font-size: 1rem;
     }
 }
 

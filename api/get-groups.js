@@ -5,7 +5,7 @@ import Papa from 'papaparse';
 
 // Link CSV export từ Google Sheet
 const GROUP_HOST_CSV_URL = 'https://docs.google.com/spreadsheets/d/1sgDT3E2kTsz5Ph6XeuXhZZKpdwtFDb4ncoUm6Q7UEYY/export?format=csv&gid=0';
-const GROUP_BRAND_CSV_URL = 'https://docs.google.com/spreadsheets/d/1s8aN64-SyEFqxYBP3VVHvXIAV6_clppMETKQ_8XZH2Q/export?format=csv&gid=1406781907';
+const GROUP_BRAND_CSV_URL = 'https://docs.google.com/spreadsheets/d/1sgDT3E2kTsz5Ph6XeuXhZZKpdwtFDb4ncoUm6Q7UEYY/export?format=csv&gid=1406781907';
 // Hàm normalize tên để so sánh
 const normalizeName = (name) => {
     if (!name) return '';
