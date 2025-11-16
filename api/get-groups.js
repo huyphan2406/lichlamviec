@@ -9,7 +9,7 @@ import Papa from 'papaparse';
 const GROUP_HOST_CSV_URL = 'https://docs.google.com/spreadsheets/d/1sgDT3E2kTsz5Ph6XeuXhZZKpdwtFDb4ncoUm6Q7UEYY/export?format=csv&gid=0';
 const GROUP_BRAND_CSV_URL = 'https://docs.google.com/spreadsheets/d/1sgDT3E2kTsz5Ph6XeuXhZZKpdwtFDb4ncoUm6Q7UEYY/export?format=csv&gid=1406781907';
 
-// Hàm normalize tên để so sánh (XỬ LÝ DỮ LIỆU NHIỄU)
+// Hàm normalize tên để so sánh
 const normalizeName = (name) => {
     if (!name) return '';
     
@@ -26,10 +26,10 @@ const normalizeName = (name) => {
     str = str.toLowerCase();
     
     // 4. (QUAN TRỌNG) Xóa tất cả các ký tự không phải chữ cái hoặc khoảng trắng
-    // Điều này sẽ xóa: 374, _, -, . , ( ), v.v.
+    // Điều này sẽ xóa: số (374), gạch dưới (_), gạch ngang (-), chấm (.), v.v.
     str = str.replace(/[^a-z\s]/g, '');
     
-    // 5. Thay thế nhiều khoảng trắng bằng 1 khoảng trắng
+    // 5. Thay thế nhiều khoảng trắng bằng 1 khoảng trắng duy nhất
     str = str.replace(/\s+/g, ' ');
     
     // 6. Cắt khoảng trắng đầu/cuối

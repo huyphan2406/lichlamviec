@@ -575,15 +575,38 @@ const JobItem = memo(({ job, isActive, onQuickReportClick, hostGroups, brandGrou
   
   const defaultUpdateMessage = "Đang cập nhật...";
 
-  // 🌟 LOGIC ĐÃ SỬA: Tìm link Zalo cho Group Brand (dùng Tên Store)
+  // 🌟 LOGIC ĐÃ SỬA: Tìm link Zalo cho Group Brand (So Khớp Một Phần)
   const brandLink = useMemo(() => {
-      if (!brandGroups || Object.keys(brandGroups).length === 0) {
+      if (!brandGroups || Object.keys(brandGroups).length === 0 || !job.Store) {
           return null;
       }
-      // Tìm bằng Store
-      const link = findGroupLink(job.Store, brandGroups); 
-      return link || null;
-  }, [job.Store, brandGroups]); // 👈 Thay đổi dependency
+
+      // 1. Chuẩn hóa tên store (ví dụ: "nivea shopee")
+      const normalizedStoreName = normalizeName(job.Store); 
+      if (!normalizedStoreName) {
+          return null;
+      }
+
+      // 2. Lấy tất cả các khóa brand (ví dụ: ["nivea", "shopee", "lazada", "tiki"])
+      const allBrandKeys = Object.keys(brandGroups);
+
+      // 3. Sắp xếp các khóa từ DÀI NHẤT đến NGẮN NHẤT
+      //    (Để "shopee express" được khớp trước "shopee")
+      const sortedBrandKeys = allBrandKeys.sort((a, b) => b.length - a.length);
+
+      // 4. Tìm khóa brand ĐẦU TIÊN mà (tên store) CÓ CHỨA (khóa brand)
+      //    Ví dụ: "nivea shopee" CÓ CHỨA "nivea" -> KHỚP!
+      const foundKey = sortedBrandKeys.find(brandKey => 
+          normalizedStoreName.includes(brandKey)
+      );
+
+      if (foundKey) {
+          return brandGroups[foundKey].link;
+      }
+      
+      return null; // Không tìm thấy
+      
+  }, [job.Store, brandGroups]); // 👈 Dependency chính xác
 
   // 🌟 LOGIC ĐÃ SỬA: Tìm link Zalo cho Group Host (dùng Tên Talent/MC)
   const hostLink = useMemo(() => {
@@ -594,7 +617,7 @@ const JobItem = memo(({ job, isActive, onQuickReportClick, hostGroups, brandGrou
       const link1 = findGroupLink(job['Talent 1'], hostGroups);
       const link2 = findGroupLink(job['Talent 2'], hostGroups);
       return link1 || link2 || null;
-  }, [job, hostGroups]); // 👈 Thay đổi dependency
+  }, [job, hostGroups]); // 👈 Dependency chính xác
 
   const handleQuickReport = useCallback(() => {
       console.log('Quick Report clicked!', job);
