@@ -507,7 +507,7 @@ input:checked + .theme-toggle-slider:before {
   transition: color var(--transition-speed), border-color var(--transition-speed);
   position: sticky;
   top: 0;
-  background: linear-gradient(135deg, var(--color-bg) 0%, rgba(240, 249, 255, 0.95) 100%);
+  background: var(--color-bg);
   backdrop-filter: blur(10px);
   z-index: 10;
   padding-top: var(--spacing-lg);
