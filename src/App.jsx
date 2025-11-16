@@ -693,7 +693,7 @@ const FilterBar = ({
                     start: [parseInt(year), parseInt(month), parseInt(day), startHour, startMinute],
                     duration: { hours: durationHours, minutes: durationMinutes },
                     location: combineLocation(job),
-                    description: `MC: ${combineNames(job['Talent 1'], job['Talent 2'])}\nCoordinator: ${combineNames(job['Coordinator 1'], job['Coordinator 2'])}`
+                    description: `Host: ${combineNames(job['Talent 1'], job['Talent 2'])}\nCoordinator: ${combineNames(job['Coordinator 1'], job['Coordinator 2'])}`
                 };
             } catch (e) {
                 return null; 
@@ -1047,7 +1047,7 @@ const JobItem = memo(({ job, isActive, onQuickReportClick, hostGroups, brandGrou
 
           <p>
               <FiMic size={18} />
-              MC: {talentDisplay}
+              Host: {talentDisplay}
           </p>
 
           <p>
@@ -1158,7 +1158,7 @@ function App() {
     const showTempNotification = useCallback((message) => setTempNotification(message), []);
     const dismissTempNotification = useCallback(() => setTempNotification(null), []);
 
-    const [isAuthPopupVisible, setIsAuthPopupVisible] = useState(true);
+    const [isAuthPopupVisible, setIsAuthPopupVisible] = useState(false); // Tắt popup thông báo khi mới vào web
     const showAuthPopup = useCallback(() => setIsAuthPopupVisible(true), []);
     const hideAuthPopup = useCallback(() => setIsAuthPopupVisible(false), []);
 
@@ -1290,7 +1290,7 @@ function App() {
                         transition={{ duration: 0.3 }}
                     >
                         <FiFilter size={18} style={{marginRight: '8px'}}/>
-                        Tìm thấy <strong style={{color: 'var(--color-brand)'}}>{totalFilteredCount}</strong> công việc
+                        Tìm thấy <strong style={{color: 'var(--color-brand)'}}> {totalFilteredCount}</strong> công việc
                         {dateFilter ? ` cho ngày ${dateFilter}` : ' trong danh sách'}
                     </motion.div>
                 )}
