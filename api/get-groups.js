@@ -105,9 +105,26 @@ export default async function handler(request, response) {
             })
         ]);
         
+        // DEBUG: Log raw data
+        console.log('🔍 [API] Raw Host Data rows:', hostData.length);
+        console.log('🔍 [API] Raw Brand Data rows:', brandData.length);
+        if (brandData.length > 0) {
+            console.log('🔍 [API] First Brand row:', brandData[0]);
+            console.log('🔍 [API] Brand row keys:', Object.keys(brandData[0] || {}));
+        }
+        
         // 2. Tạo map từ tên -> link Zalo cho cả Host và Brand
         const hostGroupsMap = createGroupsMap(hostData);
         const brandGroupsMap = createGroupsMap(brandData);
+        
+        // DEBUG: Log map sizes
+        console.log('🔍 [API] Host Groups Map size:', hostGroupsMap.size);
+        console.log('🔍 [API] Brand Groups Map size:', brandGroupsMap.size);
+        if (brandGroupsMap.size > 0) {
+            const firstBrandKey = Array.from(brandGroupsMap.keys())[0];
+            console.log('🔍 [API] First Brand key:', firstBrandKey);
+            console.log('🔍 [API] First Brand data:', brandGroupsMap.get(firstBrandKey));
+        }
         
         // 3. Chuyển Map thành Object để JSON serialize
         const hostGroupsObject = {};
@@ -119,6 +136,10 @@ export default async function handler(request, response) {
         brandGroupsMap.forEach((value, key) => {
             brandGroupsObject[key] = value;
         });
+        
+        // DEBUG: Log final objects
+        console.log('🔍 [API] Host Groups Object keys:', Object.keys(hostGroupsObject).length);
+        console.log('🔍 [API] Brand Groups Object keys:', Object.keys(brandGroupsObject).length);
         
         // 4. Đặt Cache Header (refresh mỗi 60s)
         response.setHeader(

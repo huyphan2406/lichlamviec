@@ -220,20 +220,27 @@ function useGroupData() {
     
     // Debug: Log khi data được fetch (LUÔN LOG để debug)
     useEffect(() => {
+        const hostKeys = Object.keys(result.hostGroups);
+        const brandKeys = Object.keys(result.brandGroups);
         console.log('🔍 [API DEBUG] useGroupData:', {
             isLoading,
             hasData: !!data,
             error: error?.message || error,
+            rawData: data, // Log toàn bộ data để xem
             hostCount: result.hostCount,
             brandCount: result.brandCount,
-            hostKeys: Object.keys(result.hostGroups).length,
-            brandKeys: Object.keys(result.brandGroups).length,
-            hostSample: Object.keys(result.hostGroups).slice(0, 5),
-            brandSample: Object.keys(result.brandGroups).slice(0, 5),
-            firstHostData: result.hostGroups[Object.keys(result.hostGroups)[0]],
-            firstBrandData: result.brandGroups[Object.keys(result.brandGroups)[0]]
+            hostKeys: hostKeys.length,
+            brandKeys: brandKeys.length,
+            hostSample: hostKeys.slice(0, 5),
+            brandSample: brandKeys.slice(0, 5),
+            firstHostKey: hostKeys[0],
+            firstHostData: hostKeys.length > 0 ? result.hostGroups[hostKeys[0]] : null,
+            firstBrandKey: brandKeys[0],
+            firstBrandData: brandKeys.length > 0 ? result.brandGroups[brandKeys[0]] : null,
+            brandGroupsType: typeof result.brandGroups,
+            brandGroupsIsArray: Array.isArray(result.brandGroups)
         });
-    }, [data, isLoading, error, result.hostCount, result.brandCount]);
+    }, [data, isLoading, error, result]);
     
     return result;
 }
@@ -640,19 +647,26 @@ const JobItem = memo(({ job, isActive, onQuickReportClick, hostGroups, brandGrou
 
   // 🌟 LOGIC CẢI THIỆN: Tìm link Zalo cho Group Brand (với nhiều cách matching)
   const brandLink = useMemo(() => {
-      // DEBUG: Log để xem data
+      // DEBUG: Log để xem data chi tiết
+      const brandKeysCount = brandGroups ? Object.keys(brandGroups).length : 0;
       console.log('🔍 [BRAND DEBUG]', {
         hasBrandGroups: !!brandGroups,
-        brandGroupsKeys: brandGroups ? Object.keys(brandGroups).length : 0,
+        brandGroupsType: typeof brandGroups,
+        brandGroupsIsArray: Array.isArray(brandGroups),
+        brandGroupsKeys: brandKeysCount,
         jobStore: job.Store,
-        brandGroupsSample: brandGroups ? Object.keys(brandGroups).slice(0, 5) : []
+        brandGroupsSample: brandGroups ? Object.keys(brandGroups).slice(0, 10) : [],
+        firstBrandKey: brandGroups && brandKeysCount > 0 ? Object.keys(brandGroups)[0] : null,
+        firstBrandData: brandGroups && brandKeysCount > 0 ? brandGroups[Object.keys(brandGroups)[0]] : null
       });
       
-      if (!brandGroups || Object.keys(brandGroups).length === 0 || !job.Store) {
+      if (!brandGroups || brandKeysCount === 0 || !job.Store) {
           console.warn('❌ [BRAND] Missing data:', {
               hasBrandGroups: !!brandGroups,
-              brandGroupsLength: brandGroups ? Object.keys(brandGroups).length : 0,
-              hasStore: !!job.Store
+              brandGroupsType: typeof brandGroups,
+              brandGroupsLength: brandKeysCount,
+              hasStore: !!job.Store,
+              storeValue: job.Store
           });
           return null;
       }
