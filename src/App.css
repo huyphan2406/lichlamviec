@@ -1041,7 +1041,7 @@ input:checked + .theme-toggle-slider:before {
     align-items: center;
     justify-content: center;
     padding: var(--spacing-md) var(--spacing-lg);
-    background: linear-gradient(135deg, var(--color-brand-light) 0%, transparent 100%);
+    background: var(--color-bg);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
     margin-bottom: var(--spacing-lg);
