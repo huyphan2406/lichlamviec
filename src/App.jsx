@@ -816,11 +816,12 @@ function App() {
     estimateSize: (index) => {
       const item = flatRowItems[index];
       if (!item) return 50;
-      // Tăng estimate size cho mobile để đảm bảo đủ không gian, tránh items dính nhau
+      // Desktop: estimate size nhỏ để spacing ngắn như ban đầu
+      // Mobile: estimate size lớn để đảm bảo đủ không gian, tránh items dính nhau
       const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
       return item.type === 'HEADER' 
-        ? (isMobile ? 90 : 80)
-        : (isMobile ? 550 : 450);
+        ? (isMobile ? 100 : 70)
+        : (isMobile ? 650 : 380);
     },
     overscan: 3,
     measureElement,
@@ -880,11 +881,12 @@ function App() {
                     {virtualItems.map((virtualItem) => {
                         const item = flatRowItems[virtualItem.index];
                         if (!item) return null; 
-                        // Tăng paddingBottom cho mobile để tránh items dính nhau
+                        // Desktop: paddingBottom ngắn như ban đầu
+                        // Mobile: paddingBottom lớn để tránh items dính nhau
                         const isMobile = window.innerWidth <= 768;
                         const paddingBottom = item.type === 'HEADER' 
-                          ? (isMobile ? '24px' : '24px')
-                          : (isMobile ? '120px' : '72px');
+                          ? (isMobile ? '28px' : '24px')
+                          : (isMobile ? '160px' : '56px');
                         
                         return (
                             <div

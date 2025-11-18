@@ -1497,10 +1497,10 @@ body[data-theme='dark'] .schedule-item p.session svg {
     margin-bottom: var(--spacing-lg);
   }
   
-  /* Schedule Items */
+  /* Schedule Items - Mobile 768px: Tăng spacing lớn để tránh dính nhau */
   .schedule-item {
     padding: var(--spacing-lg);
-    margin: 64px 0 !important;
+    margin: 80px 0 !important;
     border-radius: var(--radius-md);
     width: 100%;
     box-sizing: border-box;
@@ -1520,7 +1520,7 @@ body[data-theme='dark'] .schedule-item p.session svg {
   
   .schedule-item p {
     font-size: 0.875rem;
-    margin: 16px 0;
+    margin: 18px 0;
     line-height: 1.6;
     word-wrap: break-word;
   }
@@ -1822,10 +1822,10 @@ body[data-theme='dark'] .schedule-item p.session svg {
     flex-shrink: 0;
   }
   
-  /* Schedule Items */
+  /* Schedule Items - Mobile 480px: Tăng spacing lớn để tránh dính nhau */
   .schedule-item {
     padding: var(--spacing-lg);
-    margin: 72px 0 !important;
+    margin: 88px 0 !important;
     border-radius: var(--radius-md);
     width: 100%;
     box-sizing: border-box;
@@ -1841,7 +1841,7 @@ body[data-theme='dark'] .schedule-item p.session svg {
   
   .schedule-item p {
     font-size: 0.8125rem;
-    margin: 16px 0;
+    margin: 18px 0;
     line-height: 1.6;
     word-wrap: break-word;
   }
@@ -2118,9 +2118,10 @@ body[data-theme='dark'] .schedule-item p.session svg {
     font-size: 0.875rem;
   }
   
+  /* Schedule Items - Mobile 360px: Tăng spacing lớn để tránh dính nhau */
   .schedule-item {
     padding: var(--spacing-md);
-    margin: 64px 0 !important;
+    margin: 80px 0 !important;
     width: 100%;
     box-sizing: border-box;
   }
@@ -2133,7 +2134,7 @@ body[data-theme='dark'] .schedule-item p.session svg {
   
   .schedule-item p {
     font-size: 0.75rem;
-    margin: 14px 0;
+    margin: 16px 0;
   }
   
   .schedule-list {
@@ -2222,9 +2223,10 @@ body[data-theme='dark'] .schedule-item p.session svg {
     box-sizing: border-box;
   }
   
+  /* Schedule Items - Mobile Landscape: Tăng spacing để tránh dính nhau */
   .schedule-item {
     padding: var(--spacing-md);
-    margin: 56px 0 !important;
+    margin: 72px 0 !important;
     width: 100%;
     box-sizing: border-box;
   }
