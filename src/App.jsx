@@ -618,11 +618,18 @@ function App() {
   }, [groupedJobs]);
 
   const parentRef = useRef(null);
+  
   const rowVirtualizer = useVirtualizer({
     count: flatRowItems.length,
-    getScrollElement: () => window, // Scroll ở ngoài (window/body)
+    getScrollElement: () => {
+      // Tìm main element từ parentRef
+      if (parentRef.current) {
+        return parentRef.current.closest('main') || document.body;
+      }
+      return null;
+    },
     estimateSize: (index) => (flatRowItems[index]?.type === 'HEADER' ? 50 : 360),
-    overscan: 5, 
+    overscan: 5,
   });
 
   const virtualItems = rowVirtualizer.getVirtualItems();

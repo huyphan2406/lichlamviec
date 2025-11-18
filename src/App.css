@@ -401,7 +401,7 @@ input:checked + .theme-toggle-slider:before {
 .virtual-list-container {
   width: 100%;
   box-sizing: border-box;
-  /* Bỏ overflow để scroll ở ngoài */
+  /* Container này chỉ để chứa virtualized content, scroll ở ngoài (main/body) */
 }
 
 .schedule-group-title {
