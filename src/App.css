@@ -1341,8 +1341,13 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
     min-width: 44px;
     min-height: 44px;
     justify-content: center;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
+    border: none;
+    background: transparent;
+    box-shadow: none;
+  }
+  
+  .theme-toggle:hover {
+    background: transparent;
   }
   
   .auth-buttons {
@@ -1457,7 +1462,7 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
   /* Schedule Items */
   .schedule-item {
     padding: var(--spacing-md);
-    margin: var(--spacing-lg) 0;
+    margin: var(--spacing-xl) 0;
     border-radius: var(--radius-md);
     width: 100%;
     box-sizing: border-box;
@@ -1648,6 +1653,13 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
     min-height: 44px;
     flex-shrink: 0;
     justify-content: center;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+  }
+  
+  .theme-toggle:hover {
+    background: transparent;
   }
   
   .auth-buttons {
@@ -1768,7 +1780,7 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
   /* Schedule Items */
   .schedule-item {
     padding: var(--spacing-md);
-    margin: var(--spacing-lg) 0;
+    margin: var(--spacing-xl) 0;
     border-radius: var(--radius-md);
     width: 100%;
     box-sizing: border-box;
@@ -1776,7 +1788,7 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
   
   .schedule-item h4 {
     font-size: 1.0625rem;
-    margin-bottom: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
     line-height: 1.4;
     min-width: 0;
     word-wrap: break-word;
@@ -2048,21 +2060,21 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
   }
   
   .schedule-item {
-    padding: var(--spacing-xs);
-    margin: var(--spacing-xs) 0;
+    padding: var(--spacing-sm);
+    margin: var(--spacing-lg) 0;
     width: 100%;
     box-sizing: border-box;
   }
   
   .schedule-item h4 {
     font-size: 1rem;
-    margin-bottom: var(--spacing-xs);
+    margin-bottom: var(--spacing-sm);
     min-width: 0;
   }
   
   .schedule-item p {
     font-size: 0.75rem;
-    margin: 6px 0;
+    margin: 8px 0;
   }
   
   .schedule-item p svg {
@@ -2149,7 +2161,7 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
   
   .schedule-item {
     padding: var(--spacing-sm);
-    margin: var(--spacing-sm) 0;
+    margin: var(--spacing-md) 0;
     width: 100%;
     box-sizing: border-box;
   }

@@ -523,11 +523,11 @@ const JobItem = memo(({ job, isActive, onQuickReport, brandGroup, hostGroup }) =
       
       <p className="time"><FiClock /> {timeGroup}</p>
       <p className="location"><FiMapPin /> {locationDisplay}</p>
+      <p className="mc"><FiUser /> {talentDisplay}</p>
+      <p className="standby"><FiMonitor /> {coordDisplay}</p>
       {isCaNoi && (
         <p className="session"><FiZap /> Ca nối</p>
       )}
-      <p className="mc"><FiUser /> {talentDisplay}</p>
-      <p className="standby"><FiMonitor /> {coordDisplay}</p>
 
       <div className="job-groups-footer-container">
           <div className="group-brand job-group-item">
@@ -780,7 +780,7 @@ function App() {
                               style={{
                                 position: 'absolute', top: 0, left: 0, width: '100%',
                                 transform: `translateY(${virtualItem.start}px)`,
-                                paddingBottom: item.type === 'HEADER' ? '24px' : '48px'
+                                paddingBottom: item.type === 'HEADER' ? '24px' : '56px'
                             }}>
                                 {item.type === 'HEADER' ? (
                                     <h3 className={`schedule-group-title ${item.content.toLowerCase() === 'ca nối' ? 'ca-noi-special' : ''}`}>
