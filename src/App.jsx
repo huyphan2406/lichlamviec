@@ -1,38 +1,325 @@
-import { useState, useMemo, useEffect, useCallback, memo, useRef } from 'react';
+import { useState, useMemo, useEffect, useCallback, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import useSWR from 'swr';
 import { 
-  FiClock, FiMapPin, FiMic, FiUser, FiMonitor,
-  FiMoon, FiSun,
-  FiSearch, FiDownload, FiX, FiZap,
-  FiCalendar, FiInfo, FiTag, FiAward,
-  FiLogIn, FiUserPlus,
-  FiFilter, FiUsers, FiUserCheck, FiEdit3, 
-  FiBarChart2
+    FiClock, FiMapPin, FiMic, FiUser, FiMonitor,
+    FiMoon, FiSun,
+    FiSearch, FiDownload, FiX, FiZap,
+    FiCalendar, FiInfo, FiTag, FiAward,
+    FiLogIn, FiUserPlus,
+    FiFilter, FiUsers, FiUserCheck, FiEdit3, 
+    FiBarChart2, FiExternalLink
 } from 'react-icons/fi';
-import { useVirtualizer } from '@tanstack/react-virtual';
+import QuickReportForm from './QuickReportForm';
 import './App.css'; 
 
+// Hàm bỏ dấu tiếng Việt (dùng cho filter)
 const removeAccents = (str) => {
-  if (!str) return '';
-  return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D");
+    if (!str) return '';
+    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D");
+};
+
+// Hàm normalize tên để so sánh (PHẢI GIỐNG HỆT VỚI API)
+const normalizeName = (name) => {
+    if (!name) return '';
+    
+    let str = String(name);
+    str = str.normalize("NFD").replace(/[\u0300-\u036f]/g, ""); // Bỏ dấu
+    str = str.replace(/đ/g, "d").replace(/Đ/g, "D"); // Chuyển đổi đ/Đ
+    str = str.toLowerCase(); // Chuyển sang chữ thường
+    
+    // (QUAN TRỌNG) Xóa tất cả các ký tự không phải chữ cái hoặc khoảng trắng
+    // Loại bỏ: số (374), gạch dưới (_), gạch ngang (-), chấm (.), v.v.
+    str = str.replace(/[^a-z\s]/g, ''); 
+    
+    str = str.replace(/\s+/g, ' '); // Thay thế nhiều khoảng trắng bằng 1
+    return str.trim();
+};
+
+// Hàm tìm link Zalo từ tên host/talent (CẢI THIỆN VỚI FUZZY MATCHING)
+// 🌟 TỐI ƯU: Cache để tránh tính lại normalize nhiều lần
+const normalizeCache = new Map();
+
+// 🌟 TỐI ƯU: Hàm tìm kiếm group link với nhiều cải tiến
+const findGroupLink = (name, groupsMap) => {
+    if (!name || !groupsMap || Object.keys(groupsMap).length === 0) {
+        return null;
+    }
+    
+    // Cache normalize để tăng tốc
+    let normalizedName = normalizeCache.get(name);
+    if (!normalizedName) {
+        normalizedName = normalizeName(name);
+        if (normalizedName) {
+            normalizeCache.set(name, normalizedName);
+        }
+    }
+    if (!normalizedName) return null;
+    
+    // 1. EXACT MATCH - Nhanh nhất, kiểm tra trước
+    const exactMatch = groupsMap[normalizedName];
+    if (exactMatch?.link) {
+        if (process.env.NODE_ENV === 'development') {
+            console.log('✅ [EXACT]', name, '->', normalizedName);
+        }
+        return exactMatch.link;
+    }
+    
+    // 2. PARTIAL MATCH - Sắp xếp keys từ dài đến ngắn để match chính xác hơn
+    const allKeys = Object.keys(groupsMap);
+    if (allKeys.length === 0) return null;
+    
+    // Sắp xếp keys theo độ dài (dài trước) để match "shopee express" trước "shopee"
+    const sortedKeys = [...allKeys].sort((a, b) => b.length - a.length);
+    
+    // Tìm partial match 2 chiều
+    for (const key of sortedKeys) {
+        if (!key) continue;
+        
+        // Kiểm tra 2 chiều: name chứa key hoặc key chứa name
+        if (normalizedName.includes(key) || key.includes(normalizedName)) {
+            const match = groupsMap[key];
+            if (match?.link) {
+                if (process.env.NODE_ENV === 'development') {
+                    console.log('✅ [PARTIAL]', name, '->', key);
+                }
+                return match.link;
+            }
+        }
+    }
+    
+    // 3. FUZZY MATCH - Chỉ chạy nếu không tìm thấy exact/partial
+    const nameWords = normalizedName.split(' ').filter(w => w.length > 2);
+    if (nameWords.length === 0) return null;
+    
+    let bestMatch = null;
+    let bestScore = 0;
+    const minScore = 5; // Ngưỡng tối thiểu
+    
+    for (const key of sortedKeys) {
+        if (!key) continue;
+        
+        const keyWords = key.split(' ').filter(w => w.length > 2);
+        if (keyWords.length === 0) continue;
+        
+        let score = 0;
+        
+        // Tính điểm: từ khớp hoàn toàn = 10, từ chứa nhau = 5
+        for (const nw of nameWords) {
+            for (const kw of keyWords) {
+                if (nw === kw) {
+                    score += 10; // Exact word match
+                } else if (nw.includes(kw) || kw.includes(nw)) {
+                    score += 5; // Partial word match
+                }
+            }
+        }
+        
+        // Cập nhật best match nếu score cao hơn và đạt ngưỡng
+        if (score > bestScore && score >= minScore) {
+            bestScore = score;
+            bestMatch = key;
+        }
+    }
+    
+    if (bestMatch) {
+        const match = groupsMap[bestMatch];
+        if (match?.link) {
+            if (process.env.NODE_ENV === 'development') {
+                console.log('✅ [FUZZY]', name, '->', bestMatch, `(Score: ${bestScore})`);
+            }
+            return match.link;
+        }
+    }
+    
+    // Không tìm thấy
+    if (process.env.NODE_ENV === 'development') {
+        console.warn('❌ [NOT FOUND]', name, '->', normalizedName);
+    }
+    return null;
+};
+
+// 🌟 Hàm normalize brand name - xử lý viết tắt và format đặc biệt
+// "tts" -> "tiktok", "shp" -> "shopee", "laz" -> "lazada"
+// "brand1+brand2" -> "brand1 brand2"
+// Xử lý dấu "/", "&", ngoặc đơn, v.v.
+// Xử lý các format: "ADIVA- TIKTOK", "ANESSA - TTS", "JUDYDOLLSHP", "MONDELEZ", "ROHTO - TTS (SC +HB)"
+const normalizeBrandName = (name) => {
+    if (!name) return name;
+    
+    let normalized = String(name).toLowerCase();
+    
+    // Bước 1: Xử lý ngoặc đơn TRƯỚC (để xử lý nội dung bên trong)
+    // "ROHTO - TTS (SC +HB)" -> "ROHTO - TTS SC +HB"
+    normalized = normalized.replace(/\(([^)]+)\)/g, (match, content) => {
+        // Xử lý nội dung trong ngoặc: thay dấu + thành space
+        const cleanedContent = content.replace(/\+/g, ' ').trim();
+        return ' ' + cleanedContent;
+    });
+    
+    // Bước 2: Xử lý viết tắt platform (phải làm trước khi xóa ký tự đặc biệt)
+    // Xử lý cả word boundary và không có word boundary (cho trường hợp "JUDYDOLLSHP")
+    // Thử word boundary trước (chính xác hơn)
+    normalized = normalized
+        .replace(/\btts\b/g, 'tiktok')
+        .replace(/\bshp\b/g, 'shopee')
+        .replace(/\blaz\b/g, 'lazada')
+        .replace(/\becom\b/g, 'ecommerce');
+    
+    // Xử lý trường hợp không có word boundary (ví dụ: "judydollshp" ở cuối)
+    // Chỉ xử lý nếu không có dấu cách trước (để tránh match sai)
+    normalized = normalized
+        .replace(/([a-z])tts(?![a-z])/g, '$1tiktok')  // "judydolltts" -> "judydolltiktok" (không match)
+        .replace(/([a-z])shp(?![a-z])/g, '$1shopee')  // "judydollshp" -> "judydollshopee"
+        .replace(/([a-z])laz(?![a-z])/g, '$1lazada')
+        .replace(/([a-z])ecom(?![a-z])/g, '$1ecommerce');
+    
+    // Bước 3: Xử lý dấu "+" (brand1+brand2 -> brand1 brand2)
+    normalized = normalized.replace(/\+/g, ' ');
+    
+    // Bước 4: Xử lý dấu "&" (SENSODYNE & CENTRUM -> SENSODYNE CENTRUM)
+    normalized = normalized.replace(/&/g, ' ');
+    
+    // Bước 5: Xử lý dấu "/" (TTS/SHP/LAZ -> TTS SHP LAZ)
+    normalized = normalized.replace(/\//g, ' ');
+    
+    // Bước 6: Xử lý dấu "-" và "|" thành space (xử lý cả "ADIVA- TIKTOK" và "ANESSA - TTS")
+    normalized = normalized.replace(/[-|]/g, ' ');
+    
+    // Bước 7: Loại bỏ khoảng trắng thừa và trim
+    normalized = normalized.replace(/\s+/g, ' ').trim();
+    
+    return normalized;
+};
+
+// 🌟 Hàm tìm Brand Link - CHẶT CHẼ HƠN, chỉ dùng exact/partial match nghiêm ngặt
+// Không dùng fuzzy match để tránh match sai (ví dụ: "NIVEA SHOPEE" với "NIVEA LZD")
+// Tham số: isBrandNameOnly = true nếu đây là brand name (chỉ 1 từ), false nếu là full name (có platform)
+const findBrandLink = (name, groupsMap, isBrandNameOnly = false) => {
+    if (!name || !groupsMap || Object.keys(groupsMap).length === 0) {
+        return null;
+    }
+    
+    // Cache normalize để tăng tốc
+    let normalizedName = normalizeCache.get(name);
+    if (!normalizedName) {
+        // Bước 1: Normalize brand name (xử lý viết tắt, dấu +, -)
+        const brandNormalized = normalizeBrandName(name);
+        // Bước 2: Normalize chuẩn (remove accents, lowercase, etc.)
+        normalizedName = normalizeName(brandNormalized);
+        if (normalizedName) {
+            normalizeCache.set(name, normalizedName);
+        }
+    }
+    if (!normalizedName) return null;
+    
+    // 1. EXACT MATCH - Nhanh nhất, kiểm tra trước
+    const exactMatch = groupsMap[normalizedName];
+    if (exactMatch?.link) {
+        if (process.env.NODE_ENV === 'development') {
+            console.log('✅ [BRAND EXACT]', name, '->', normalizedName);
+        }
+        return exactMatch.link;
+    }
+    
+    // 2. Nếu là brand name only (chỉ 1 từ), CHỈ dùng exact match - không dùng partial
+    // Tránh match "NIVEA" với "NIVEA LZD" (platform khác)
+    // Kiểm tra số từ thực tế (không filter) để xác định brand name only
+    const allNameWords = normalizedName.split(' ').filter(w => w.trim().length > 0);
+    if (isBrandNameOnly || allNameWords.length === 1) {
+        // Chỉ match exact, không dùng partial
+        if (process.env.NODE_ENV === 'development') {
+            console.warn('❌ [BRAND NOT FOUND - EXACT ONLY]', name, '->', normalizedName);
+        }
+        return null;
+    }
+    
+    // Lọc từ có độ dài > 2 để dùng cho partial match (bỏ qua từ ngắn như "ui", "a", v.v.)
+    const nameWords = normalizedName.split(' ').filter(w => w.length > 2);
+    
+    // Nếu không có từ nào đủ dài (> 2 ký tự), không thể dùng partial match
+    if (nameWords.length === 0) {
+        if (process.env.NODE_ENV === 'development') {
+            console.warn('❌ [BRAND NOT FOUND - NO VALID WORDS]', name, '->', normalizedName);
+        }
+        return null;
+    }
+    
+    // 3. PARTIAL MATCH NGHIÊM NGẶT - Chỉ match nếu tất cả từ đều có trong key
+    // Chỉ dùng cho full name (có nhiều từ, ví dụ: "NIVEA SHOPEE")
+    const allKeys = Object.keys(groupsMap);
+    if (allKeys.length === 0) return null;
+    
+    // Sắp xếp keys theo độ dài (dài trước) để match chính xác hơn
+    const sortedKeys = [...allKeys].sort((a, b) => b.length - a.length);
+    
+    // Tìm partial match: name chứa key HOẶC key chứa name (nhưng phải đảm bảo tất cả từ đều match)
+    for (const key of sortedKeys) {
+        if (!key) continue;
+        
+        // Kiểm tra 2 chiều: name chứa key hoặc key chứa name
+        if (normalizedName.includes(key) || key.includes(normalizedName)) {
+            // NGHIÊM NGẶT: Kiểm tra xem tất cả từ trong name có trong key không
+            // Ví dụ: "NIVEA SHOPEE" không match "NIVEA LZD" vì "SHOPEE" không có trong "NIVEA LZD"
+            const keyWords = key.split(' ').filter(w => w.length > 2);
+            
+            // Nếu key không có từ nào đủ dài, bỏ qua
+            if (keyWords.length === 0) continue;
+            
+            let allWordsMatch = true;
+            
+            // Kiểm tra tất cả từ trong name phải có trong key
+            for (const nw of nameWords) {
+                let wordFound = false;
+                // Kiểm tra exact match hoặc partial match của từ
+                for (const kw of keyWords) {
+                    if (nw === kw || kw.includes(nw) || nw.includes(kw)) {
+                        wordFound = true;
+                        break;
+                    }
+                }
+                if (!wordFound) {
+                    allWordsMatch = false;
+                    break;
+                }
+            }
+            
+            // Chỉ match nếu tất cả từ đều có trong key
+            if (allWordsMatch) {
+                const match = groupsMap[key];
+                if (match?.link) {
+                    if (process.env.NODE_ENV === 'development') {
+                        console.log('✅ [BRAND PARTIAL]', name, '->', key);
+                    }
+                    return match.link;
+                }
+            }
+        }
+    }
+    
+    // 4. KHÔNG dùng fuzzy match - quá rủi ro, có thể match sai
+    // Không tìm thấy -> return null
+    if (process.env.NODE_ENV === 'development') {
+        console.warn('❌ [BRAND NOT FOUND]', name, '->', normalizedName);
+    }
+    return null;
 };
 
 const parseDate = (dateStr, timeStr) => {
-  try {
-    const [day, month, year] = dateStr.split('/');
-    const startTime = (timeStr || '00:00').split(' - ')[0];
-    const [hour, minute] = startTime.split(':');
-    return new Date(year, month - 1, day, hour, minute);
-  } catch (e) { return new Date(0); }
+    try {
+        const [day, month, year] = dateStr.split('/');
+        const startTime = (timeStr || '00:00').split(' - ')[0];
+        const [hour, minute] = startTime.split(':');
+        return new Date(year, month - 1, day, hour, minute);
+    } catch (e) { return new Date(0); }
 };
 
 const getFormattedToday = () => {
-  const today = new Date();
-  const day = String(today.getDate()).padStart(2, '0');
-  const month = String(today.getMonth() + 1).padStart(2, '0'); 
-  const year = today.getFullYear();
-  return `${day}/${month}/${year}`;
+    const today = new Date();
+    const day = String(today.getDate()).padStart(2, '0');
+    const month = String(today.getMonth() + 1).padStart(2, '0'); 
+    const year = today.getFullYear();
+    return `${day}/${month}/${year}`;
 };
 
 const jsonFetcher = (url) => fetch(url).then((res) => res.json());
@@ -73,90 +360,137 @@ const isJobActive = (job) => {
 // --- LOGIC (HOOKS) ---
 
 function useDarkMode() {
-  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
-  const toggleTheme = () => setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
-  useEffect(() => {
-    localStorage.setItem('theme', theme);
-    document.body.setAttribute('data-theme', theme);
-  }, [theme]);
-  return [theme, toggleTheme];
+    const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
+    const toggleTheme = () => setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
+    useEffect(() => {
+        localStorage.setItem('theme', theme);
+        document.body.setAttribute('data-theme', theme);
+    }, [theme]);
+    return [theme, toggleTheme];
 }
 
 // 🌟 TỐI ƯU 1: HÀM useJobData ĐÃ ĐƯỢC TỐI ƯU HÓA
 function useJobData() {
-  // 1. Fetch từ API route của bạn (đảm bảo file /api/get-schedule.js tồn tại)
-  const API_URL = '/api/get-schedule'; 
+    // 1. Fetch từ API route của bạn (đảm bảo file /api/get-schedule.js tồn tại)
+    const API_URL = '/api/get-schedule'; 
 
-  const { data, error, isLoading } = useSWR(
-    API_URL,
-    jsonFetcher, // 👈 Dùng fetcher JSON mới
-    {
-      refreshInterval: 60000, 
-      revalidateOnFocus: true
-    }
-  );
+    const { data, error, isLoading } = useSWR(
+        API_URL,
+        jsonFetcher, // 👈 Dùng fetcher JSON mới
+        {
+            refreshInterval: 60000, 
+            revalidateOnFocus: true
+        }
+    );
 
-  // 2. Dữ liệu đã được xử lý sẵn trên server
-  return { 
-    jobs: data?.jobs || [], 
-    uniqueDates: data?.dates || [],
-    uniqueSessions: data?.sessions || [],
-    uniqueStores: data?.stores || [],
-    isLoading: isLoading, // Giữ nguyên trạng thái loading của SWR
-    error 
-  };
+    // 2. Dữ liệu đã được xử lý sẵn trên server
+    return { 
+        jobs: data?.jobs || [], 
+        uniqueDates: data?.dates || [],
+        uniqueSessions: data?.sessions || [],
+        uniqueStores: data?.stores || [],
+        isLoading: isLoading, // Giữ nguyên trạng thái loading của SWR
+        error 
+    };
+}
+
+// 🌟 HÀM useGroupData ĐỂ FETCH GROUPS (HOST & BRAND)
+function useGroupData() {
+    const API_URL = '/api/get-groups';
+
+    const { data, error, isLoading } = useSWR(
+        API_URL,
+        jsonFetcher,
+        {
+            refreshInterval: 60000, // Refresh mỗi 60s
+            revalidateOnFocus: true
+        }
+    );
+
+    const result = {
+        hostGroups: data?.hostGroups || {},
+        brandGroups: data?.brandGroups || {},
+        hostCount: data?.hostCount || 0,
+        brandCount: data?.brandCount || 0,
+        isLoading: isLoading,
+        error
+    };
+    
+    // Debug: Log khi data được fetch (LUÔN LOG để debug)
+    useEffect(() => {
+        const hostKeys = Object.keys(result.hostGroups);
+        const brandKeys = Object.keys(result.brandGroups);
+        console.log('🔍 [API DEBUG] useGroupData:', {
+            isLoading,
+            hasData: !!data,
+            error: error?.message || error,
+            rawData: data, // Log toàn bộ data để xem
+            hostCount: result.hostCount,
+            brandCount: result.brandCount,
+            hostKeys: hostKeys.length,
+            brandKeys: brandKeys.length,
+            hostSample: hostKeys.slice(0, 5),
+            brandSample: brandKeys.slice(0, 5),
+            firstHostKey: hostKeys[0],
+            firstHostData: hostKeys.length > 0 ? result.hostGroups[hostKeys[0]] : null,
+            firstBrandKey: brandKeys[0],
+            firstBrandData: brandKeys.length > 0 ? result.brandGroups[brandKeys[0]] : null,
+            brandGroupsType: typeof result.brandGroups,
+            brandGroupsIsArray: Array.isArray(result.brandGroups)
+        });
+    }, [data, isLoading, error, result]);
+    
+    return result;
 }
 
 // --- HÀM HELPER CHO GIAO DIỆN ---
 const combineNames = (name1, name2) => {
-  const n1 = name1 || '';
-  const n2 = (name2 && name2 !== 'nan') ? name2 : '';
-  if (n1 && n2) return `${n1} | ${n2}`;
-  return n1 || n2 || '...'; 
+    const n1 = name1 || '';
+    const n2 = (name2 && name2 !== 'nan') ? name2 : '';
+    if (n1 && n2) return `${n1} | ${n2}`;
+    return n1 || n2 || '...'; 
 };
 
 const combineLocation = (job) => {
-  const addressName = job.Address || '';
-  const roomName = job['Studio/Room'] || '';
-  const locationDisplay = [addressName, roomName]
-    .filter(part => part && part !== 'nan') 
-    .join(' | ');
-  return locationDisplay || 'No location';
+    const addressName = job.Address || '';
+    const roomName = job['Studio/Room'] || '';
+    const locationDisplay = [addressName, roomName]
+        .filter(part => part && part !== 'nan') 
+        .join(' | ');
+    return locationDisplay || 'No location';
 };
 
 // 🌟 COMPONENT THÔNG BÁO TẠM THỜI (thay thế alert)
 const TemporaryNotification = ({ message, onDismiss }) => {
-  useEffect(() => {
-    if (message) {
-      const timer = setTimeout(onDismiss, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [message, onDismiss]);
+    useEffect(() => {
+        if (message) {
+            const timer = setTimeout(onDismiss, 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [message, onDismiss]);
 
-  return (
-    <AnimatePresence>
-      {message && (
-        <motion.div
-          className="temporary-notification"
-          initial={{ y: -50, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: -50, opacity: 0 }}
-        >
-          {message}
-          <button 
-            onClick={onDismiss} 
-            style={{ 
-              marginLeft: '10px', background: 'none', border: 'none', 
-              color: 'inherit', cursor: 'pointer', display: 'flex',
-              alignItems: 'center'
-            }}
-          >
-            <FiX size={16} />
-          </button>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
+    return (
+        <AnimatePresence>
+            {message && (
+                <motion.div
+                    className="temporary-notification"
+                    initial={{ y: -50, opacity: 0, scale: 0.95 }}
+                    animate={{ y: 0, opacity: 1, scale: 1 }}
+                    exit={{ y: -50, opacity: 0, scale: 0.95 }}
+                    transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                >
+                    <span className="temporary-notification-text">{message}</span>
+                    <button 
+                        className="temporary-notification-close"
+                        onClick={onDismiss}
+                        aria-label="Đóng thông báo"
+                    >
+                        <FiX size={16} />
+                    </button>
+                </motion.div>
+            )}
+        </AnimatePresence>
+    );
 };
 
 
@@ -180,10 +514,11 @@ const NotificationPopup = ({ isVisible, setIsVisible }) => {
                     
                     <motion.div 
                         className="popup-modal"
-                        initial={{ opacity: 0, x: "-50%", y: "calc(-50% + 50px)" }}
-                        animate={{ opacity: 1, x: "-50%", y: "-50%" }}
-                        exit={{ opacity: 0, x: "-50%", y: "calc(-50% + 50px)" }}
-                        transition={{ type: 'spring', stiffness: 100, damping: 20 }}
+                        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                        onClick={(e) => e.stopPropagation()}
                     >
                         <div className="popup-header">
                             <FiZap size={22} className="popup-icon-zap" />
@@ -235,13 +570,10 @@ const handleAuthClick = (showAuthPopup) => {
 
 const Header = ({ theme, toggleTheme, showAuthPopup }) => ( 
   <header className="app-header">
-    
-    {/* 🌟 HÀNG 1: TIÊU ĐỀ CĂN GIỮA (Sử dụng CSS để căn giữa) */}
-    <h1 className="header-title-centered">
+    <h1 style={{margin: 0, paddingRight: '15px', flexShrink: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>
         Lịch làm việc
     </h1>
     
-    {/* 🌟 HÀNG 2: KHỐI ĐIỀU KHIỂN (Cân 2 bên) */}
     <div className="header-controls">
 
       {/* Nút CRM (Đã bị ẩn/xóa theo yêu cầu trước, nhưng vẫn giữ code nếu bạn cần) */}
@@ -300,200 +632,220 @@ const FilterBar = ({
     uniqueStores,
     showTempNotification
 }) => {
-  
-  // 🌟 TỐI ƯU HÓA 4: Tách state 'inputValue' vào FilterBar
-  const [inputValue, setInputValue] = useState(''); 
-
-  // 🌟 TỐI ƯU HÓA 4: Debounce (làm trễ) việc cập nhật bộ lọc
-  useEffect(() => {
-    const timerId = setTimeout(() => {
-        setNameFilter(inputValue); // ...rồi mới cập nhật state của App
-    }, 300);
     
-    return () => {
-        clearTimeout(timerId); // Xóa timer nếu người dùng gõ tiếp
-    };
-  }, [inputValue, setNameFilter]); 
-  
-  
-  // 🌟 TỐI ƯU HÓA 3: Tải lười (Lazy Loading) thư viện 'ics'
-  const handleDownloadICS = useCallback(async () => { // 👈 Thêm async
-    // 🌟 Chỉ import khi nhấn nút
-    const ics = await import('ics');
+    // 🌟 TỐI ƯU HÓA 4: Tách state 'inputValue' vào FilterBar
+    // 🌟 Load từ localStorage nếu có
+    const [inputValue, setInputValue] = useState(() => {
+        try {
+            return localStorage.getItem('searchNameCache') || '';
+        } catch (e) {
+            return '';
+        }
+    }); 
 
-    const events = filteredJobs.map(job => {
-      try {
-        const [day, month, year] = job['Date livestream'].split('/');
-        const [startTimeStr, endTimeStr] = (job['Time slot'] || '00:00 - 00:00').split(' - ');
+    // 🌟 TỐI ƯU HÓA 4: Debounce (làm trễ) việc cập nhật bộ lọc
+    useEffect(() => {
+        const timerId = setTimeout(() => {
+            setNameFilter(inputValue); // ...rồi mới cập nhật state của App
+        }, 300);
         
-        const [startHour, startMinute] = startTimeStr.split(':').map(Number);
-        const [endHour, endMinute] = (endTimeStr || startTimeStr).split(':').map(Number);
-
-        const startDate = new Date(0, 0, 0, startHour, startMinute);
-        const endDate = new Date(0, 0, 0, endHour, endMinute);
-        let diffMs = endDate.getTime() - startDate.getTime();
-        if (diffMs <= 0) diffMs = 60 * 60 * 1000; 
-
-        const durationHours = Math.floor(diffMs / (1000 * 60 * 60));
-        const durationMinutes = (diffMs / (1000 * 60)) % 60;
-
-        return {
-          title: job.Store || 'Unnamed Job',
-          start: [parseInt(year), parseInt(month), parseInt(day), startHour, startMinute],
-          duration: { hours: durationHours, minutes: durationMinutes },
-          location: combineLocation(job),
-          description: `MC: ${combineNames(job['Talent 1'], job['Talent 2'])}\nCoordinator: ${combineNames(job['Coordinator 1'], job['Coordinator 2'])}`
+        return () => {
+            clearTimeout(timerId); // Xóa timer nếu người dùng gõ tiếp
         };
-      } catch (e) {
-        return null; 
-      }
-    }).filter(Boolean); 
+    }, [inputValue, setNameFilter]);
 
-    if (events.length === 0) {
-      showTempNotification("Không có sự kiện hợp lệ nào để xuất lịch.");
-      return;
-    }
+    // 🌟 Lưu inputValue vào localStorage khi thay đổi
+    useEffect(() => {
+        try {
+            if (inputValue.trim()) {
+                localStorage.setItem('searchNameCache', inputValue);
+            } else {
+                localStorage.removeItem('searchNameCache');
+            }
+        } catch (e) {
+            console.warn('Không thể lưu vào localStorage:', e);
+        }
+    }, [inputValue]); 
+    
+    
+    // 🌟 TỐI ƯU HÓA 3: Tải lười (Lazy Loading) thư viện 'ics'
+    const handleDownloadICS = useCallback(async () => { // 👈 Thêm async
+        // 🌟 Chỉ import khi nhấn nút
+        const ics = await import('ics');
 
-    const { error, value } = ics.createEvents(events);
+        const events = filteredJobs.map(job => {
+            try {
+                const [day, month, year] = job['Date livestream'].split('/');
+                const [startTimeStr, endTimeStr] = (job['Time slot'] || '00:00 - 00:00').split(' - ');
+                
+                const [startHour, startMinute] = startTimeStr.split(':').map(Number);
+                const [endHour, endMinute] = (endTimeStr || startTimeStr).split(':').map(Number);
 
-    if (error) {
-      console.error("Error creating ICS file:", error);
-      showTempNotification("Lỗi khi tạo file ICS.");
-      return;
-    }
+                const startDate = new Date(0, 0, 0, startHour, startMinute);
+                const endDate = new Date(0, 0, 0, endHour, endMinute);
+                let diffMs = endDate.getTime() - startDate.getTime();
+                if (diffMs <= 0) diffMs = 60 * 60 * 1000; 
 
-    const blob = new Blob([value], { type: 'text/calendar;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `Google_Calendar_Schedule_${dateFilter.replace(/\//g, '-') || 'all'}.ics`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    showTempNotification("Đã xuất lịch thành công!");
-  }, [dateFilter, filteredJobs, showTempNotification]);
+                const durationHours = Math.floor(diffMs / (1000 * 60 * 60));
+                const durationMinutes = (diffMs / (1000 * 60)) % 60;
 
-  return (
-    <div className="filter-container">
-        
-      <div className="form-group-grid">
-        <div className="form-group filter-date">
-            <label htmlFor="dateInput">Ngày</label>
-            <select id="dateInput" value={dateFilter} onChange={(e) => setDateFilter(e.target.value)}>
-              <option value="">All Dates</option>
-              {uniqueDates.map(date => <option key={date} value={date}>{date}</option>)}
-            </select>
-        </div>
-        
-        <div className="form-group filter-session">
-            <label htmlFor="sessionInput">Loại Ca</label>
-            <select id="sessionInput" value={sessionFilter} onChange={(e) => setSessionFilter(e.target.value)}>
-                <option value="">All Sessions</option>
-                {uniqueSessions.map(session => <option key={session} value={session}>{session}</option>)}
-            </select>
-        </div>
+                return {
+                    title: job.Store || 'Unnamed Job',
+                    start: [parseInt(year), parseInt(month), parseInt(day), startHour, startMinute],
+                    duration: { hours: durationHours, minutes: durationMinutes },
+                    location: combineLocation(job),
+                    description: `Host: ${combineNames(job['Talent 1'], job['Talent 2'])}\nCoordinator: ${combineNames(job['Coordinator 1'], job['Coordinator 2'])}`
+                };
+            } catch (e) {
+                return null; 
+            }
+        }).filter(Boolean); 
 
-        <div className="form-group filter-store">
-            <label htmlFor="storeInput">Tên Cửa Hàng</label>
-            <select id="storeInput" value={storeFilter} onChange={(e) => setStoreFilter(e.target.value)}>
-                <option value="">All Stores</option>
-                {uniqueStores.map(store => <option key={store} value={store}>{store}</option>)}
-            </select>
-        </div>
+        if (events.length === 0) {
+            showTempNotification("Không có sự kiện hợp lệ nào để xuất lịch.");
+            return;
+        }
 
-        {/* Đã xóa Group Brand và Group Host khỏi FilterBar */}
+        const { error, value } = ics.createEvents(events);
 
-        <div className="form-group filter-search full-width">
-            <label htmlFor="nameInput">Tìm Kiếm</label>
-            <div className="input-with-icon">
-              <FiSearch className="search-icon" size={18} />
-              <input 
-                type="text" 
-                id="nameInput" 
-                placeholder="Nhập tên của bạn " 
-                value={inputValue} // 👈 Dùng state nội bộ
-                onChange={(e) => setInputValue(e.target.value)} // 👈 Cập nhật state nội bộ
-              />
+        if (error) {
+            console.error("Error creating ICS file:", error);
+            showTempNotification("Lỗi khi tạo file ICS.");
+            return;
+        }
+
+        const blob = new Blob([value], { type: 'text/calendar;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `Google_Calendar_Schedule_${dateFilter.replace(/\//g, '-') || 'all'}.ics`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showTempNotification("Đã xuất lịch thành công!");
+    }, [dateFilter, filteredJobs, showTempNotification]);
+
+    return (
+        <div className="filter-container">
+            
+            <div className="form-group-grid">
+                <div className="form-group filter-date">
+                    <label htmlFor="dateInput">Ngày</label>
+                    <select id="dateInput" value={dateFilter} onChange={(e) => setDateFilter(e.target.value)}>
+                        <option value="">All Dates</option>
+                        {uniqueDates.map(date => <option key={date} value={date}>{date}</option>)}
+                    </select>
+                </div>
+                
+                <div className="form-group filter-session">
+                    <label htmlFor="sessionInput">Loại Ca</label>
+                    <select id="sessionInput" value={sessionFilter} onChange={(e) => setSessionFilter(e.target.value)}>
+                        <option value="">All Sessions</option>
+                        {uniqueSessions.map(session => <option key={session} value={session}>{session}</option>)}
+                    </select>
+                </div>
+
+                <div className="form-group filter-store">
+                    <label htmlFor="storeInput">Tên Cửa Hàng</label>
+                    <select id="storeInput" value={storeFilter} onChange={(e) => setStoreFilter(e.target.value)}>
+                        <option value="">All Stores</option>
+                        {uniqueStores.map(store => <option key={store} value={store}>{store}</option>)}
+                    </select>
+                </div>
+
+                {/* Đã xóa Group Brand và Group Host khỏi FilterBar */}
+
+                <div className="form-group filter-search full-width">
+                    <label htmlFor="nameInput">Tìm Kiếm</label>
+                    <div className="input-with-icon">
+                        <FiSearch className="search-icon" size={18} />
+                        <input 
+                            type="text" 
+                            id="nameInput" 
+                            placeholder="Nhập tên của bạn " 
+                            value={inputValue} // 👈 Dùng state nội bộ
+                            onChange={(e) => setInputValue(e.target.value)} // 👈 Cập nhật state nội bộ
+                        />
+                    </div>
+                </div>
+
             </div>
+
+            <button 
+                className="download-button" 
+                onClick={handleDownloadICS} 
+                disabled={filteredJobs.length === 0}
+            >
+                <FiDownload size={18} />
+                Nhập vào Google Calendar (.ics)
+            </button>
         </div>
-
-      </div>
-
-      <button 
-        className="download-button" 
-        onClick={handleDownloadICS} 
-        disabled={filteredJobs.length === 0}
-      >
-        <FiDownload size={18} />
-        Nhập vào Google Calendar (.ics)
-      </button>
-    </div>
-  );
+    );
 };
 
 const SkeletonLoader = () => (
-  <div className="skeleton-container">
-    {[...Array(3)].map((_, i) => (
-      <div className="skeleton-item" key={i}>
-        <div className="skeleton-line h4"></div>
-        <div className="skeleton-line p"></div>
-        <div className="skeleton-line p"></div>
-        <div className="skeleton-line p"></div>
-      </div>
-    ))}
-  </div>
+    <div className="skeleton-container">
+        {[...Array(3)].map((_, i) => (
+            <div className="skeleton-item" key={i}>
+                <div className="skeleton-line h4"></div>
+                <div className="skeleton-line p"></div>
+                <div className="skeleton-line p"></div>
+                <div className="skeleton-line p"></div>
+            </div>
+        ))}
+    </div>
 );
 
 const EmptyState = ({ dateFilter }) => (
-  <motion.div 
-    className="empty-state" 
-    initial={{ opacity: 0, scale: 0.9 }} 
-    animate={{ opacity: 1, scale: 1 }}
-  >
-    {/* THẺ CẢNH BÁO CHÍNH - STYLE CAO CẤP */}
-    <div style={{ 
-        border: '2px solid var(--color-danger)', borderRadius: '16px', padding: '25px', 
-        backgroundColor: 'var(--color-card)', width: '100%', boxSizing: 'border-box',
-        boxShadow: '0 8px 25px rgba(220, 53, 69, 0.2)'
-    }}>
-        
-        <h3 style={{ 
-            color: 'var(--color-danger)', display: 'flex', alignItems: 'center', gap: '12px', 
-            margin: '0 0 20px 0', paddingBottom: '10px', borderBottom: '1px solid var(--color-border)', 
-            fontSize: '1.3rem', fontWeight: 700
+    <motion.div 
+        className="empty-state" 
+        initial={{ opacity: 0, scale: 0.9 }} 
+        animate={{ opacity: 1, scale: 1 }}
+    >
+        {/* THẺ CẢNH BÁO CHÍNH - STYLE CAO CẤP */}
+        <div style={{ 
+            border: '2px solid var(--color-danger)', borderRadius: '16px', padding: '25px', 
+            backgroundColor: 'var(--color-card)', width: '100%', boxSizing: 'border-box',
+            boxShadow: '0 8px 25px rgba(220, 53, 69, 0.2)'
         }}>
-            <FiSearch size={24} style={{color: 'var(--color-danger)'}} />
-            KHÔNG TÌM THẤY LỊCH LÀM VIỆC!
-        </h3>
-        
-        <p style={{ color: 'var(--color-text-primary)', fontWeight: 500, fontSize: '1.05em', margin: '0 0 15px 0' }}>
-            <FiInfo size={18} style={{marginRight: '10px', color: 'var(--color-danger)'}}/>
-            <strong style={{color: 'var(--color-danger)'}}>Lỗi:</strong> Không có công việc nào khớp với các tiêu chí lọc.
-        </p>
-        
-        {dateFilter && (
-            <p style={{ 
-                color: 'var(--color-text-primary)', fontSize: '1em', margin: '0 0 25px 0',
-                padding: '10px 15px', borderLeft: '4px solid var(--color-brand)', 
-                backgroundColor: 'var(--color-brand-light)', borderRadius: '4px'
+            
+            <h3 style={{ 
+                color: 'var(--color-danger)', display: 'flex', alignItems: 'center', gap: '12px', 
+                margin: '0 0 20px 0', paddingBottom: '10px', borderBottom: '1px solid var(--color-border)', 
+                fontSize: '1.3rem', fontWeight: 700
             }}>
-                <span style={{ fontWeight: 600 }}>Đang lọc theo Ngày:</span> 
-                <strong style={{marginLeft: '5px'}}>{dateFilter}</strong>
+                <FiSearch size={24} style={{color: 'var(--color-danger)'}} />
+                KHÔNG TÌM THẤY LỊCH LÀM VIỆC!
+            </h3>
+            
+            <p style={{ color: 'var(--color-text-primary)', fontWeight: 500, fontSize: '1.05em', margin: '0 0 15px 0' }}>
+                <FiInfo size={18} style={{marginRight: '10px', color: 'var(--color-danger)'}}/>
+                <strong style={{color: 'var(--color-danger)'}}>Lỗi:</strong> Không có công việc nào khớp với các tiêu chí lọc.
             </p>
-        )}
-        
-        <p style={{ 
-            color: 'var(--color-text-secondary)', fontWeight: 500, paddingTop: '15px',
-            borderTop: '1px solid var(--color-border)', fontSize: '0.95em'
-        }}>
-            👉 Vui lòng điều chỉnh lại Ngày, Tên Cửa Hàng, hoặc Loại Ca để xem lịch.
-        </p>
+            
+            {dateFilter && (
+                <p style={{ 
+                    color: 'var(--color-text-primary)', fontSize: '1em', margin: '0 0 25px 0',
+                    padding: '10px 15px', borderLeft: '4px solid var(--color-brand)', 
+                    backgroundColor: 'var(--color-brand-light)', borderRadius: '4px'
+                }}>
+                    <span style={{ fontWeight: 600 }}>Đang lọc theo Ngày:</span> 
+                    <strong style={{marginLeft: '5px'}}>{dateFilter}</strong>
+                </p>
+            )}
+            
+            <p style={{ 
+                color: 'var(--color-text-secondary)', fontWeight: 500, paddingTop: '15px',
+                borderTop: '1px solid var(--color-border)', fontSize: '0.95em'
+            }}>
+                👉 Vui lòng điều chỉnh lại Ngày, Tên Cửa Hàng, hoặc Loại Ca để xem lịch.
+            </p>
 
-    </div>
-  </motion.div>
+        </div>
+    </motion.div>
 );
 
-const JobItem = memo(({ job, isActive }) => {
+const JobItem = memo(({ job, isActive, onQuickReportClick, hostGroups, brandGroups }) => {
   const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } };
   const timeGroup = `${job['Time slot'] || 'N/A'}`;
   const talentDisplay = combineNames(job['Talent 1'], job['Talent 2']);
@@ -503,250 +855,486 @@ const JobItem = memo(({ job, isActive }) => {
   
   const defaultUpdateMessage = "Đang cập nhật...";
 
-  const handleQuickReport = useCallback(() => {
-    alert(`Tính năng đang được triển khai bạn vui lòng chờ nha!!!`);
-  }, [job]);
+  // 🌟 TỐI ƯU: Tìm link Zalo cho Group Brand với logic chính xác
+  // Format hỗ trợ:
+  // - "BRAND - PLATFORM" (ví dụ: "NIVEA - SHOPEE")
+  // - "BRAND PLATFORM" (ví dụ: "NIVEA SHOPEE")
+  // - "BRAND1+BRAND2 - PLATFORM" (ví dụ: "NIVEA+SHOPEE - TTS")
+  // - Viết tắt: "tts" = "tiktok", "shp" = "shopee"
+  // Ưu tiên: 1) Full name -> 2) Brand name -> 3) null (hiện "Đang cập nhật")
+  const brandLink = useMemo(() => {
+      if (!brandGroups || Object.keys(brandGroups).length === 0 || !job.Store) {
+          return null;
+      }
 
-  return (
-    <motion.div 
-      className={`schedule-item ${isActive ? 'job-active' : ''}`}
-      variants={itemVariants}
-    >
-      <div className="job-header-row">
-        <h4 className="job-title-with-button">{job.Store || 'Unnamed Job'}</h4> 
-        
-        <button 
-          className="quick-report-button" 
-          onClick={handleQuickReport}
-          title="Điền Report Nhanh"
-        >
-          <FiEdit3 size={16} />
-          Điền Report Nhanh
-        </button>
-      </div>
+      const storeName = job.Store.trim();
+      if (!storeName) return null;
+
+      // 1. ƯU TIÊN 1: Tìm với tên đầy đủ (đã được normalize brand name trong findBrandLink)
+      // Format: "BRAND - PLATFORM", "BRAND PLATFORM", "BRAND1+BRAND2 - TTS/SHP", "JUDYDOLLSHP"
+      // isBrandNameOnly = false vì đây là full name (có thể có platform)
+      let link = findBrandLink(storeName, brandGroups, false);
+      if (link) return link;
+
+      // 2. Xử lý các format đặc biệt
+      // 2a. Kiểm tra nếu có dấu "-" hoặc "|" để tách
+      const hasDelimiter = /[-|]/.test(storeName);
       
-      <p className="time"><FiClock /> {timeGroup}</p>
-      <p className="location"><FiMapPin /> {locationDisplay}</p>
-      <p className="session"><FiMic /> Loại Ca: {sessionTypeDisplay}</p> 
-      <p className="mc"><FiUser /> {talentDisplay}</p>
-      <p className="standby"><FiMonitor /> {coordDisplay}</p>
+      if (hasDelimiter) {
+          // Tách tên theo dấu "-", "|"
+          // Ví dụ: "NIVEA - SHOPEE" -> ["NIVEA", "SHOPEE"]
+          // Ví dụ: "NIVEA+SHOPEE - TTS" -> ["NIVEA+SHOPEE", "TTS"]
+          const parts = storeName.split(/[-|]/).map(p => p.trim()).filter(p => p.length > 0);
+          
+          if (parts.length > 1) {
+              // ƯU TIÊN 2: Xử lý phần đầu (có thể là "BRAND" hoặc "BRAND1+BRAND2")
+              const brandPart = parts[0]; // Phần đầu có thể là "NIVEA" hoặc "NIVEA+SHOPEE"
+              
+              // 2a. Thử tìm với brand part (có thể có dấu +)
+              // Ví dụ: "NIVEA+SHOPEE" -> normalize thành "NIVEA SHOPEE"
+              link = findBrandLink(brandPart, brandGroups, false);
+              if (link) return link;
+              
+              // 2b. Nếu brand part có dấu "+", thử tìm từng brand riêng
+              if (brandPart.includes('+')) {
+                  const brandNames = brandPart.split('+').map(b => b.trim()).filter(b => b.length > 0);
+                  // Thử tìm brand đầu tiên (brand chính)
+                  if (brandNames.length > 0) {
+                      link = findBrandLink(brandNames[0], brandGroups, true);
+                      if (link) return link;
+                  }
+              } else {
+                  // 2c. Nếu không có dấu "+", chỉ tìm brand name (exact only)
+                  link = findBrandLink(brandPart, brandGroups, true);
+                  if (link) return link;
+              }
+          }
+      } else {
+          // Không có dấu "-" hoặc "|", có thể là:
+          // - "NIVEA" (brand name only)
+          // - "NIVEA SHOPEE" (full name không có dấu "-")
+          // - "NIVEA+SHOPEE" (brand1+brand2)
+          // - "JUDYDOLLSHP" (không có dấu cách, không có dấu -)
+          const singlePart = storeName;
+          
+          // Kiểm tra xem có dấu "+" không
+          if (singlePart.includes('+')) {
+              // Format: "BRAND1+BRAND2" -> tìm với full name
+              link = findBrandLink(singlePart, brandGroups, false);
+              if (link) return link;
+              
+              // Nếu không tìm thấy, thử tìm brand đầu tiên
+              const brandNames = singlePart.split('+').map(b => b.trim()).filter(b => b.length > 0);
+              if (brandNames.length > 0) {
+                  link = findBrandLink(brandNames[0], brandGroups, true);
+                  if (link) return link;
+              }
+          } else {
+              // Không có dấu "+", kiểm tra số từ
+              const words = singlePart.split(' ').filter(w => w.trim().length > 0);
+              if (words.length === 1) {
+                  // Chỉ 1 từ -> có thể là "NIVEA" hoặc "JUDYDOLLSHP"
+                  // Thử exact match trước
+                  link = findBrandLink(singlePart, brandGroups, true);
+                  if (link) return link;
+                  
+                  // Nếu không match, có thể là "JUDYDOLLSHP" (cần tách platform ở cuối)
+                  // Thử tách các viết tắt ở cuối: "judydollshp" -> "judydoll" + "shopee"
+                  const platformPatterns = [
+                      { pattern: /shp$/i, replacement: ' shopee' },
+                      { pattern: /tts$/i, replacement: ' tiktok' },
+                      { pattern: /laz$/i, replacement: ' lazada' },
+                      { pattern: /ecom$/i, replacement: ' ecommerce' }
+                  ];
+                  
+                  for (const { pattern, replacement } of platformPatterns) {
+                      if (pattern.test(singlePart)) {
+                          const withSpace = singlePart.replace(pattern, replacement);
+                          link = findBrandLink(withSpace, brandGroups, false);
+                          if (link) return link;
+                      }
+                  }
+              } else {
+                  // Nhiều từ -> full name, có thể dùng partial match
+                  link = findBrandLink(singlePart, brandGroups, false);
+                  if (link) return link;
+              }
+          }
+      }
 
-      <div className="job-groups-footer-container">
-          <div className="group-brand job-group-item">
-            <FiUsers size={18} className="job-group-icon" /> 
-            Group Brand: <span className="job-group-value">{defaultUpdateMessage}</span>
-          </div>
-          <div className="group-host job-group-item">
-            <FiUserCheck size={18} className="job-group-icon" />
-            Group Host: <span className="job-group-value">{defaultUpdateMessage}</span>
-          </div>
-      </div>
+      // 3. Không tìm thấy -> return null (sẽ hiện "Đang cập nhật")
+      return null;
+  }, [job.Store, brandGroups]);
 
-    </motion.div>
+  // 🌟 TỐI ƯU: Tìm link Zalo cho Group Host (sử dụng hàm findGroupLink đã tối ưu)
+  const hostLink = useMemo(() => {
+      if (!hostGroups || Object.keys(hostGroups).length === 0) {
+          return null;
+      }
+      
+      // Thử tìm với Talent 1 trước (ưu tiên cao nhất)
+      const link1 = findGroupLink(job['Talent 1'], hostGroups);
+      if (link1) return link1;
+      
+      // Nếu không có, thử Talent 2
+      const link2 = findGroupLink(job['Talent 2'], hostGroups);
+      if (link2) return link2;
+      
+      // Nếu vẫn không có, thử Coordinator (có thể host cũng là coordinator)
+      const link3 = findGroupLink(job['Coordinator 1'], hostGroups);
+      if (link3) {
+          if (process.env.NODE_ENV === 'development') {
+              console.log('✅ [HOST] Found via Coordinator 1:', job['Coordinator 1'], '->', link3);
+          }
+          return link3;
+      }
+      
+      const link4 = findGroupLink(job['Coordinator 2'], hostGroups);
+      if (link4) {
+          if (process.env.NODE_ENV === 'development') {
+              console.log('✅ [HOST] Found via Coordinator 2:', job['Coordinator 2'], '->', link4);
+          }
+          return link4;
+      }
+      
+      if (process.env.NODE_ENV === 'development') {
+          console.warn('❌ [HOST] Not found for any talent/coordinator');
+      }
+      return null;
+  }, [job, hostGroups]);
+
+  // Handler functions
+  const handleQuickReport = useCallback(() => {
+      if (onQuickReportClick) {
+          onQuickReportClick(job);
+      }
+  }, [onQuickReportClick, job]);
+
+  const handleGroupClick = useCallback((link, e) => {
+      e.stopPropagation();
+      if (link) {
+          window.open(link, '_blank', 'noopener,noreferrer');
+      }
+  }, []);
+  
+  return (
+      <motion.div 
+          className={`schedule-item ${isActive ? 'job-active' : ''}`}
+          variants={itemVariants}
+          initial="hidden"
+          animate="visible"
+      >
+          <div className="job-header-row">
+              <h4>{job.Store || 'N/A'}</h4>
+              <button 
+                  className="quick-report-button"
+                  onClick={handleQuickReport}
+                  title="Điền Report Nhanh"
+              >
+                  <FiEdit3 size={16} />
+                  Điền Report Nhanh
+              </button>
+          </div>
+
+          <p className="location">
+              <FiMapPin size={18} />
+              {locationDisplay}
+          </p>
+
+          <p className="time">
+              <FiClock size={18} />
+              {job['Time slot'] || 'N/A'}
+          </p>
+
+          <p>
+              <FiMic size={18} />
+              Host: {talentDisplay}
+          </p>
+
+          <p>
+              <FiUser size={18} />
+              Coordinator: {coordDisplay}
+          </p>
+
+          {sessionTypeDisplay !== '—' && (
+              <p className="session">
+                  <FiTag size={18} />
+                  Loại ca: Ca nối
+              </p>
+          )}
+
+          <div className="job-groups-footer-container">
+              <div className="group-brand job-group-item">
+                  <FiUsers size={18} className="job-group-icon" /> 
+                  <span className="job-group-label">Group Brand:</span>
+                  {brandLink ? (
+                      <a 
+                          href={brandLink} 
+                          onClick={(e) => handleGroupClick(brandLink, e)}
+                          className="job-group-link"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="Mở Group Brand trên Zalo"
+                      >
+                          <span className="job-group-link-text">Tham gia Group</span>
+                          <FiExternalLink size={14} className="job-group-link-icon" />
+                      </a>
+                  ) : (
+                      <span className="job-group-value">{defaultUpdateMessage}</span>
+                  )}
+              </div>
+              <div className="group-host job-group-item">
+                  <FiUserCheck size={18} className="job-group-icon" />
+                  <span className="job-group-label">Group Host:</span>
+                  {hostLink ? (
+                      <a 
+                          href={hostLink} 
+                          onClick={(e) => handleGroupClick(hostLink, e)}
+                          className="job-group-link"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="Mở Group Host trên Zalo"
+                      >
+                          <span className="job-group-link-text">Tham gia Group</span>
+                          <FiExternalLink size={14} className="job-group-link-icon" />
+                      </a>
+                  ) : (
+                      <span className="job-group-value">{defaultUpdateMessage}</span>
+                  )}
+              </div>
+          </div>
+      </motion.div>
   );
 });
 
 // --- COMPONENT APP CHÍNH ---
 function App() {
-  const [theme, toggleTheme] = useDarkMode();
-  const { jobs, isLoading, uniqueDates, uniqueSessions, uniqueStores, error } = useJobData();
-  
-  const [dateFilter, setDateFilter] = useState(() => getFormattedToday());
-  const [nameFilter, setNameFilter] = useState(''); 
-  const [sessionFilter, setSessionFilter] = useState('');
-  const [storeFilter, setStoreFilter] = useState('');
-
-  const [tempNotification, setTempNotification] = useState(null); 
-  const showTempNotification = useCallback((message) => setTempNotification(message), []);
-  const dismissTempNotification = useCallback(() => setTempNotification(null), []);
-
-  const [isAuthPopupVisible, setIsAuthPopupVisible] = useState(true);
-  const showAuthPopup = useCallback(() => setIsAuthPopupVisible(true), []);
-  const hideAuthPopup = useCallback(() => setIsAuthPopupVisible(false), []);
-
-  const [currentTime, setCurrentTime] = useState(new Date());
-  
-  useEffect(() => {
-      const intervalId = setInterval(() => setCurrentTime(new Date()), 60000); 
-      return () => clearInterval(intervalId);
-  }, []);
-
-  // Logic lọc
-  const filteredJobs = useMemo(() => {
-    const dummy = currentTime.toISOString(); 
+    const [theme, toggleTheme] = useDarkMode();
+    const { jobs, isLoading, uniqueDates, uniqueSessions, uniqueStores, error } = useJobData();
+    const { hostGroups, brandGroups, isLoading: groupsLoading, error: groupsError } = useGroupData(); // Fetch groups data
     
-    let jobsToFilter = jobs;
-    const normNameFilter = removeAccents(nameFilter.toLowerCase().trim());
+    // Debug groups data (chỉ trong development)
+    useEffect(() => {
+        if (process.env.NODE_ENV === 'development') {
+            if (!groupsLoading && hostGroups && brandGroups) {
+                console.log('Groups in App:', {
+                    hostKeys: Object.keys(hostGroups).length,
+                    brandKeys: Object.keys(brandGroups).length,
+                    hostSample: Object.keys(hostGroups).slice(0, 5),
+                    brandSample: Object.keys(brandGroups).slice(0, 5)
+                });
+            }
+            if (groupsError) {
+                console.error('Groups Error:', groupsError);
+            }
+        }
+    }, [hostGroups, brandGroups, groupsLoading, groupsError]);
     
-    if (normNameFilter) {
-      jobsToFilter = jobsToFilter.filter(job => {
-        const jobStr = `${job['Talent 1']} ${job['Talent 2']} ${job['Coordinator 1']} ${job['Coordinator 2']} ${job.Store} ${job.Address} ${job['Studio/Room']}`;
-        return removeAccents(jobStr.toLowerCase()).includes(normNameFilter);
-      });
-    }
+    const [dateFilter, setDateFilter] = useState(() => getFormattedToday());
+    // 🌟 Lưu tên tìm kiếm vào localStorage
+    const [nameFilter, setNameFilter] = useState(() => {
+        try {
+            return localStorage.getItem('searchNameCache') || '';
+        } catch (e) {
+            return '';
+        }
+    }); 
+    const [sessionFilter, setSessionFilter] = useState('');
+    const [storeFilter, setStoreFilter] = useState('');
+
+    // 🌟 Lưu nameFilter vào localStorage khi thay đổi
+    useEffect(() => {
+        try {
+            if (nameFilter.trim()) {
+                localStorage.setItem('searchNameCache', nameFilter);
+            } else {
+                localStorage.removeItem('searchNameCache');
+            }
+        } catch (e) {
+            console.warn('Không thể lưu vào localStorage:', e);
+        }
+    }, [nameFilter]);
+
+    const [tempNotification, setTempNotification] = useState(null); 
+    const showTempNotification = useCallback((message) => setTempNotification(message), []);
+    const dismissTempNotification = useCallback(() => setTempNotification(null), []);
+
+    const [isAuthPopupVisible, setIsAuthPopupVisible] = useState(true); // Popup thông báo khi mới vào web
+    const showAuthPopup = useCallback(() => setIsAuthPopupVisible(true), []);
+    const hideAuthPopup = useCallback(() => setIsAuthPopupVisible(false), []);
+
+    const [isReportFormVisible, setIsReportFormVisible] = useState(false);
+    const [selectedJob, setSelectedJob] = useState(null);
+    const handleQuickReportClick = useCallback((job) => {
+        console.log('handleQuickReportClick called with job:', job);
+        setSelectedJob(job);
+        setIsReportFormVisible(true);
+        console.log('State updated: isReportFormVisible = true, selectedJob =', job);
+    }, []);
+    const hideReportForm = useCallback(() => {
+        setIsReportFormVisible(false);
+        setSelectedJob(null);
+    }, []);
+
+    const [currentTime, setCurrentTime] = useState(new Date());
     
-    if (dateFilter) { 
-      jobsToFilter = jobsToFilter.filter(job => (job['Date livestream'] || '').toString() === dateFilter);
-    }
-    if (sessionFilter) {
-        const normalizedFilter = sessionFilter.toLowerCase();
-        jobsToFilter = jobsToFilter.filter(job => (job['Type of session'] || '').trim().toLowerCase() === normalizedFilter);
-    }
-    if (storeFilter) {
-        const normalizedFilter = storeFilter.toLowerCase();
-        jobsToFilter = jobsToFilter.filter(job => (job.Store || '').trim().toLowerCase() === normalizedFilter);
-    }
+    useEffect(() => {
+        const intervalId = setInterval(() => setCurrentTime(new Date()), 60000); 
+        return () => clearInterval(intervalId);
+    }, []);
 
-    return jobsToFilter;
+    // Logic lọc
+    const filteredJobs = useMemo(() => {
+        const dummy = currentTime.toISOString(); 
+        
+        let jobsToFilter = jobs;
+        const normNameFilter = removeAccents(nameFilter.toLowerCase().trim());
+        
+        if (normNameFilter) {
+            jobsToFilter = jobsToFilter.filter(job => {
+                const jobStr = `${job['Talent 1']} ${job['Talent 2']} ${job['Coordinator 1']} ${job['Coordinator 2']} ${job.Store} ${job.Address} ${job['Studio/Room']}`;
+                return removeAccents(jobStr.toLowerCase()).includes(normNameFilter);
+            });
+        }
+        
+        if (dateFilter) { 
+            jobsToFilter = jobsToFilter.filter(job => (job['Date livestream'] || '').toString() === dateFilter);
+        }
+        if (sessionFilter) {
+            const normalizedFilter = sessionFilter.toLowerCase();
+            jobsToFilter = jobsToFilter.filter(job => (job['Type of session'] || '').trim().toLowerCase() === normalizedFilter);
+        }
+        if (storeFilter) {
+            const normalizedFilter = storeFilter.toLowerCase();
+            jobsToFilter = jobsToFilter.filter(job => (job.Store || '').trim().toLowerCase() === normalizedFilter);
+        }
 
-  }, [jobs, dateFilter, nameFilter, sessionFilter, storeFilter, currentTime]);
+        return jobsToFilter;
 
-  // Logic Gom Nhóm (Dùng toàn bộ, không giới hạn)
-  const groupedJobs = useMemo(() => {
-    return filteredJobs.reduce((acc, job) => { // 👈 Dùng filteredJobs
-      const timeGroup = job['Time slot'] || 'N/A';
-      if (!acc[timeGroup]) acc[timeGroup] = [];
-      acc[timeGroup].push(job);
-      return acc;
-    }, {});
-  }, [filteredJobs]);
+    }, [jobs, dateFilter, nameFilter, sessionFilter, storeFilter, currentTime]);
 
-  // 🌟 TỐI ƯU HÓA 2: "Làm phẳng" (Flatten) dữ liệu để ảo hóa
-  const flatRowItems = useMemo(() => {
-    const items = [];
-    const jobGroups = Object.keys(groupedJobs);
+    // Logic Gom Nhóm (Dùng toàn bộ, không giới hạn)
+    const groupedJobs = useMemo(() => {
+        return filteredJobs.reduce((acc, job) => { // 👈 Dùng filteredJobs
+            const timeGroup = job['Time slot'] || 'N/A';
+            if (!acc[timeGroup]) acc[timeGroup] = [];
+            acc[timeGroup].push(job);
+            return acc;
+        }, {});
+    }, [filteredJobs]);
 
-    jobGroups.forEach(timeGroup => {
-        items.push({ id: `header_${timeGroup}`, type: 'HEADER', content: timeGroup });
-        groupedJobs[timeGroup].forEach((job, index) => {
-            items.push({
-                id: `job_${timeGroup}_${index}`,
-                type: 'JOB',
-                content: job,
-                isActive: isJobActive(job)
+    // 🌟 TỐI ƯU HÓA 2: "Làm phẳng" (Flatten) dữ liệu để ảo hóa
+    const flatRowItems = useMemo(() => {
+        const items = [];
+        const jobGroups = Object.keys(groupedJobs);
+
+        jobGroups.forEach(timeGroup => {
+            items.push({ id: `header_${timeGroup}`, type: 'HEADER', content: timeGroup });
+            groupedJobs[timeGroup].forEach((job, index) => {
+                items.push({
+                    id: `job_${timeGroup}_${index}`,
+                    type: 'JOB',
+                    content: job,
+                    isActive: isJobActive(job)
+                });
             });
         });
-    });
-    return items;
-  }, [groupedJobs]);
+        return items;
+    }, [groupedJobs]);
 
 
-  // 🌟 TỐI ƯU HÓA 2: Khởi tạo Virtualizer
-  const parentRef = useRef(null);
-  
-  const rowVirtualizer = useVirtualizer({
-    count: flatRowItems.length, 
-    getScrollElement: () => parentRef.current,
-    estimateSize: (index) => {
-        const itemType = flatRowItems[index]?.type;
-        return itemType === 'HEADER' ? 50 : 360; // 50px cho Header, 360px cho JobItem
-    },
-    overscan: 5, 
-  });
+    const totalFilteredCount = filteredJobs.length;
 
-  const virtualItems = rowVirtualizer.getVirtualItems();
-  const totalFilteredCount = filteredJobs.length;
+    // Giao diện
+    return (
+        <div className="App">
+            <NotificationPopup isVisible={isAuthPopupVisible} setIsVisible={hideAuthPopup} /> 
+            <QuickReportForm 
+                isVisible={isReportFormVisible} 
+                setIsVisible={hideReportForm}
+                job={selectedJob}
+                showTempNotification={showTempNotification}
+            />
+            
+            <Header 
+                theme={theme} 
+                toggleTheme={toggleTheme} 
+                showAuthPopup={showAuthPopup}
+            />
+            
+            <TemporaryNotification message={tempNotification} onDismiss={dismissTempNotification} />
 
-  // Giao diện
-  return (
-    <div className="App">
-        <NotificationPopup isVisible={isAuthPopupVisible} setIsVisible={hideAuthPopup} /> 
-        
-      <Header 
-        theme={theme} 
-        toggleTheme={toggleTheme} 
-        showAuthPopup={showAuthPopup}
-      />
-      
-      <TemporaryNotification message={tempNotification} onDismiss={dismissTempNotification} />
+            <main>
+                {/* 🌟 TỐI ƯU HÓA 4: Truyền 'setNameFilter' */}
+                <FilterBar 
+                    dateFilter={dateFilter}
+                    setDateFilter={setDateFilter}
+                    setNameFilter={setNameFilter} // 👈 ĐÃ THÊM
+                    uniqueDates={uniqueDates}
+                    filteredJobs={filteredJobs} // 👈 Truyền toàn bộ danh sách đã lọc
+                    
+                    sessionFilter={sessionFilter}
+                    setSessionFilter={setSessionFilter}
+                    uniqueSessions={uniqueSessions}
 
-      <main>
-        {/* 🌟 TỐI ƯU HÓA 4: Truyền 'setNameFilter' */}
-        <FilterBar 
-          dateFilter={dateFilter}
-          setDateFilter={setDateFilter}
-          setNameFilter={setNameFilter} // 👈 ĐÃ THÊM
-          uniqueDates={uniqueDates}
-          filteredJobs={filteredJobs} // 👈 Truyền toàn bộ danh sách đã lọc
-          
-          sessionFilter={sessionFilter}
-          setSessionFilter={setSessionFilter}
-          uniqueSessions={uniqueSessions}
-
-          storeFilter={storeFilter}
-          setStoreFilter={setStoreFilter}
-          uniqueStores={uniqueStores}
-          showTempNotification={showTempNotification}
-        />
-        
-        {jobs.length > 0 && totalFilteredCount > 0 && (
-            <motion.div 
-                className="job-count-summary"
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-            >
-                <FiFilter size={18} style={{marginRight: '8px'}}/>
-                Tìm thấy <strong style={{color: 'var(--color-brand)'}}>{totalFilteredCount}</strong> công việc
-                {dateFilter ? ` cho ngày ${dateFilter}` : ' trong danh sách'}
-            </motion.div>
-        )}
-        
-        <div id="schedule-list" className="schedule-list">
-          {error ? (
-             <motion.div className="empty-state" initial={{opacity:0}} animate={{opacity:1}}>
-                <FiSearch className="empty-state-icon" style={{color: '#dc3545'}}/>
-                <h3>Error Loading Data</h3>
-                <p>Could not connect to the Google Sheet. Please check the link or sharing permissions.</p>
-             </motion.div>
-          ) : isLoading ? (
-            <SkeletonLoader />
-          ) : (jobs.length > 0 && flatRowItems.length === 0) ? (
-            <EmptyState dateFilter={dateFilter} />
-          ) : (
-            // 🌟 TỐI ƯU HÓA 2: ÁP DỤNG VIRTUALIZER
-            <div 
-                ref={parentRef} 
-                className="virtual-list-container" // 👈 Container cuộn
-            >
-                <div style={{ height: `${rowVirtualizer.getTotalSize()}px`, width: '100%', position: 'relative' }}>
-                    {virtualItems.map((virtualItem) => {
-                        const item = flatRowItems[virtualItem.index];
-                        
-                        if (!item) {
-                            return null; 
-                        }
-                        
-                        return (
-                            <div
-                                key={item.id}
-                                style={{
-                                    position: 'absolute',
-                                    top: 0,
-                                    left: 0,
-                                    width: '100%',
-                                    transform: `translateY(${virtualItem.start}px)`,
-                                    paddingBottom: '15px' // 👈 Thêm padding dưới để tạo khoảng cách
-                                }}
-                            >
-                                {item.type === 'HEADER' ? (
-                                    <h3 className="schedule-group-title">{item.content}</h3>
-                                ) : (
-                                    <JobItem 
-                                        job={item.content} 
-                                        isActive={item.isActive} 
-                                    />
-                                )}
-                            </div>
-                        );
-                    })}
+                    storeFilter={storeFilter}
+                    setStoreFilter={setStoreFilter}
+                    uniqueStores={uniqueStores}
+                    showTempNotification={showTempNotification}
+                />
+                
+                {jobs.length > 0 && totalFilteredCount > 0 && (
+                    <motion.div 
+                        className="job-count-summary"
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3 }}
+                    >
+                        <FiFilter size={18} style={{marginRight: '8px'}}/>
+                        <span>Tìm thấy <strong style={{color: 'var(--color-brand)'}}>{totalFilteredCount}</strong> công việc{dateFilter ? ` cho ngày ${dateFilter}` : ' trong danh sách'}</span>
+                    </motion.div>
+                )}
+                
+                <div id="schedule-list" className="schedule-list">
+                    {error ? (
+                        <motion.div className="empty-state" initial={{opacity:0}} animate={{opacity:1}}>
+                            <FiSearch className="empty-state-icon" style={{color: '#dc3545'}}/>
+                            <h3>Error Loading Data</h3>
+                            <p>Could not connect to the Google Sheet. Please check the link or sharing permissions.</p>
+                        </motion.div>
+                    ) : isLoading ? (
+                        <SkeletonLoader />
+                    ) : (jobs.length > 0 && flatRowItems.length === 0) ? (
+                        <EmptyState dateFilter={dateFilter} />
+                    ) : (
+                        // Render tất cả items để scroll tự nhiên
+                        <div className="schedule-list">
+                            {flatRowItems.map((item) => {
+                                if (!item) return null;
+                                
+                                return (
+                                    <div key={item.id}>
+                                        {item.type === 'HEADER' ? (
+                                            <h3 className="schedule-group-title">{item.content}</h3>
+                                        ) : (
+                                            <JobItem 
+                                                job={item.content} 
+                                                isActive={item.isActive}
+                                                onQuickReportClick={handleQuickReportClick}
+                                                hostGroups={hostGroups}
+                                                brandGroups={brandGroups}
+                                            />
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
                 </div>
-            </div>
-          )}
+            </main>
         </div>
-      </main>
-    </div>
-  );
+    );
+
 }
 
 export default App;
