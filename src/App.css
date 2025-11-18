@@ -566,21 +566,54 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
 .schedule-item p svg {
   margin-right: var(--spacing-sm);
   font-size: 1.1em;
-  color: var(--color-brand);
   flex-shrink: 0;
   width: 20px;
 }
 
-.schedule-item p.location svg {
-  color: var(--color-danger);
-}
-
+/* Time icon - Slate blue */
 .schedule-item p.time svg {
-  color: var(--color-grey);
+  color: #64748b;
 }
 
+/* Location icon - Red */
+.schedule-item p.location svg {
+  color: #ef4444;
+}
+
+/* MC icon - Blue */
+.schedule-item p.mc svg {
+  color: #2563eb;
+}
+
+/* Standby icon - Purple */
+.schedule-item p.standby svg {
+  color: #8b5cf6;
+}
+
+/* Ca nối icon - Amber/Orange */
 .schedule-item p.session svg {
-  color: var(--color-warning);
+  color: #f59e0b;
+}
+
+/* Dark mode adjustments */
+body[data-theme='dark'] .schedule-item p.time svg {
+  color: #94a3b8;
+}
+
+body[data-theme='dark'] .schedule-item p.location svg {
+  color: #f87171;
+}
+
+body[data-theme='dark'] .schedule-item p.mc svg {
+  color: #60a5fa;
+}
+
+body[data-theme='dark'] .schedule-item p.standby svg {
+  color: #a78bfa;
+}
+
+body[data-theme='dark'] .schedule-item p.session svg {
+  color: #fbbf24;
 }
 
 /* --- 6. GROUP LINKS (Modern Link Design) --- */

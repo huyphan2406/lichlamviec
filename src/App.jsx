@@ -524,7 +524,7 @@ const JobItem = memo(({ job, isActive, onQuickReport, brandGroup, hostGroup }) =
       <p className="time"><FiClock /> {timeGroup}</p>
       <p className="location"><FiMapPin /> {locationDisplay}</p>
       <p className="mc"><FiUser /> {talentDisplay}</p>
-      <p className="standby"><FiMonitor /> {coordDisplay}</p>
+      <p className="standby"><FiUserCheck /> {coordDisplay}</p>
       {isCaNoi && (
         <p className="session"><FiZap /> Ca nối</p>
       )}
