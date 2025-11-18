@@ -76,7 +76,7 @@ const normalizeName = (name) => {
 // Hàm fetch và parse CSV (Tối ưu tốc độ)
 async function fetchGroupsData(csvUrl) {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000); // Timeout 5 giây (giảm từ 8s)
+    const timeoutId = setTimeout(() => controller.abort(), 8000); // Timeout 8 giây
     
     try {
         const response = await fetch(csvUrl, {
@@ -84,8 +84,7 @@ async function fetchGroupsData(csvUrl) {
             headers: {
                 'Accept': 'text/csv',
                 'Cache-Control': 'no-cache'
-            },
-            keepalive: true // Tối ưu connection
+            }
         });
         
         clearTimeout(timeoutId);
@@ -190,14 +189,11 @@ export default async function handler(request, response) {
         const hostGroupsObject = Object.fromEntries(hostGroupsMap);
         const brandGroupsObject = Object.fromEntries(brandGroupsMap);
         
-        // 4. Đặt Cache Header (Tối ưu)
+        // 4. Đặt Cache Header (refresh mỗi 60s)
         response.setHeader(
             'Cache-Control',
-            'public, s-maxage=300, stale-while-revalidate=600, max-age=120'
+            'public, s-maxage=60, stale-while-revalidate=120'
         );
-        // s-maxage=300: CDN cache 5 phút
-        // stale-while-revalidate=600: Serve stale data trong 10 phút khi đang revalidate
-        // max-age=120: Browser cache 2 phút
         
         // 5. Trả về dữ liệu JSON với cả Host và Brand
         response.status(200).json({

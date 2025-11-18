@@ -41,14 +41,13 @@ const getFormattedToday = () => {
 const jsonFetcher = (url) => fetch(url).then((res) => res.json());
 
 // HÀM KIỂM TRA CÔNG VIỆC ĐANG HOẠT ĐỘNG (60 PHÚT)
-// Tối ưu: nhận now như optional parameter để tránh tạo Date mới mỗi lần
-const isJobActive = (job, now = null) => {
+const isJobActive = (job) => {
     try {
         if (!job || !job['Date livestream'] || !job['Time slot']) {
             return false;
         }
         
-        const currentTime = now || new Date();
+        const now = new Date();
         const [day, month, year] = job['Date livestream'].split('/');
         const [startTimeStr, endTimeStr] = (job['Time slot'] || '00:00 - 00:00').split(' - ');
         
@@ -63,13 +62,9 @@ const isJobActive = (job, now = null) => {
             jobEndTime.setDate(jobEndTime.getDate() + 1);
         }
 
-        const nowTime = currentTime.getTime();
-        const startTime = jobStartTime.getTime();
-        const endTime = jobEndTime.getTime();
-        
-        const isRunning = nowTime >= startTime && nowTime < endTime;
+        const isRunning = now.getTime() >= jobStartTime.getTime() && now.getTime() < jobEndTime.getTime();
         const soonThreshold = 60 * 60 * 1000; // 60 phút
-        const timeToStart = startTime - nowTime;
+        const timeToStart = jobStartTime.getTime() - now.getTime();
         const isStartingSoon = timeToStart > 0 && timeToStart <= soonThreshold;
 
         return isRunning || isStartingSoon;
@@ -118,12 +113,8 @@ function useJobData() {
     API_URL,
     jsonFetcher, 
     {
-      refreshInterval: 120000, // Tăng lên 2 phút thay vì 1 phút
-      revalidateOnFocus: false, // Tắt revalidate khi focus (giảm fetch không cần thiết)
-      revalidateOnReconnect: true, // Chỉ revalidate khi reconnect
-      dedupingInterval: 60000, // Dedupe requests trong 1 phút
-      errorRetryCount: 2, // Retry tối đa 2 lần
-      errorRetryInterval: 1000, // Retry sau 1 giây
+      refreshInterval: 60000, 
+      revalidateOnFocus: true
     }
   );
 
@@ -146,11 +137,7 @@ function useGroupsData() {
     jsonFetcher,
     {
       refreshInterval: 300000, // Refresh mỗi 5 phút
-      revalidateOnFocus: false,
-      revalidateOnReconnect: true,
-      dedupingInterval: 120000, // Dedupe requests trong 2 phút
-      errorRetryCount: 2,
-      errorRetryInterval: 1000,
+      revalidateOnFocus: false
     }
   );
 
@@ -402,7 +389,7 @@ const FilterBar = ({
             </select>
         </div>
         <div className="form-group filter-session">
-            <label htmlFor="sessionInput">Loại ca</label>
+            <label htmlFor="sessionInput">Loại Ca</label>
             <select id="sessionInput" value={sessionFilter} onChange={(e) => setSessionFilter(e.target.value)}>
                 <option value="">All Sessions</option>
                 {uniqueSessions.map(session => <option key={session} value={session}>{session}</option>)}
@@ -459,18 +446,13 @@ const EmptyState = ({ dateFilter }) => (
   </motion.div>
 );
 
-// Tối ưu: Custom comparison để tránh re-render không cần thiết
 const JobItem = memo(({ job, isActive, onQuickReport, hostGroups, brandGroups }) => {
   const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } };
   const timeGroup = `${job['Time slot'] || 'N/A'}`;
   const talentDisplay = combineNames(job['Talent 1'], job['Talent 2']);
   const coordDisplay = combineNames(job['Coordinator 1'], job['Coordinator 2']);
   const locationDisplay = combineLocation(job);
-  // Format session type: "ca nối" -> "Ca nối", còn lại giữ nguyên, nếu rỗng thì "—"
-  const rawSessionType = job['Type of session'] && job['Type of session'].trim() !== '' ? job['Type of session'] : null;
-  const sessionTypeDisplay = rawSessionType 
-    ? (rawSessionType.toLowerCase() === 'ca nối' ? 'Ca nối' : rawSessionType)
-    : '—';
+  const sessionTypeDisplay = job['Type of session'] && job['Type of session'].trim() !== '' ? job['Type of session'] : '—';
   
   // Tìm group links
   const brandGroup = findGroupLink(job, brandGroups, 'brand');
@@ -511,7 +493,7 @@ const JobItem = memo(({ job, isActive, onQuickReport, hostGroups, brandGroups })
       
       <p className="time"><FiClock /> {timeGroup}</p>
       <p className="location"><FiMapPin /> {locationDisplay}</p>
-      <p className="session"><FiMic /> Loại ca: {sessionTypeDisplay}</p> 
+      <p className="session"><FiMic /> Loại Ca: {sessionTypeDisplay}</p> 
       <p className="mc"><FiUser /> {talentDisplay}</p>
       <p className="standby"><FiMonitor /> {coordDisplay}</p>
 
@@ -555,14 +537,6 @@ const JobItem = memo(({ job, isActive, onQuickReport, hostGroups, brandGroups })
       </div>
     </motion.div>
   );
-}, (prevProps, nextProps) => {
-  // Custom comparison: chỉ re-render nếu job, isActive, hoặc groups thay đổi
-  return (
-    prevProps.job === nextProps.job &&
-    prevProps.isActive === nextProps.isActive &&
-    prevProps.hostGroups === nextProps.hostGroups &&
-    prevProps.brandGroups === nextProps.brandGroups
-  );
 });
 
 // --- COMPONENT APP CHÍNH ---
@@ -571,37 +545,10 @@ function App() {
   const { jobs, isLoading, uniqueDates, uniqueSessions, uniqueStores, error } = useJobData();
   const { hostGroups, brandGroups } = useGroupsData();
   
-  // Load filters từ localStorage hoặc dùng default
-  const [dateFilter, setDateFilter] = useState(() => {
-    const saved = localStorage.getItem('schedule_dateFilter');
-    return saved || getFormattedToday();
-  });
-  const [nameFilter, setNameFilter] = useState(() => {
-    return localStorage.getItem('schedule_nameFilter') || '';
-  });
-  const [sessionFilter, setSessionFilter] = useState(() => {
-    return localStorage.getItem('schedule_sessionFilter') || '';
-  });
-  const [storeFilter, setStoreFilter] = useState(() => {
-    return localStorage.getItem('schedule_storeFilter') || '';
-  });
-
-  // Lưu filters vào localStorage mỗi khi thay đổi
-  useEffect(() => {
-    localStorage.setItem('schedule_dateFilter', dateFilter);
-  }, [dateFilter]);
-
-  useEffect(() => {
-    localStorage.setItem('schedule_nameFilter', nameFilter);
-  }, [nameFilter]);
-
-  useEffect(() => {
-    localStorage.setItem('schedule_sessionFilter', sessionFilter);
-  }, [sessionFilter]);
-
-  useEffect(() => {
-    localStorage.setItem('schedule_storeFilter', storeFilter);
-  }, [storeFilter]);
+  const [dateFilter, setDateFilter] = useState(() => getFormattedToday());
+  const [nameFilter, setNameFilter] = useState(''); 
+  const [sessionFilter, setSessionFilter] = useState('');
+  const [storeFilter, setStoreFilter] = useState('');
 
   const [tempNotification, setTempNotification] = useState(null); 
   const showTempNotification = useCallback((message) => setTempNotification(message), []);
@@ -657,42 +604,32 @@ function App() {
     }, {});
   }, [filteredJobs]);
 
-  // Tối ưu hóa Virtualization: Flatten data (tối ưu isJobActive)
+  // Tối ưu hóa Virtualization: Flatten data
   const flatRowItems = useMemo(() => {
     const items = [];
     const jobGroups = Object.keys(groupedJobs);
-    const now = new Date(); // Cache current time
-    
     jobGroups.forEach(timeGroup => {
         items.push({ id: `header_${timeGroup}`, type: 'HEADER', content: timeGroup });
         groupedJobs[timeGroup].forEach((job, index) => {
-            // Chỉ tính isActive khi cần, tối ưu bằng cách cache now
-            items.push({ 
-              id: `job_${timeGroup}_${index}`, 
-              type: 'JOB', 
-              content: job, 
-              isActive: isJobActive(job, now) // Pass now để tránh tạo Date mới
-            });
+            items.push({ id: `job_${timeGroup}_${index}`, type: 'JOB', content: job, isActive: isJobActive(job) });
         });
     });
     return items;
   }, [groupedJobs]);
 
   const parentRef = useRef(null);
-  const scrollElementRef = useRef(null);
-  
-  // Cache scroll element để tránh tìm lại mỗi lần render
-  useEffect(() => {
-    if (parentRef.current) {
-      scrollElementRef.current = parentRef.current.closest('main') || document.body;
-    }
-  }, [flatRowItems.length]);
   
   const rowVirtualizer = useVirtualizer({
     count: flatRowItems.length,
-    getScrollElement: () => scrollElementRef.current,
+    getScrollElement: () => {
+      // Tìm main element từ parentRef
+      if (parentRef.current) {
+        return parentRef.current.closest('main') || document.body;
+      }
+      return null;
+    },
     estimateSize: (index) => (flatRowItems[index]?.type === 'HEADER' ? 50 : 360),
-    overscan: 3, // Giảm từ 5 xuống 3 để giảm số lượng items render
+    overscan: 5,
   });
 
   const virtualItems = rowVirtualizer.getVirtualItems();
@@ -749,7 +686,7 @@ function App() {
                             <div key={item.id} style={{
                                 position: 'absolute', top: 0, left: 0, width: '100%',
                                 transform: `translateY(${virtualItem.start}px)`,
-                                paddingBottom: '24px' // Tăng từ 15px lên 24px
+                                paddingBottom: '20px' 
                             }}>
                                 {item.type === 'HEADER' ? (
                                     <h3 className="schedule-group-title">

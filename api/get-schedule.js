@@ -29,7 +29,7 @@ const getUniqueItems = (list) => {
 async function fetchData() {
     // 1. Fetch với timeout và tối ưu
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000); // Timeout 5 giây (giảm từ 10s)
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // Timeout 10 giây
     
     try {
         const response = await fetch(CSV_URL, {
@@ -37,8 +37,7 @@ async function fetchData() {
             headers: {
                 'Accept': 'text/csv',
                 'Cache-Control': 'no-cache'
-            },
-            keepalive: true // Tối ưu connection
+            }
         });
         
         clearTimeout(timeoutId);
@@ -127,14 +126,11 @@ export default async function handler(request, response) {
         stores: uniqueStores
     };
 
-    // 3. Đặt Cache Header (Tối ưu)
+    // 3. Đặt Cache Header
     response.setHeader(
         'Cache-Control',
-        'public, s-maxage=300, stale-while-revalidate=600, max-age=60'
+        'public, s-maxage=600, stale-while-revalidate=1200'
     );
-    // s-maxage=300: CDN cache 5 phút
-    // stale-while-revalidate=600: Serve stale data trong 10 phút khi đang revalidate
-    // max-age=60: Browser cache 1 phút
     
     // 4. Trả về dữ liệu JSON
     response.status(200).json(processedData);

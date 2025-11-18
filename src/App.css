@@ -193,12 +193,8 @@ main {
 
 .auth-button.register:hover {
   background-color: var(--color-brand-hover);
-  transform: translateY(-1px) scale(1.02);
+  transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(var(--color-brand-rgb), 0.3);
-}
-
-.auth-button:active {
-  transform: translateY(0) scale(1);
 }
 
 /* Theme Toggle - Modern Switch */
@@ -381,12 +377,12 @@ input:checked + .theme-toggle-slider:before {
 
 .download-button:hover:not(:disabled) {
   background-color: var(--color-brand-hover);
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 6px 20px rgba(var(--color-brand-rgb), 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(var(--color-brand-rgb), 0.35);
 }
 
 .download-button:active:not(:disabled) {
-  transform: translateY(0) scale(1);
+  transform: translateY(0);
 }
 
 .download-button:disabled {
@@ -412,10 +408,10 @@ input:checked + .theme-toggle-slider:before {
   font-size: 1rem;
   font-weight: 700;
   color: var(--color-brand);
-  padding: var(--spacing-lg) 0 var(--spacing-md) 0; /* Tăng padding top từ md lên lg */
+  padding: var(--spacing-lg) 0 var(--spacing-md) 0;
   border-top: 2px solid var(--color-border);
-  margin-top: var(--spacing-xl); /* Tăng từ lg lên xl */
-  margin-bottom: var(--spacing-lg); /* Tăng từ md lên lg */
+  margin-top: var(--spacing-xl);
+  margin-bottom: var(--spacing-lg);
   text-transform: uppercase;
   letter-spacing: 1px;
   position: static;
@@ -426,18 +422,11 @@ input:checked + .theme-toggle-slider:before {
   border-radius: var(--radius-lg);
   box-shadow: 0 2px 8px var(--color-shadow);
   padding: var(--spacing-lg);
-  margin: var(--spacing-lg) 0; /* Tăng từ md lên lg */
+  margin: var(--spacing-lg) 0;
   border: 1px solid var(--color-border);
-  transition: all var(--transition-smooth);
+  transition: all var(--transition-speed);
   position: relative;
   overflow: hidden;
-  cursor: pointer;
-}
-
-/* Tăng khoảng cách cho item đầu tiên sau title */
-.schedule-group-title + div > .schedule-item,
-.schedule-group-title ~ div > .schedule-item:first-of-type {
-  margin-top: var(--spacing-md);
 }
 
 .schedule-item::before {
@@ -446,49 +435,19 @@ input:checked + .theme-toggle-slider:before {
   top: 0;
   left: 0;
   right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, var(--color-brand), var(--color-brand-hover), var(--color-brand));
-  background-size: 200% 100%;
+  height: 3px;
+  background: linear-gradient(90deg, var(--color-brand), var(--color-brand-hover));
   opacity: 0;
-  transition: all var(--transition-smooth);
-  animation: shimmer 2s infinite;
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-.schedule-item::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, rgba(var(--color-brand-rgb), 0.03) 0%, transparent 100%);
-  opacity: 0;
-  transition: opacity var(--transition-smooth);
-  pointer-events: none;
+  transition: opacity var(--transition-speed);
 }
 
 .schedule-item:hover {
-  transform: translateY(-6px) scale(1.01);
-  box-shadow: 0 12px 32px rgba(var(--color-brand-rgb), 0.15), 0 4px 16px var(--color-shadow-hover);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px var(--color-shadow-hover);
   border-color: var(--color-brand);
-  background-color: var(--color-card);
 }
 
 .schedule-item:hover::before {
-  opacity: 1;
-  height: 4px;
-}
-
-.schedule-item:hover::after {
   opacity: 1;
 }
 
@@ -549,12 +508,12 @@ input:checked + .theme-toggle-slider:before {
 
 .quick-report-button:hover {
   background-color: var(--color-report-hover);
-  transform: translateY(-2px) scale(1.05);
-  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
 }
 
 .quick-report-button:active {
-  transform: translateY(0) scale(1);
+  transform: translateY(0);
 }
 
 /* Job Info */
@@ -650,13 +609,13 @@ input:checked + .theme-toggle-slider:before {
 
 .job-group-link:hover {
   background: linear-gradient(135deg, var(--color-brand-hover) 0%, var(--color-brand-active) 100%);
-  transform: translateY(-2px) scale(1.05);
-  box-shadow: 0 6px 16px rgba(var(--color-brand-rgb), 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(var(--color-brand-rgb), 0.4);
   color: white !important;
 }
 
 .job-group-link:active {
-  transform: translateY(0) scale(1);
+  transform: translateY(0);
 }
 
 .job-group-link-text {
@@ -950,7 +909,7 @@ input:checked + .theme-toggle-slider:before {
 
 .empty-state {
   padding: var(--spacing-xl);
-  text-align: left; /* Bỏ căn giữa */
+  text-align: center;
   color: var(--color-text-secondary);
   width: 100%;
   box-sizing: border-box;
