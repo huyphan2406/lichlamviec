@@ -408,9 +408,9 @@ input:checked + .theme-toggle-slider:before {
   font-size: 1rem;
   font-weight: 700;
   color: var(--color-brand);
-  padding: var(--spacing-lg) 0 var(--spacing-xl) 0;
+  padding: var(--spacing-md) 0 var(--spacing-lg) 0;
   border-top: 2px solid var(--color-border);
-  margin-top: var(--spacing-xl);
+  margin-top: var(--spacing-md);
   margin-bottom: 41px;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -710,7 +710,7 @@ input:checked + .theme-toggle-slider:before {
   display: flex;
   align-items: center;
   padding: var(--spacing-md) var(--spacing-lg);
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: var(--spacing-md);
   background: linear-gradient(135deg, var(--color-brand-light) 0%, transparent 100%);
   color: var(--color-text-primary);
   border-radius: var(--radius-md);
