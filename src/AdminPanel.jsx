@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import app from './firebase'; 
+import app from './firebase.js'; 
 import { useAuth } from './AuthContext.jsx'; 
 
 function AdminPanel() {

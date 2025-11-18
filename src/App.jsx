@@ -10,6 +10,7 @@ import {
   FiFilter, FiUsers, FiUserCheck, FiEdit3 
 } from 'react-icons/fi';
 import { useVirtualizer } from '@tanstack/react-virtual';
+import QuickReportForm from './QuickReportForm.jsx';
 import './App.css'; 
 
 // --- HÀM HỖ TRỢ ---
@@ -41,31 +42,34 @@ const jsonFetcher = (url) => fetch(url).then((res) => res.json());
 // HÀM KIỂM TRA CÔNG VIỆC ĐANG HOẠT ĐỘNG (60 PHÚT)
 const isJobActive = (job) => {
     try {
+        if (!job || !job['Date livestream'] || !job['Time slot']) {
+            return false;
+        }
+        
         const now = new Date();
         const [day, month, year] = job['Date livestream'].split('/');
         const [startTimeStr, endTimeStr] = (job['Time slot'] || '00:00 - 00:00').split(' - ');
         
         const [startHour, startMinute] = startTimeStr.split(':').map(Number);
-        const [endHour, endMinute] = (endTimeStr || '00:00').split(':').map(Number); 
+        const [endHour, endMinute] = (endTimeStr || startTimeStr).split(':').map(Number); 
 
-        const jobStartTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), startHour, startMinute);
-        jobStartTime.setFullYear(parseInt(year), parseInt(month) - 1, parseInt(day));
+        const jobStartTime = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), startHour, startMinute);
+        const jobEndTime = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), endHour, endMinute);
 
-        const jobEndTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), endHour, endMinute);
-        jobEndTime.setFullYear(parseInt(year), parseInt(month) - 1, parseInt(day));
-
+        // Nếu end time < start time, có thể là ca đêm qua ngày hôm sau
         if (jobEndTime.getTime() < jobStartTime.getTime()) {
             jobEndTime.setDate(jobEndTime.getDate() + 1);
         }
 
         const isRunning = now.getTime() >= jobStartTime.getTime() && now.getTime() < jobEndTime.getTime();
-        const soonThreshold = 60 * 60 * 1000; 
+        const soonThreshold = 60 * 60 * 1000; // 60 phút
         const timeToStart = jobStartTime.getTime() - now.getTime();
         const isStartingSoon = timeToStart > 0 && timeToStart <= soonThreshold;
 
         return isRunning || isStartingSoon;
 
     } catch (e) {
+        console.error("Lỗi isJobActive:", e, job);
         return false;
     }
 };
@@ -200,7 +204,7 @@ const handleAuthClick = (showAuthPopup) => showAuthPopup();
 
 const Header = ({ theme, toggleTheme, showAuthPopup }) => ( 
   <header className="app-header">
-    <h1>Lịch làm việc</h1>
+    <h1 className="header-title-centered">Lịch làm việc</h1>
     <div className="header-controls">
       {/* Nút Sáng/Tối bên TRÁI */}
       <label className="theme-toggle" title="Toggle Light/Dark Mode">
@@ -248,12 +252,21 @@ const FilterBar = ({
         const [day, month, year] = job['Date livestream'].split('/');
         const [startTimeStr, endTimeStr] = (job['Time slot'] || '00:00 - 00:00').split(' - ');
         const [startHour, startMinute] = startTimeStr.split(':').map(Number);
-        const [endHour, endMinute] = (endTimeStr || startTimeStr).split(':').map(Number); 
-        const durationHours = Math.floor((new Date(0, 0, 0, endHour, endMinute) - new Date(0, 0, 0, startHour, startMinute)) / (1000 * 60 * 60)); // Simplified duration logic for brevity
+        const [endHour, endMinute] = (endTimeStr || startTimeStr).split(':').map(Number);
+        
+        // Tính duration chính xác
+        const startDate = new Date(0, 0, 0, startHour, startMinute);
+        const endDate = new Date(0, 0, 0, endHour, endMinute);
+        let diffMs = endDate.getTime() - startDate.getTime();
+        if (diffMs <= 0) diffMs = 60 * 60 * 1000; // Fallback 1 giờ nếu end < start
+        
+        const durationHours = Math.floor(diffMs / (1000 * 60 * 60));
+        const durationMinutes = (diffMs / (1000 * 60)) % 60;
+        
         return {
           title: job.Store || 'Unnamed Job',
           start: [parseInt(year), parseInt(month), parseInt(day), startHour, startMinute],
-          duration: { hours: durationHours || 1, minutes: 0 }, // Fallback duration
+          duration: { hours: durationHours, minutes: durationMinutes },
           location: combineLocation(job),
           description: `MC: ${combineNames(job['Talent 1'], job['Talent 2'])}\nCoordinator: ${combineNames(job['Coordinator 1'], job['Coordinator 2'])}`
         };
@@ -351,7 +364,7 @@ const EmptyState = ({ dateFilter }) => (
   </motion.div>
 );
 
-const JobItem = memo(({ job, isActive }) => {
+const JobItem = memo(({ job, isActive, onQuickReport }) => {
   const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } };
   const timeGroup = `${job['Time slot'] || 'N/A'}`;
   const talentDisplay = combineNames(job['Talent 1'], job['Talent 2']);
@@ -362,8 +375,10 @@ const JobItem = memo(({ job, isActive }) => {
   const defaultUpdateMessage = "Đang cập nhật...";
 
   const handleQuickReport = useCallback(() => {
-    alert(`Tính năng đang được triển khai bạn vui lòng chờ nha!!!`);
-  }, []);
+    if (onQuickReport) {
+      onQuickReport(job);
+    }
+  }, [job, onQuickReport]);
 
   return (
     <motion.div className={`schedule-item ${isActive ? 'job-active' : ''}`} variants={itemVariants}>
@@ -411,6 +426,13 @@ function App() {
   const [isAuthPopupVisible, setIsAuthPopupVisible] = useState(true);
   const showAuthPopup = useCallback(() => setIsAuthPopupVisible(true), []);
   const hideAuthPopup = useCallback(() => setIsAuthPopupVisible(false), []);
+
+  const [quickReportJob, setQuickReportJob] = useState(null);
+  const [isQuickReportVisible, setIsQuickReportVisible] = useState(false);
+  const handleQuickReport = useCallback((job) => {
+    setQuickReportJob(job);
+    setIsQuickReportVisible(true);
+  }, []);
 
   const [currentTime, setCurrentTime] = useState(new Date());
   useEffect(() => {
@@ -478,6 +500,12 @@ function App() {
   return (
     <div className="App">
       <NotificationPopup isVisible={isAuthPopupVisible} setIsVisible={hideAuthPopup} /> 
+      <QuickReportForm 
+        isVisible={isQuickReportVisible} 
+        setIsVisible={setIsQuickReportVisible} 
+        job={quickReportJob}
+        showTempNotification={showTempNotification}
+      />
       <Header theme={theme} toggleTheme={toggleTheme} showAuthPopup={showAuthPopup} />
       <TemporaryNotification message={tempNotification} onDismiss={dismissTempNotification} />
 
@@ -525,7 +553,11 @@ function App() {
                                 {item.type === 'HEADER' ? (
                                     <h3 className="schedule-group-title">{item.content}</h3>
                                 ) : (
-                                    <JobItem job={item.content} isActive={item.isActive} />
+                                    <JobItem 
+                                      job={item.content} 
+                                      isActive={item.isActive}
+                                      onQuickReport={handleQuickReport}
+                                    />
                                 )}
                             </div>
                         );
