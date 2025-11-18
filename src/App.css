@@ -395,14 +395,13 @@ input:checked + .theme-toggle-slider:before {
   padding: 0;
   width: 100%;
   box-sizing: border-box;
+  /* Scroll sẽ ở ngoài (main hoặc body) */
 }
 
 .virtual-list-container {
   width: 100%;
-  height: 100%;
-  overflow-y: auto;
-  overflow-x: hidden;
   box-sizing: border-box;
+  /* Bỏ overflow để scroll ở ngoài */
 }
 
 .schedule-group-title {

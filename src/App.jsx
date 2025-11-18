@@ -620,7 +620,7 @@ function App() {
   const parentRef = useRef(null);
   const rowVirtualizer = useVirtualizer({
     count: flatRowItems.length,
-    getScrollElement: () => parentRef.current,
+    getScrollElement: () => window, // Scroll ở ngoài (window/body)
     estimateSize: (index) => (flatRowItems[index]?.type === 'HEADER' ? 50 : 360),
     overscan: 5, 
   });
@@ -670,8 +670,8 @@ function App() {
           ) : (jobs.length > 0 && flatRowItems.length === 0) ? (
             <EmptyState dateFilter={dateFilter} />
           ) : (
-            <div ref={parentRef} className="virtual-list-container">
-                <div style={{ height: `${rowVirtualizer.getTotalSize()}px`, width: '100%', position: 'relative' }}>
+            <div className="virtual-list-container">
+                <div ref={parentRef} style={{ height: `${rowVirtualizer.getTotalSize()}px`, width: '100%', position: 'relative' }}>
                     {virtualItems.map((virtualItem) => {
                         const item = flatRowItems[virtualItem.index];
                         if (!item) return null; 
@@ -682,7 +682,9 @@ function App() {
                                 paddingBottom: '15px' 
                             }}>
                                 {item.type === 'HEADER' ? (
-                                    <h3 className="schedule-group-title">{item.content}</h3>
+                                    <h3 className="schedule-group-title">
+                                      {item.content.toLowerCase() === 'ca nối' ? 'Ca nối' : item.content}
+                                    </h3>
                                 ) : (
                                     <JobItem 
                                       job={item.content} 

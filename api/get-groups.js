@@ -73,31 +73,50 @@ const normalizeName = (name) => {
     return str.trim();
 };
 
-// Hàm fetch và parse CSV
+// Hàm fetch và parse CSV (Tối ưu tốc độ)
 async function fetchGroupsData(csvUrl) {
-    const response = await fetch(csvUrl);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000); // Timeout 8 giây
     
-    if (!response.ok) {
-        throw new Error(`Failed to fetch Groups CSV: ${response.statusText}`);
-    }
-    
-    const csvText = await response.text();
-
-    return new Promise((resolve, reject) => {
-        Papa.parse(csvText, {
-            header: true,
-            skipEmptyLines: true,
-            dynamicTyping: false,
-            transformHeader: (header) => header.replace(/\ufeff/g, '').trim(),
-            complete: (results) => {
-                resolve(results.data);
-            },
-            error: (err) => {
-                console.error("Lỗi Papa.parse Groups CSV:", err);
-                reject(err);
+    try {
+        const response = await fetch(csvUrl, {
+            signal: controller.signal,
+            headers: {
+                'Accept': 'text/csv',
+                'Cache-Control': 'no-cache'
             }
         });
-    });
+        
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+            throw new Error(`Failed to fetch Groups CSV: ${response.statusText}`);
+        }
+        
+        const csvText = await response.text();
+
+        return new Promise((resolve, reject) => {
+            Papa.parse(csvText, {
+                header: true,
+                skipEmptyLines: true,
+                dynamicTyping: false, // Tắt để parse nhanh hơn
+                transformHeader: (header) => header.replace(/\ufeff/g, '').trim(),
+                complete: (results) => {
+                    resolve(results.data);
+                },
+                error: (err) => {
+                    console.error("Lỗi Papa.parse Groups CSV:", err);
+                    reject(err);
+                }
+            });
+        });
+    } catch (error) {
+        clearTimeout(timeoutId);
+        if (error.name === 'AbortError') {
+            throw new Error('Request timeout: Groups CSV fetch quá chậm');
+        }
+        throw error;
+    }
 }
 
 // Hàm tạo map từ tên -> link Zalo (Đã sửa lỗi dò tìm tên cột)
@@ -109,62 +128,36 @@ function createGroupsMap(rawData, type = 'unknown') {
     const NAME_KEYS = ['group brand', 'tên host', 'ten host', 'tên brand', 'ten brand', 'name', 'tên', 'mc name', 'brand name', 'ten brand name'];
     const LINK_KEYS = ['link', 'link dép lào', 'link dep lao', 'link zalo', 'zalo link', 'link zalo group', 'zalo group link'];
     
-    // DEBUG: Log tên cột của row đầu tiên
-    if (rawData.length > 0) {
-        const firstRow = rawData[0];
-        const firstRowKeys = Object.keys(firstRow);
-        console.log(`🔍 [API] ${type} - First row keys:`, firstRowKeys);
-        console.log(`🔍 [API] ${type} - First row keys normalized:`, firstRowKeys.map(k => normalizeName(k)));
-    }
+    // Tối ưu: Cache normalized keys để tránh normalize nhiều lần
+    const normalizedNameKeys = new Set(NAME_KEYS);
+    const normalizedLinkKeys = new Set(LINK_KEYS);
     
-    // Hàm tìm tên cột khớp (tìm giá trị trong row dựa trên danh sách khóa tiềm năng)
-    const findMatchingKey = (row, potentialKeys) => {
-        const rowKeys = Object.keys(row);
-        for (const rowKey of rowKeys) {
-            const normalizedRowKey = normalizeName(rowKey); // Chuẩn hóa tên cột của dữ liệu
-            if (potentialKeys.includes(normalizedRowKey)) {
+    // Hàm tìm tên cột khớp (tối ưu với Set lookup)
+    const findMatchingKey = (row, potentialKeysSet) => {
+        for (const rowKey of Object.keys(row)) {
+            const normalizedRowKey = normalizeName(rowKey);
+            if (potentialKeysSet.has(normalizedRowKey)) {
                 return row[rowKey];
             }
         }
         return '';
     };
 
-    let processedCount = 0;
-    let skippedCount = 0;
-    
-    rawData.forEach((row, index) => {
-        // Lấy giá trị tên và link bằng cách tìm kiếm tên cột khớp
-        const hostName = findMatchingKey(row, NAME_KEYS);
-        const zaloLink = findMatchingKey(row, LINK_KEYS);
-        
-        // DEBUG: Log row đầu tiên để xem tại sao không match
-        if (index === 0) {
-            console.log(`🔍 [API] ${type} - First row debug:`, {
-                hostName,
-                zaloLink,
-                hasHostName: !!hostName,
-                hasZaloLink: !!zaloLink,
-                rowKeys: Object.keys(row)
-            });
-        }
+    // Xử lý dữ liệu (bỏ debug logs để tăng tốc)
+    for (const row of rawData) {
+        const hostName = findMatchingKey(row, normalizedNameKeys);
+        const zaloLink = findMatchingKey(row, normalizedLinkKeys);
         
         if (hostName && zaloLink) {
-            // Sử dụng normalizeBrandName cho brand groups, normalizeName cho host groups
             const normalizedName = type.toUpperCase() === 'BRAND' 
-                ? normalizeName(normalizeBrandName(hostName)) // Brand: normalize brand name trước, rồi normalize chuẩn
-                : normalizeName(hostName); // Host: chỉ normalize chuẩn
-            // Lưu cả tên gốc và link
+                ? normalizeName(normalizeBrandName(hostName))
+                : normalizeName(hostName);
             groupsMap.set(normalizedName, {
                 originalName: hostName,
                 link: zaloLink
             });
-            processedCount++;
-        } else {
-            skippedCount++;
         }
-    });
-    
-    console.log(`🔍 [API] ${type} - Processed: ${processedCount}, Skipped: ${skippedCount}, Total rows: ${rawData.length}`);
+    }
     
     return groupsMap;
 }
@@ -186,41 +179,15 @@ export default async function handler(request, response) {
             })
         ]);
         
-        // DEBUG: Log raw data
-        console.log('🔍 [API] Raw Host Data rows:', hostData.length);
-        console.log('🔍 [API] Raw Brand Data rows:', brandData.length);
-        if (brandData.length > 0) {
-            console.log('🔍 [API] First Brand row:', brandData[0]);
-            console.log('🔍 [API] Brand row keys:', Object.keys(brandData[0] || {}));
-        }
+        // 2. Tạo map từ tên -> link Zalo cho cả Host và Brand (song song)
+        const [hostGroupsMap, brandGroupsMap] = await Promise.all([
+            Promise.resolve(createGroupsMap(hostData, 'HOST')),
+            Promise.resolve(createGroupsMap(brandData, 'BRAND'))
+        ]);
         
-        // 2. Tạo map từ tên -> link Zalo cho cả Host và Brand
-        const hostGroupsMap = createGroupsMap(hostData, 'HOST');
-        const brandGroupsMap = createGroupsMap(brandData, 'BRAND');
-        
-        // DEBUG: Log map sizes
-        console.log('🔍 [API] Host Groups Map size:', hostGroupsMap.size);
-        console.log('🔍 [API] Brand Groups Map size:', brandGroupsMap.size);
-        if (brandGroupsMap.size > 0) {
-            const firstBrandKey = Array.from(brandGroupsMap.keys())[0];
-            console.log('🔍 [API] First Brand key:', firstBrandKey);
-            console.log('🔍 [API] First Brand data:', brandGroupsMap.get(firstBrandKey));
-        }
-        
-        // 3. Chuyển Map thành Object để JSON serialize
-        const hostGroupsObject = {};
-        hostGroupsMap.forEach((value, key) => {
-            hostGroupsObject[key] = value;
-        });
-        
-        const brandGroupsObject = {};
-        brandGroupsMap.forEach((value, key) => {
-            brandGroupsObject[key] = value;
-        });
-        
-        // DEBUG: Log final objects
-        console.log('🔍 [API] Host Groups Object keys:', Object.keys(hostGroupsObject).length);
-        console.log('🔍 [API] Brand Groups Object keys:', Object.keys(brandGroupsObject).length);
+        // 3. Chuyển Map thành Object để JSON serialize (tối ưu)
+        const hostGroupsObject = Object.fromEntries(hostGroupsMap);
+        const brandGroupsObject = Object.fromEntries(brandGroupsMap);
         
         // 4. Đặt Cache Header (refresh mỗi 60s)
         response.setHeader(

@@ -25,35 +25,52 @@ const getUniqueItems = (list) => {
     return Array.from(itemMap.values());
 };
 
-// 🌟🌟🌟 HÀM FETCH DỮ LIỆU (ĐÃ SỬA LỖI) 🌟🌟🌟
+// 🌟🌟🌟 HÀM FETCH DỮ LIỆU (TỐI ƯU TỐC ĐỘ) 🌟🌟🌟
 async function fetchData() {
-    // 1. Tải dữ liệu CSV về dưới dạng văn bản (text)
-    // (Đây là cách server (Node.js) fetch dữ liệu)
-    const response = await fetch(CSV_URL);
+    // 1. Fetch với timeout và tối ưu
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // Timeout 10 giây
     
-    if (!response.ok) {
-        // Nếu không tải được (ví dụ: Google Sheet CHƯA CHIA SẺ CÔNG KHAI)
-        throw new Error(`Failed to fetch CSV: ${response.statusText}`);
-    }
-    
-    const csvText = await response.text();
-
-    // 2. Dùng PapaParse để phân tích (parse) đoạn text đó
-    return new Promise((resolve, reject) => {
-        Papa.parse(csvText, { // 👈 Phân tích text, không download
-            header: true,
-            skipEmptyLines: true,
-            dynamicTyping: false,
-            transformHeader: (header) => header.replace(/\ufeff/g, '').trim(),
-            complete: (results) => {
-                resolve(results.data);
-            },
-            error: (err) => {
-                console.error("Lỗi Papa.parse trên server:", err);
-                reject(err);
+    try {
+        const response = await fetch(CSV_URL, {
+            signal: controller.signal,
+            headers: {
+                'Accept': 'text/csv',
+                'Cache-Control': 'no-cache'
             }
         });
-    });
+        
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+            throw new Error(`Failed to fetch CSV: ${response.statusText}`);
+        }
+        
+        const csvText = await response.text();
+
+        // 2. Dùng PapaParse với chế độ tối ưu tốc độ
+        return new Promise((resolve, reject) => {
+            Papa.parse(csvText, {
+                header: true,
+                skipEmptyLines: true,
+                dynamicTyping: false, // Tắt để parse nhanh hơn
+                transformHeader: (header) => header.replace(/\ufeff/g, '').trim(),
+                complete: (results) => {
+                    resolve(results.data);
+                },
+                error: (err) => {
+                    console.error("Lỗi Papa.parse:", err);
+                    reject(err);
+                }
+            });
+        });
+    } catch (error) {
+        clearTimeout(timeoutId);
+        if (error.name === 'AbortError') {
+            throw new Error('Request timeout: CSV fetch quá chậm');
+        }
+        throw error;
+    }
 }
 
 // ----------------------------------------------------
@@ -64,22 +81,43 @@ export default async function handler(request, response) {
     // 1. Tải và phân tích CSV (trên máy chủ Vercel)
     const rawData = await fetchData();
     
-    // 2. Xử lý và trích xuất
-    const validData = rawData.filter(row => row['Date livestream'] && row['Date livestream'].includes('/'));
+    // 2. Xử lý và trích xuất (Tối ưu với single pass)
+    const validData = [];
+    const datesSet = new Set();
+    const sessionsMap = new Map();
+    const storesMap = new Map();
     
+    // Single pass để tối ưu
+    for (const row of rawData) {
+      if (row['Date livestream'] && row['Date livestream'].includes('/')) {
+        validData.push(row);
+        const date = row['Date livestream'];
+        if (date) datesSet.add(date);
+        
+        const session = (row['Type of session'] || '').trim();
+        if (session && session !== 'nan') {
+          const lower = session.toLowerCase();
+          if (!sessionsMap.has(lower)) sessionsMap.set(lower, session);
+        }
+        
+        const store = (row['Store'] || '').trim();
+        if (store && store !== 'nan') {
+          const lower = store.toLowerCase();
+          if (!storesMap.has(lower)) storesMap.set(lower, store);
+        }
+      }
+    }
+    
+    // Sort một lần
     const sortedData = validData.sort((a, b) => {
       const dtA = parseDate(a['Date livestream'], a['Time slot']);
       const dtB = parseDate(b['Date livestream'], b['Time slot']);
       return dtA - dtB;
     });
 
-    const uniqueDates = [...new Set(sortedData.map(job => job['Date livestream']).filter(Boolean))];
-    
-    const sessionsList = sortedData.map(job => (job['Type of session'] || '').trim()).filter(s => s && s !== 'nan');
-    const storesList = sortedData.map(job => (job['Store'] || '').trim()).filter(s => s && s !== 'nan');
-
-    const uniqueSessions = getUniqueItems(sessionsList);
-    const uniqueStores = getUniqueItems(storesList);
+    const uniqueDates = Array.from(datesSet);
+    const uniqueSessions = Array.from(sessionsMap.values());
+    const uniqueStores = Array.from(storesMap.values());
     
     const processedData = {
         jobs: sortedData,
