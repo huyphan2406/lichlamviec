@@ -235,10 +235,13 @@ const handleAuthClick = (showAuthPopup) => {
 
 const Header = ({ theme, toggleTheme, showAuthPopup }) => ( 
   <header className="app-header">
-    <h1 style={{margin: 0, paddingRight: '15px', flexShrink: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>
+    
+    {/* 🌟 HÀNG 1: TIÊU ĐỀ CĂN GIỮA (Sử dụng CSS để căn giữa) */}
+    <h1 className="header-title-centered">
         Lịch làm việc
     </h1>
     
+    {/* 🌟 HÀNG 2: KHỐI ĐIỀU KHIỂN (Cân 2 bên) */}
     <div className="header-controls">
 
       {/* Nút CRM (Đã bị ẩn/xóa theo yêu cầu trước, nhưng vẫn giữ code nếu bạn cần) */}

@@ -93,7 +93,8 @@ main { padding: 0; }
   width: 100%; 
 }
 
-.app-header h1 {
+.app-header h1,
+.header-title-centered {
   /* 🌟 KHỐI TIÊU ĐỀ: CĂN GIỮA TRÊN HÀNG RIÊNG */
   margin: 0 0 10px 0; /* Chỉ cần margin dưới */
   width: 100%; 
