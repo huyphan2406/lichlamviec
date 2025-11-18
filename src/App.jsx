@@ -332,8 +332,39 @@ const FilterBar = memo(({
     uniqueStores,
     showTempNotification
 }) => {
-  const [inputValue, setInputValue] = useState(''); 
+  // Khởi tạo từ localStorage cache
+  const [inputValue, setInputValue] = useState(() => {
+    try {
+      const cached = localStorage.getItem('schedule_name_filter');
+      return cached || '';
+    } catch (e) {
+      return '';
+    }
+  }); 
 
+  // Khôi phục filter từ cache khi component mount (chỉ một lần)
+  const isInitialMount = useRef(true);
+  useEffect(() => {
+    if (isInitialMount.current && inputValue) {
+      setNameFilter(inputValue);
+      isInitialMount.current = false;
+    }
+  }, [inputValue, setNameFilter]);
+
+  // Lưu vào cache mỗi khi inputValue thay đổi
+  useEffect(() => {
+    try {
+      if (inputValue.trim()) {
+        localStorage.setItem('schedule_name_filter', inputValue);
+      } else {
+        localStorage.removeItem('schedule_name_filter');
+      }
+    } catch (e) {
+      // Ignore localStorage errors (private browsing, quota exceeded, etc.)
+    }
+  }, [inputValue]);
+
+  // Debounce filter update
   useEffect(() => {
     const timerId = setTimeout(() => setNameFilter(inputValue), 300);
     return () => clearTimeout(timerId);
@@ -729,8 +760,7 @@ function App() {
                             <div key={item.id} style={{
                                 position: 'absolute', top: 0, left: 0, width: '100%',
                                 transform: `translateY(${virtualItem.start}px)`,
-                                paddingBottom: item.type === 'HEADER' ? '8px' : '24px',
-                                marginBottom: item.type === 'HEADER' ? '0' : '0'
+                                paddingBottom: item.type === 'HEADER' ? '16px' : '36px'
                             }}>
                                 {item.type === 'HEADER' ? (
                                     <h3 className={`schedule-group-title ${item.content.toLowerCase() === 'ca nối' ? 'ca-noi-special' : ''}`}>

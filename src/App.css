@@ -137,9 +137,8 @@ main {
   text-align: center;
   letter-spacing: -0.5px;
   flex-shrink: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .header-controls {
@@ -1326,19 +1325,14 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
     font-size: 1.5rem;
     margin-bottom: var(--spacing-md);
     line-height: 1.3;
-    white-space: normal;
-    overflow: visible;
-    text-overflow: clip;
-    padding: 0;
+    padding: 0 var(--spacing-xs);
   }
   
   .header-controls {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
+    align-items: stretch;
     gap: var(--spacing-sm);
     width: 100%;
-    flex-wrap: nowrap;
   }
   
   .theme-toggle {
@@ -1346,21 +1340,30 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
     padding: var(--spacing-xs);
     min-width: 44px;
     min-height: 44px;
+    justify-content: center;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
   }
   
   .auth-buttons {
-    width: auto;
-    flex: 1;
-    justify-content: flex-end;
+    width: 100%;
+    justify-content: center;
     gap: var(--spacing-xs);
     min-width: 0;
+    flex-wrap: wrap;
+    box-shadow: none;
+    background: transparent;
   }
   
   .auth-button {
     padding: 10px 14px;
     font-size: 0.8125rem;
     min-height: 44px;
-    flex-shrink: 0;
+    flex: 1 1 48%;
+    justify-content: center;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background-color: var(--color-card);
   }
   
   .auth-button span {
@@ -1454,7 +1457,7 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
   /* Schedule Items */
   .schedule-item {
     padding: var(--spacing-md);
-    margin: var(--spacing-md) 0;
+    margin: var(--spacing-lg) 0;
     border-radius: var(--radius-md);
     width: 100%;
     box-sizing: border-box;
@@ -1632,9 +1635,8 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
   }
   
   .header-controls {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
+    align-items: stretch;
     gap: var(--spacing-xs);
     padding: 0;
     width: 100%;
@@ -1645,25 +1647,30 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
     min-width: 44px;
     min-height: 44px;
     flex-shrink: 0;
+    justify-content: center;
   }
   
   .auth-buttons {
     gap: var(--spacing-xs);
     flex: 1;
-    justify-content: flex-end;
+    justify-content: center;
     min-width: 0;
+    width: 100%;
+    flex-wrap: wrap;
   }
   
   .auth-button {
     padding: 10px 12px;
     font-size: 0.75rem;
     min-height: 44px;
-    min-width: 44px;
+    min-width: 48%;
+    flex: 1 1 48%;
     flex-shrink: 0;
+    justify-content: center;
   }
   
   .auth-button span {
-    display: none;
+    display: inline;
   }
   
   .auth-button svg {
@@ -1760,8 +1767,8 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
   
   /* Schedule Items */
   .schedule-item {
-    padding: var(--spacing-sm);
-    margin: var(--spacing-sm) 0;
+    padding: var(--spacing-md);
+    margin: var(--spacing-lg) 0;
     border-radius: var(--radius-md);
     width: 100%;
     box-sizing: border-box;
@@ -1986,13 +1993,15 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
     gap: var(--spacing-xs);
     padding: 0;
     width: 100%;
+    align-items: stretch;
   }
   
   .auth-button {
     padding: 8px 10px;
     font-size: 0.6875rem;
-    min-width: 40px;
+    min-width: 100%;
     min-height: 40px;
+    flex: 1 1 100%;
   }
   
   .filter-container {
@@ -2000,6 +2009,10 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
     margin-bottom: var(--spacing-xs);
     width: 100%;
     box-sizing: border-box;
+  }
+  
+  .auth-buttons {
+    width: 100%;
   }
   
   .form-group label {
