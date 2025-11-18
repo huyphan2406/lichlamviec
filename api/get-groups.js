@@ -189,11 +189,12 @@ export default async function handler(request, response) {
         const hostGroupsObject = Object.fromEntries(hostGroupsMap);
         const brandGroupsObject = Object.fromEntries(brandGroupsMap);
         
-        // 4. Đặt Cache Header (refresh mỗi 60s)
+        // 4. Đặt Cache Header (tối ưu)
         response.setHeader(
             'Cache-Control',
-            'public, s-maxage=60, stale-while-revalidate=120'
+            'public, s-maxage=300, stale-while-revalidate=600, max-age=60'
         );
+        response.setHeader('Content-Type', 'application/json; charset=utf-8');
         
         // 5. Trả về dữ liệu JSON với cả Host và Brand
         response.status(200).json({

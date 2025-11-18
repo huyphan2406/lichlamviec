@@ -32,6 +32,15 @@ const QuickReportForm = memo(({ isVisible, setIsVisible, job, showTempNotificati
     }
   }, [isVisible]);
 
+  // Separate cleanup cho image preview
+  useEffect(() => {
+    return () => {
+      if (imagePreview && imagePreview.startsWith('blob:')) {
+        URL.revokeObjectURL(imagePreview);
+      }
+    };
+  }, [imagePreview]);
+
   // Tạo key livestream từ job data
   const generateKeyLivestream = (job) => {
     if (!job) return '';
@@ -82,7 +91,7 @@ const QuickReportForm = memo(({ isVisible, setIsVisible, job, showTempNotificati
   }, []);
 
   // Xử lý upload ảnh với cleanup
-  const handleImageUpload = useCallback(async (e) => {
+  const handleImageUpload = useCallback((e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -98,10 +107,18 @@ const QuickReportForm = memo(({ isVisible, setIsVisible, job, showTempNotificati
       return;
     }
 
+    setIsProcessing(true);
+
     // Hiển thị preview với cleanup
     const reader = new FileReader();
-    reader.onload = (e) => {
-      setImagePreview(e.target.result);
+    reader.onload = (event) => {
+      // Cleanup preview cũ nếu có
+      setImagePreview(prev => {
+        if (prev && prev.startsWith('blob:')) {
+          URL.revokeObjectURL(prev);
+        }
+        return event.target.result;
+      });
       setIsProcessing(false);
       showTempNotification?.('Ảnh đã được tải lên. Vui lòng nhập thông tin thủ công từ ảnh.');
     };
@@ -110,14 +127,7 @@ const QuickReportForm = memo(({ isVisible, setIsVisible, job, showTempNotificati
       showTempNotification?.('Lỗi khi đọc file ảnh!');
     };
     reader.readAsDataURL(file);
-    
-    // Cleanup: revoke URL nếu có preview cũ
-    return () => {
-      if (imagePreview && imagePreview.startsWith('blob:')) {
-        URL.revokeObjectURL(imagePreview);
-      }
-    };
-  }, [showTempNotification, imagePreview]);
+  }, [showTempNotification]);
 
   // Thêm ID phiên live mới
   const handleAddLiveId = useCallback(() => {

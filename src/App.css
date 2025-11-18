@@ -286,15 +286,7 @@ input:checked + .theme-toggle-slider:before {
   grid-column: span 3;
 }
 
-@media (max-width: 640px) {
-  .form-group-grid {
-    grid-template-columns: 1fr;
-    gap: var(--spacing-md);
-  }
-  .form-group-grid .full-width {
-    grid-column: span 1;
-  }
-}
+/* Media query này đã được tích hợp vào responsive section lớn hơn */
 
 .form-group label {
   display: block;
@@ -752,6 +744,11 @@ input:checked + .theme-toggle-slider:before {
   transform: translate(-50%, -50%);
   border: 1px solid var(--color-border);
   overflow: hidden;
+  /* Tối ưu cho mobile */
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
 .popup-header {
@@ -928,7 +925,259 @@ input:checked + .theme-toggle-slider:before {
   color: var(--color-text-primary);
 }
 
-/* --- 9. RESPONSIVE --- */
+/* --- 8.5. QUICK REPORT FORM STYLES --- */
+.report-form-modal {
+  max-width: 700px;
+  width: 95%;
+}
+
+.report-form-content {
+  padding: var(--spacing-lg);
+  max-height: calc(90vh - 80px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.form-section {
+  margin-bottom: var(--spacing-xl);
+  padding-bottom: var(--spacing-lg);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.form-section:last-of-type {
+  border-bottom: none;
+  margin-bottom: var(--spacing-md);
+}
+
+.form-section-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-md);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.form-readonly-info {
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: var(--color-input-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-primary);
+  font-size: 0.9375rem;
+  margin-top: var(--spacing-xs);
+}
+
+.image-upload-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-sm);
+}
+
+.image-upload-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md) var(--spacing-lg);
+  background-color: var(--color-brand);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-speed);
+  min-height: 44px;
+}
+
+.image-upload-button:hover:not(:disabled) {
+  background-color: var(--color-brand-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(var(--color-brand-rgb), 0.3);
+}
+
+.image-upload-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.image-preview {
+  position: relative;
+  width: 100%;
+  max-width: 500px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 2px solid var(--color-border);
+  background-color: var(--color-input-bg);
+}
+
+.image-preview img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.processing-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  gap: var(--spacing-md);
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.spinner-small {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.form-actions {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: flex-end;
+  margin-top: var(--spacing-xl);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--color-border);
+}
+
+.form-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md) var(--spacing-xl);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-speed);
+  min-height: 44px;
+  min-width: 120px;
+}
+
+.form-button-cancel {
+  background-color: var(--color-border);
+  color: var(--color-text-primary);
+}
+
+.form-button-cancel:hover:not(:disabled) {
+  background-color: var(--color-text-secondary);
+  color: white;
+}
+
+.form-button-submit {
+  background-color: var(--color-report-primary);
+  color: white;
+}
+
+.form-button-submit:hover:not(:disabled) {
+  background-color: var(--color-report-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.form-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.remove-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  background-color: var(--color-danger-light);
+  color: var(--color-danger);
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-speed);
+  min-width: 32px;
+  min-height: 32px;
+}
+
+.remove-button:hover {
+  background-color: var(--color-danger);
+  color: white;
+}
+
+.add-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: var(--color-brand-light);
+  color: var(--color-brand);
+  border: 1px solid var(--color-brand);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-speed);
+  width: 100%;
+  min-height: 44px;
+}
+
+.add-button:hover {
+  background-color: var(--color-brand);
+  color: white;
+}
+
+/* --- 9. RESPONSIVE (Tối ưu cho mọi thiết bị) --- */
+
+/* Tablet và nhỏ hơn (max-width: 1024px) */
+@media (max-width: 1024px) {
+  .App {
+    max-width: 100%;
+    padding: 0 var(--spacing-md);
+  }
+  
+  .filter-container {
+    padding: var(--spacing-md);
+  }
+  
+  .form-group-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .form-group-grid .full-width {
+    grid-column: span 2;
+  }
+}
+
+/* Mobile lớn (max-width: 768px) */
 @media (max-width: 768px) {
   body {
     padding: var(--spacing-sm);
@@ -936,41 +1185,271 @@ input:checked + .theme-toggle-slider:before {
   
   .App {
     max-width: 100%;
+    padding: 0;
+  }
+  
+  .app-header {
+    padding: var(--spacing-md) 0;
   }
   
   .app-header h1 {
     font-size: 1.5rem;
   }
   
+  .header-controls {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+  
+  .auth-buttons {
+    width: 100%;
+    justify-content: center;
+  }
+  
   .filter-container {
     padding: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+  }
+  
+  .form-group-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+  
+  .form-group-grid .full-width {
+    grid-column: span 1;
   }
   
   .schedule-item {
     padding: var(--spacing-md);
+    margin: var(--spacing-md) 0;
   }
   
   .job-header-row {
     flex-direction: column;
     align-items: stretch;
+    gap: var(--spacing-sm);
   }
   
   .quick-report-button {
     width: 100%;
     justify-content: center;
   }
+  
+  .job-groups-footer-container {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-sm);
+  }
+  
+  .group-host .job-group-item {
+    justify-content: flex-start;
+  }
+  
+  .job-group-link {
+    width: 100%;
+    justify-content: center;
+    margin-left: 0 !important;
+  }
+  
+  .popup-modal {
+    width: 95%;
+    max-width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
 }
 
+/* Mobile nhỏ (max-width: 480px) */
 @media (max-width: 480px) {
+  body {
+    padding: var(--spacing-xs);
+  }
+  
   .app-header h1 {
     font-size: 1.25rem;
+    margin-bottom: var(--spacing-sm);
+  }
+  
+  .header-controls {
+    width: 100%;
+  }
+  
+  .auth-button {
+    padding: 8px 12px;
+    font-size: 0.8125rem;
   }
   
   .auth-button span {
     display: none;
   }
   
+  .theme-toggle {
+    padding: var(--spacing-xs);
+  }
+  
+  .filter-container {
+    padding: var(--spacing-sm);
+  }
+  
+  .form-group label {
+    font-size: 0.8125rem;
+  }
+  
+  .form-group input,
+  .form-group select {
+    padding: 10px 12px;
+    font-size: 0.875rem;
+  }
+  
+  .schedule-item {
+    padding: var(--spacing-sm);
+    margin: var(--spacing-sm) 0;
+  }
+  
   .schedule-item h4 {
     font-size: 1.1rem;
+    margin-bottom: var(--spacing-sm);
+  }
+  
+  .schedule-item p {
+    font-size: 0.875rem;
+    margin: 8px 0;
+  }
+  
+  .job-groups-footer-container {
+    flex-direction: column;
+    gap: var(--spacing-xs);
+  }
+  
+  .job-group-item {
+    font-size: 0.8125rem;
+  }
+  
+  .job-group-link {
+    padding: 6px 12px;
+    font-size: 0.75rem;
+  }
+  
+  .download-button {
+    padding: 12px;
+    font-size: 0.875rem;
+  }
+  
+  .job-count-summary {
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: 0.875rem;
+  }
+  
+  .schedule-group-title {
+    font-size: 0.875rem;
+    padding: var(--spacing-sm) 0;
+    margin-bottom: var(--spacing-md);
+  }
+  
+  .popup-modal {
+    width: 98%;
+    padding: var(--spacing-md);
+  }
+  
+  .popup-header {
+    padding: var(--spacing-md);
+  }
+  
+  .popup-content {
+    padding: var(--spacing-md);
+  }
+  
+  .report-form-modal {
+    width: 98%;
+    max-width: 100%;
+    max-height: 95vh;
+  }
+  
+  .report-form-content {
+    padding: var(--spacing-md);
+    max-height: calc(95vh - 60px);
+  }
+  
+  .form-section {
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-md);
+  }
+  
+  .form-section-title {
+    font-size: 1rem;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+  
+  .form-button {
+    width: 100%;
+    min-width: auto;
+  }
+  
+  .image-preview {
+    max-width: 100%;
+  }
+}
+
+/* Mobile rất nhỏ (max-width: 360px) */
+@media (max-width: 360px) {
+  .app-header h1 {
+    font-size: 1.1rem;
+  }
+  
+  .schedule-item {
+    padding: var(--spacing-xs);
+  }
+  
+  .schedule-item h4 {
+    font-size: 1rem;
+  }
+  
+  .filter-container {
+    padding: var(--spacing-xs);
+  }
+  
+  .form-group input,
+  .form-group select {
+    padding: 8px 10px;
+    font-size: 0.8125rem;
+  }
+}
+
+/* Landscape orientation cho mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+  .app-header {
+    padding: var(--spacing-sm) 0;
+  }
+  
+  .app-header h1 {
+    font-size: 1.3rem;
+  }
+  
+  .filter-container {
+    padding: var(--spacing-sm);
+  }
+  
+  .schedule-item {
+    padding: var(--spacing-sm);
+  }
+}
+
+/* Touch devices - tăng kích thước touch targets */
+@media (hover: none) and (pointer: coarse) {
+  .quick-report-button,
+  .download-button,
+  .auth-button,
+  .job-group-link {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  .form-group input,
+  .form-group select {
+    min-height: 44px;
   }
 }

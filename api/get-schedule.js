@@ -126,11 +126,12 @@ export default async function handler(request, response) {
         stores: uniqueStores
     };
 
-    // 3. Đặt Cache Header
+    // 3. Đặt Cache Header (tối ưu)
     response.setHeader(
         'Cache-Control',
-        'public, s-maxage=600, stale-while-revalidate=1200'
+        'public, s-maxage=300, stale-while-revalidate=600, max-age=60'
     );
+    response.setHeader('Content-Type', 'application/json; charset=utf-8');
     
     // 4. Trả về dữ liệu JSON
     response.status(200).json(processedData);

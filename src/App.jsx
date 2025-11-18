@@ -404,7 +404,7 @@ const FilterBar = memo(({
             </select>
         </div>
         <div className="form-group filter-session">
-            <label htmlFor="sessionInput">Loại Ca</label>
+            <label htmlFor="sessionInput">Loại ca</label>
             <select id="sessionInput" value={sessionFilter} onChange={(e) => setSessionFilter(e.target.value)}>
                 <option value="">All Sessions</option>
                 {uniqueSessions.map(session => <option key={session} value={session}>{session}</option>)}
@@ -461,35 +461,17 @@ const EmptyState = memo(({ dateFilter }) => (
   </motion.div>
 ));
 
-const JobItem = memo(({ job, isActive, onQuickReport, hostGroups, brandGroups }) => {
+const JobItem = memo(({ job, isActive, onQuickReport, brandGroup, hostGroup }) => {
   const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } };
-  const timeGroup = `${job['Time slot'] || 'N/A'}`;
-  const talentDisplay = combineNames(job['Talent 1'], job['Talent 2']);
-  const coordDisplay = combineNames(job['Coordinator 1'], job['Coordinator 2']);
-  const locationDisplay = combineLocation(job);
-  const sessionTypeDisplay = job['Type of session'] && job['Type of session'].trim() !== '' ? job['Type of session'] : '—';
   
-  // Tìm group links
-  const brandGroup = findGroupLink(job, brandGroups, 'brand');
-  const hostGroup = findGroupLink(job, hostGroups, 'host');
-  
-  // Tìm host group từ tên MC/Coordinator
-  let hostGroupFromName = null;
-  if (!hostGroup && (talentDisplay || coordDisplay)) {
-    const namesToCheck = [talentDisplay, coordDisplay].filter(Boolean);
-    for (const name of namesToCheck) {
-      const normalizedName = normalizeNameForMatch(name);
-      for (const [key, value] of Object.entries(hostGroups || {})) {
-        if (normalizedName.includes(key) || key.includes(normalizedName)) {
-          hostGroupFromName = value;
-          break;
-        }
-      }
-      if (hostGroupFromName) break;
-    }
-  }
-  
-  const finalHostGroup = hostGroup || hostGroupFromName;
+  // Memoize các giá trị display để tránh tính toán lại
+  const timeGroup = useMemo(() => `${job['Time slot'] || 'N/A'}`, [job['Time slot']]);
+  const talentDisplay = useMemo(() => combineNames(job['Talent 1'], job['Talent 2']), [job['Talent 1'], job['Talent 2']]);
+  const coordDisplay = useMemo(() => combineNames(job['Coordinator 1'], job['Coordinator 2']), [job['Coordinator 1'], job['Coordinator 2']]);
+  const locationDisplay = useMemo(() => combineLocation(job), [job.Address, job['Studio/Room']]);
+  const sessionTypeDisplay = useMemo(() => {
+    return job['Type of session'] && job['Type of session'].trim() !== '' ? job['Type of session'] : '—';
+  }, [job['Type of session']]);
 
   const handleQuickReport = useCallback(() => {
     if (onQuickReport) {
@@ -534,13 +516,13 @@ const JobItem = memo(({ job, isActive, onQuickReport, hostGroups, brandGroups })
           <div className="group-host job-group-item">
             <FiUserCheck size={18} className="job-group-icon" />
             <span className="job-group-label">Group Host:</span>
-            {finalHostGroup ? (
+            {hostGroup ? (
               <a 
-                href={finalHostGroup.link} 
+                href={hostGroup.link} 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="job-group-link"
-                title={finalHostGroup.originalName}
+                title={hostGroup.originalName}
               >
                 <span className="job-group-link-text">Join Group</span>
                 <FiExternalLink size={14} className="job-group-link-icon" />
@@ -578,15 +560,6 @@ function App() {
   const handleQuickReport = useCallback((job) => {
     setQuickReportJob(job);
     setIsQuickReportVisible(true);
-  }, []);
-
-  // Tối ưu: Chỉ update currentTime khi cần thiết (mỗi phút)
-  const [currentTime, setCurrentTime] = useState(() => new Date());
-  useEffect(() => {
-      const intervalId = setInterval(() => {
-          setCurrentTime(new Date());
-      }, 60000); 
-      return () => clearInterval(intervalId);
   }, []);
 
   // Tối ưu filtering với early returns và cache
@@ -633,49 +606,69 @@ function App() {
     }, {});
   }, [filteredJobs]);
 
-  // Tối ưu hóa Virtualization: Flatten data và cache isJobActive results
+  // Tối ưu hóa Virtualization: Flatten data, cache isJobActive và pre-compute group links
   const flatRowItems = useMemo(() => {
     const items = [];
     const jobGroups = Object.keys(groupedJobs);
-    const now = Date.now(); // Cache current time
-    const activeJobsCache = new Map(); // Cache active status
     
     jobGroups.forEach(timeGroup => {
         items.push({ id: `header_${timeGroup}`, type: 'HEADER', content: timeGroup });
         groupedJobs[timeGroup].forEach((job, index) => {
             const jobId = `${timeGroup}_${index}`;
-            // Cache isActive check để tránh tính toán lại
-            if (!activeJobsCache.has(jobId)) {
-                activeJobsCache.set(jobId, isJobActive(job));
+            // Pre-compute group links để tránh tính toán trong JobItem
+            const brandGroup = findGroupLink(job, brandGroups, 'brand');
+            const hostGroup = findGroupLink(job, hostGroups, 'host');
+            
+            // Tìm host group từ tên MC/Coordinator (pre-compute)
+            let hostGroupFromName = null;
+            if (!hostGroup) {
+              const talentDisplay = combineNames(job['Talent 1'], job['Talent 2']);
+              const coordDisplay = combineNames(job['Coordinator 1'], job['Coordinator 2']);
+              if (talentDisplay || coordDisplay) {
+                const namesToCheck = [talentDisplay, coordDisplay].filter(Boolean);
+                for (const name of namesToCheck) {
+                  const normalizedName = normalizeNameForMatch(name);
+                  for (const [key, value] of Object.entries(hostGroups || {})) {
+                    if (normalizedName.includes(key) || key.includes(normalizedName)) {
+                      hostGroupFromName = value;
+                      break;
+                    }
+                  }
+                  if (hostGroupFromName) break;
+                }
+              }
             }
+            
             items.push({ 
                 id: `job_${jobId}`, 
                 type: 'JOB', 
                 content: job, 
-                isActive: activeJobsCache.get(jobId) 
+                isActive: isJobActive(job),
+                brandGroup,
+                hostGroup: hostGroup || hostGroupFromName
             });
         });
     });
     return items;
-  }, [groupedJobs]);
+  }, [groupedJobs, hostGroups, brandGroups]);
 
   const parentRef = useRef(null);
+  const scrollElementRef = useRef(null);
+  
+  // Cache scroll element để tránh query mỗi lần
+  useEffect(() => {
+    scrollElementRef.current = document.querySelector('main');
+  }, []);
   
   const rowVirtualizer = useVirtualizer({
     count: flatRowItems.length,
-    getScrollElement: () => {
-      // Tìm main element từ parentRef
-      if (parentRef.current) {
-        return parentRef.current.closest('main') || document.body;
-      }
-      return null;
-    },
-    estimateSize: useCallback((index) => {
+    getScrollElement: () => scrollElementRef.current,
+    estimateSize: (index) => {
       const item = flatRowItems[index];
       if (!item) return 50;
-      return item.type === 'HEADER' ? 70 : 380; // Tăng estimate để tránh scroll jump
-    }, [flatRowItems]),
-    overscan: 3, // Giảm overscan để tối ưu rendering
+      return item.type === 'HEADER' ? 70 : 380;
+    },
+    overscan: 3,
   });
 
   const virtualItems = rowVirtualizer.getVirtualItems();
@@ -748,8 +741,8 @@ function App() {
                                       job={item.content} 
                                       isActive={item.isActive}
                                       onQuickReport={handleQuickReport}
-                                      hostGroups={hostGroups}
-                                      brandGroups={brandGroups}
+                                      brandGroup={item.brandGroup}
+                                      hostGroup={item.hostGroup}
                                     />
                                 )}
                             </div>
