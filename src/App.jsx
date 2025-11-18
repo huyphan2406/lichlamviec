@@ -460,9 +460,11 @@ const JobItem = memo(({ job, isActive, onQuickReport, hostGroups, brandGroups })
   const talentDisplay = combineNames(job['Talent 1'], job['Talent 2']);
   const coordDisplay = combineNames(job['Coordinator 1'], job['Coordinator 2']);
   const locationDisplay = combineLocation(job);
-  // Format session type: "ca nối" -> "CA NỐI", còn lại giữ nguyên
-  const rawSessionType = job['Type of session'] && job['Type of session'].trim() !== '' ? job['Type of session'] : '—';
-  const sessionTypeDisplay = rawSessionType.toLowerCase() === 'ca nối' ? 'CA NỐI' : rawSessionType;
+  // Format session type: "ca nối" -> "Ca nối", còn lại giữ nguyên, nếu rỗng thì "—"
+  const rawSessionType = job['Type of session'] && job['Type of session'].trim() !== '' ? job['Type of session'] : null;
+  const sessionTypeDisplay = rawSessionType 
+    ? (rawSessionType.toLowerCase() === 'ca nối' ? 'Ca nối' : rawSessionType)
+    : '—';
   
   // Tìm group links
   const brandGroup = findGroupLink(job, brandGroups, 'brand');
