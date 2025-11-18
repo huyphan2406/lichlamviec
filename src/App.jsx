@@ -217,6 +217,35 @@ const normalizeNameForMatch = (name) => {
   return str;
 };
 
+// Stop words cần loại bỏ khi so khớp tên brand (để tránh match sai)
+const STORE_STOP_WORDS = new Set([
+  'team', 'livestream', 'inhouse', 'group', 'brand',
+  'official', 'studio', 'account', 'page', 'crew',
+  'channel', 'event', 'agency'
+]);
+
+const tokenize = (str) => str.split(' ').filter(Boolean);
+const removeStopWords = (tokens) => {
+  const filtered = tokens.filter(token => !STORE_STOP_WORDS.has(token));
+  return filtered.length ? filtered : tokens;
+};
+
+const buildCoreTokens = (normalizedStr) => {
+  const tokens = tokenize(normalizedStr);
+  const coreTokens = removeStopWords(tokens);
+  return { tokens, coreTokens, coreName: coreTokens.join(' ') || normalizedStr };
+};
+
+const computeOverlapScore = (tokensA, tokensB) => {
+  if (!tokensA.length || !tokensB.length) return 0;
+  const setB = new Set(tokensB);
+  let matches = 0;
+  tokensA.forEach(token => {
+    if (setB.has(token)) matches++;
+  });
+  return matches / Math.max(tokensA.length, tokensB.length);
+};
+
 // Hàm tìm group link cho job
 const findGroupLink = (job, groups, type) => {
   if (!job || !groups || Object.keys(groups).length === 0) return null;
@@ -234,28 +263,46 @@ const findGroupLink = (job, groups, type) => {
     return groups[normalizedStore];
   }
   
-  // Tìm partial match - cải thiện logic matching
-  // Lấy phần đầu của store name (trước "TEAM", "INHOUSE", "LIVESTREAM", etc.) để match tốt hơn
-  const storeParts = normalizedStore.split(/\s+(?:team|livestream|inhouse|group|brand)\s+/i);
-  const mainStoreName = storeParts[0] ? storeParts[0].trim() : normalizedStore;
-  
-  // Thử match với main store name trước
+  const { coreTokens, coreName } = buildCoreTokens(normalizedStore);
+  const candidateNames = new Set([normalizedStore, coreName].filter(Boolean));
+
+  for (const candidate of candidateNames) {
+    if (groups[candidate]) return groups[candidate];
+  }
+
+  let bestMatch = null;
+  let bestScore = 0;
+
   for (const [key, value] of Object.entries(groups)) {
-    // Exact match với main store name
-    if (mainStoreName === key || key === mainStoreName) {
+    if (candidateNames.has(key)) {
       return value;
     }
-    // Partial match - một trong hai chứa nhau (ưu tiên main store name)
-    if (mainStoreName.includes(key) || key.includes(mainStoreName)) {
+
+    const { coreTokens: keyCoreTokens, coreName: keyCoreName } = buildCoreTokens(key);
+
+    // Direct contains check với core name
+    if (coreName && keyCoreName && (coreName === keyCoreName)) {
       return value;
     }
-    // Fallback: match với full normalized store
-    if (normalizedStore.includes(key) || key.includes(normalizedStore)) {
+
+    if (coreName && keyCoreName && (coreName.includes(keyCoreName) || keyCoreName.includes(coreName))) {
+      bestMatch = value;
+      bestScore = 1;
+      break;
+    }
+
+    const score = computeOverlapScore(coreTokens, keyCoreTokens);
+    if (score >= 0.85) {
       return value;
+    }
+
+    if (score > bestScore && score >= 0.4) {
+      bestScore = score;
+      bestMatch = value;
     }
   }
   
-  return null;
+  return bestMatch;
 };
 
 // --- COMPONENTS ---
@@ -749,7 +796,8 @@ function App() {
     estimateSize: (index) => {
       const item = flatRowItems[index];
       if (!item) return 50;
-      return item.type === 'HEADER' ? 70 : 380;
+      // Tăng estimate size để đảm bảo đủ không gian, tránh items dính nhau
+      return item.type === 'HEADER' ? 80 : 450;
     },
     overscan: 3,
     measureElement,
@@ -809,6 +857,12 @@ function App() {
                     {virtualItems.map((virtualItem) => {
                         const item = flatRowItems[virtualItem.index];
                         if (!item) return null; 
+                        // Tăng paddingBottom cho mobile để tránh items dính nhau
+                        const isMobile = window.innerWidth <= 768;
+                        const paddingBottom = item.type === 'HEADER' 
+                          ? (isMobile ? '20px' : '24px')
+                          : (isMobile ? '100px' : '80px');
+                        
                         return (
                             <div
                               key={item.id}
@@ -816,7 +870,7 @@ function App() {
                               style={{
                                 position: 'absolute', top: 0, left: 0, width: '100%',
                                 transform: `translateY(${virtualItem.start}px)`,
-                                paddingBottom: item.type === 'HEADER' ? '32px' : '72px'
+                                paddingBottom: paddingBottom
                             }}>
                                 {item.type === 'HEADER' ? (
                                     <h3 className={`schedule-group-title ${item.content.toLowerCase() === 'ca nối' ? 'ca-noi-special' : ''}`}>
