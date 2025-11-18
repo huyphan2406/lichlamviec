@@ -113,8 +113,12 @@ function useJobData() {
     API_URL,
     jsonFetcher, 
     {
-      refreshInterval: 60000, 
-      revalidateOnFocus: true
+      refreshInterval: 120000, // Tăng lên 2 phút thay vì 1 phút
+      revalidateOnFocus: false, // Tắt revalidate khi focus (giảm fetch không cần thiết)
+      revalidateOnReconnect: true, // Chỉ revalidate khi reconnect
+      dedupingInterval: 60000, // Dedupe requests trong 1 phút
+      errorRetryCount: 2, // Retry tối đa 2 lần
+      errorRetryInterval: 1000, // Retry sau 1 giây
     }
   );
 
@@ -137,7 +141,11 @@ function useGroupsData() {
     jsonFetcher,
     {
       refreshInterval: 300000, // Refresh mỗi 5 phút
-      revalidateOnFocus: false
+      revalidateOnFocus: false,
+      revalidateOnReconnect: true,
+      dedupingInterval: 120000, // Dedupe requests trong 2 phút
+      errorRetryCount: 2,
+      errorRetryInterval: 1000,
     }
   );
 
@@ -389,7 +397,7 @@ const FilterBar = ({
             </select>
         </div>
         <div className="form-group filter-session">
-            <label htmlFor="sessionInput">Loại Ca</label>
+            <label htmlFor="sessionInput">Loại ca</label>
             <select id="sessionInput" value={sessionFilter} onChange={(e) => setSessionFilter(e.target.value)}>
                 <option value="">All Sessions</option>
                 {uniqueSessions.map(session => <option key={session} value={session}>{session}</option>)}
@@ -452,7 +460,9 @@ const JobItem = memo(({ job, isActive, onQuickReport, hostGroups, brandGroups })
   const talentDisplay = combineNames(job['Talent 1'], job['Talent 2']);
   const coordDisplay = combineNames(job['Coordinator 1'], job['Coordinator 2']);
   const locationDisplay = combineLocation(job);
-  const sessionTypeDisplay = job['Type of session'] && job['Type of session'].trim() !== '' ? job['Type of session'] : '—';
+  // Format session type: "ca nối" -> "CA NỐI", còn lại giữ nguyên
+  const rawSessionType = job['Type of session'] && job['Type of session'].trim() !== '' ? job['Type of session'] : '—';
+  const sessionTypeDisplay = rawSessionType.toLowerCase() === 'ca nối' ? 'CA NỐI' : rawSessionType;
   
   // Tìm group links
   const brandGroup = findGroupLink(job, brandGroups, 'brand');
@@ -493,7 +503,7 @@ const JobItem = memo(({ job, isActive, onQuickReport, hostGroups, brandGroups })
       
       <p className="time"><FiClock /> {timeGroup}</p>
       <p className="location"><FiMapPin /> {locationDisplay}</p>
-      <p className="session"><FiMic /> Loại Ca: {sessionTypeDisplay}</p> 
+      <p className="session"><FiMic /> Loại ca: {sessionTypeDisplay}</p> 
       <p className="mc"><FiUser /> {talentDisplay}</p>
       <p className="standby"><FiMonitor /> {coordDisplay}</p>
 
@@ -686,7 +696,7 @@ function App() {
                             <div key={item.id} style={{
                                 position: 'absolute', top: 0, left: 0, width: '100%',
                                 transform: `translateY(${virtualItem.start}px)`,
-                                paddingBottom: '15px' 
+                                paddingBottom: '24px' // Tăng từ 15px lên 24px
                             }}>
                                 {item.type === 'HEADER' ? (
                                     <h3 className="schedule-group-title">
