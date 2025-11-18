@@ -455,7 +455,7 @@ const EmptyState = memo(({ dateFilter }) => (
             </p>
         )}
         <p style={{ color: 'var(--color-text-secondary)', fontWeight: 500, paddingTop: '15px', borderTop: '1px solid var(--color-border)', fontSize: '0.95em' }}>
-            👉 Vui lòng điều chỉnh lại Ngày, Tên Cửa Hàng, hoặc Loại Phiên để xem lịch.
+            👉 Vui lòng điều chỉnh lại Ngày, Tên Cửa Hàng, hoặc Loại Ca để xem lịch.
         </p>
     </div>
   </motion.div>

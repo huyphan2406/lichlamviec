@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, memo } from 'react';
+import { useState, useEffect, useRef, useCallback, memo, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   FiX, FiSave, FiClock, FiMapPin, FiUser, FiMonitor, 
@@ -20,6 +20,7 @@ const QuickReportForm = memo(({ isVisible, setIsVisible, job, showTempNotificati
   const [isProcessing, setIsProcessing] = useState(false);
   const [liveIds, setLiveIds] = useState(['']); // Array để quản lý nhiều ID
   const fileInputRef = useRef(null);
+  const imageRef = useRef(null);
 
   // Lock scroll khi form mở
   useEffect(() => {
@@ -41,19 +42,18 @@ const QuickReportForm = memo(({ isVisible, setIsVisible, job, showTempNotificati
     };
   }, [imagePreview]);
 
-  // Tạo key livestream từ job data
-  const generateKeyLivestream = (job) => {
+  // Tạo key livestream từ job data - Memoized để tránh tính toán lại
+  const keyLivestream = useMemo(() => {
     if (!job) return '';
     const date = (job['Date livestream'] || '').replace(/\//g, '');
     const store = (job.Store || '').replace(/\s+/g, '').substring(0, 10);
     const time = (job['Time slot'] || '').split(' - ')[0].replace(/:/g, '');
     return `${date}_${store}_${time}`.toUpperCase();
-  };
+  }, [job]);
 
   // Điền dữ liệu từ job vào form khi mở
   useEffect(() => {
     if (job && isVisible) {
-      const keyLivestream = generateKeyLivestream(job);
       setFormData({
         email: '',
         keyLivestream: keyLivestream,
@@ -65,7 +65,7 @@ const QuickReportForm = memo(({ isVisible, setIsVisible, job, showTempNotificati
       setLiveIds(['']);
       setImagePreview(null);
     }
-  }, [job, isVisible]);
+  }, [job, isVisible, keyLivestream]);
 
   const handleDismiss = useCallback(() => {
     setIsVisible(false);
@@ -109,7 +109,7 @@ const QuickReportForm = memo(({ isVisible, setIsVisible, job, showTempNotificati
 
     setIsProcessing(true);
 
-    // Hiển thị preview với cleanup
+    // Hiển thị preview với cleanup và lazy loading
     const reader = new FileReader();
     reader.onload = (event) => {
       // Cleanup preview cũ nếu có
@@ -120,7 +120,10 @@ const QuickReportForm = memo(({ isVisible, setIsVisible, job, showTempNotificati
         return event.target.result;
       });
       setIsProcessing(false);
-      showTempNotification?.('Ảnh đã được tải lên. Vui lòng nhập thông tin thủ công từ ảnh.');
+      // Delay notification để không block UI
+      requestAnimationFrame(() => {
+        showTempNotification?.('Ảnh đã được tải lên. Vui lòng nhập thông tin thủ công từ ảnh.');
+      });
     };
     reader.onerror = () => {
       setIsProcessing(false);
@@ -247,16 +250,17 @@ const QuickReportForm = memo(({ isVisible, setIsVisible, job, showTempNotificati
           
           <motion.div 
             className="popup-modal report-form-modal"
-            initial={{ opacity: 0, scale: 0.9 }}
+            initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
             onClick={(e) => e.stopPropagation()}
             style={{ 
               position: 'fixed',
               top: '50%',
               left: '50%',
-              transform: 'translate(-50%, -50%)'
+              transform: 'translate(-50%, -50%)',
+              willChange: 'transform, opacity'
             }}
           >
             <div className="popup-header">
@@ -322,7 +326,14 @@ const QuickReportForm = memo(({ isVisible, setIsVisible, job, showTempNotificati
                     </button>
                     {imagePreview && (
                       <div className="image-preview">
-                        <img src={imagePreview} alt="Preview" />
+                        <img 
+                          ref={imageRef}
+                          src={imagePreview} 
+                          alt="Preview" 
+                          loading="lazy"
+                          decoding="async"
+                          style={{ willChange: 'transform' }}
+                        />
                         {isProcessing && (
                           <div className="processing-overlay">
                             <div className="spinner"></div>

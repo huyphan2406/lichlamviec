@@ -306,8 +306,9 @@ input:checked + .theme-toggle-slider:before {
   border-radius: var(--radius-md);
   background-color: var(--color-input-bg);
   color: var(--color-text-primary);
-  transition: all var(--transition-speed);
+  transition: border-color var(--transition-speed), box-shadow var(--transition-speed);
   font-family: var(--font-main);
+  will-change: border-color, box-shadow;
 }
 
 .form-group select {
@@ -327,7 +328,6 @@ input:checked + .theme-toggle-slider:before {
   outline: none;
   border-color: var(--color-brand);
   box-shadow: 0 0 0 4px var(--color-brand-light);
-  transform: translateY(-1px);
 }
 
 .input-with-icon {
@@ -978,6 +978,8 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
   top: 50% !important;
   left: 50% !important;
   transform: translate(-50%, -50%) !important;
+  will-change: transform, opacity;
+  transform-origin: center;
 }
 
 .report-form-content {
@@ -985,12 +987,15 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
   max-height: calc(90vh - 80px);
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  will-change: scroll-position;
+  contain: layout style paint;
 }
 
 .form-section {
   margin-bottom: var(--spacing-xl);
   padding-bottom: var(--spacing-lg);
   border-bottom: 1px solid var(--color-border);
+  contain: layout style;
 }
 
 .form-section:last-of-type {
@@ -1016,6 +1021,20 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
   color: var(--color-text-primary);
   font-size: 0.9375rem;
   margin-top: var(--spacing-xs);
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+.readonly-input {
+  background-color: var(--color-input-bg) !important;
+  cursor: not-allowed !important;
+  opacity: 0.8;
+}
+
+.readonly-input:focus {
+  border-color: var(--color-border) !important;
+  box-shadow: none !important;
 }
 
 .image-upload-container {
@@ -1048,6 +1067,10 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
   box-shadow: 0 4px 12px rgba(var(--color-brand-rgb), 0.3);
 }
 
+.image-upload-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
 .image-upload-button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
@@ -1061,12 +1084,17 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
   overflow: hidden;
   border: 2px solid var(--color-border);
   background-color: var(--color-input-bg);
+  will-change: contents;
+  contain: layout style paint;
 }
 
 .image-preview img {
   width: 100%;
   height: auto;
   display: block;
+  will-change: transform;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
 }
 
 .processing-overlay {
@@ -1116,6 +1144,7 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
   margin-top: var(--spacing-xl);
   padding-top: var(--spacing-lg);
   border-top: 1px solid var(--color-border);
+  flex-wrap: wrap;
 }
 
 .form-button {
@@ -1129,9 +1158,10 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
   border: none;
   border-radius: var(--radius-md);
   cursor: pointer;
-  transition: all var(--transition-speed);
+  transition: background-color var(--transition-speed), transform var(--transition-speed), box-shadow var(--transition-speed);
   min-height: 44px;
   min-width: 120px;
+  box-sizing: border-box;
 }
 
 .form-button-cancel {
@@ -1155,6 +1185,10 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
   box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
 }
 
+.form-button-submit:active:not(:disabled) {
+  transform: translateY(0);
+}
+
 .form-button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
@@ -1171,14 +1205,21 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
   border: none;
   border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: all var(--transition-speed);
+  transition: background-color var(--transition-speed), color var(--transition-speed), transform var(--transition-speed);
   min-width: 32px;
   min-height: 32px;
+  flex-shrink: 0;
+  box-sizing: border-box;
 }
 
 .remove-button:hover {
   background-color: var(--color-danger);
   color: white;
+  transform: scale(1.1);
+}
+
+.remove-button:active {
+  transform: scale(0.95);
 }
 
 .add-button {
@@ -1194,35 +1235,60 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all var(--transition-speed);
+  transition: background-color var(--transition-speed), color var(--transition-speed), transform var(--transition-speed);
   width: 100%;
   min-height: 44px;
+  box-sizing: border-box;
 }
 
 .add-button:hover {
   background-color: var(--color-brand);
   color: white;
+  transform: translateY(-1px);
 }
 
-/* --- 9. RESPONSIVE (Tối ưu cho mọi thiết bị) --- */
+.add-button:active {
+  transform: translateY(0);
+}
 
-/* Tablet và nhỏ hơn (max-width: 1024px) */
+/* --- 9. RESPONSIVE (Tối ưu cho mọi thiết bị - Mobile First) --- */
+
+/* Base Mobile Styles - Áp dụng cho tất cả mobile */
 @media (max-width: 1024px) {
+  body {
+    padding: var(--spacing-sm);
+    overflow-x: hidden;
+  }
+  
   .App {
     max-width: 100%;
-    padding: 0 var(--spacing-md);
+    padding: 0;
+    margin: 0 auto;
+  }
+  
+  main {
+    padding: 0;
+    width: 100%;
+    overflow-x: hidden;
   }
   
   .filter-container {
     padding: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
   }
   
   .form-group-grid {
     grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-md);
   }
   
   .form-group-grid .full-width {
     grid-column: span 2;
+  }
+  
+  .virtual-list-container {
+    width: 100%;
+    overflow-x: hidden;
   }
 }
 
@@ -1231,22 +1297,39 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
   body {
     padding: var(--spacing-sm);
     font-size: 0.9375rem;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
   }
   
   .App {
     max-width: 100%;
     padding: 0;
+    margin: 0 auto;
   }
   
+  main {
+    padding: 0;
+    width: 100%;
+    overflow-x: hidden;
+  }
+  
+  /* Header */
   .app-header {
     padding: var(--spacing-md) var(--spacing-sm);
     margin-bottom: var(--spacing-md);
+    width: 100%;
+    box-sizing: border-box;
   }
   
-  .app-header h1 {
+  .app-header h1,
+  .header-title-centered {
     font-size: 1.5rem;
     margin-bottom: var(--spacing-md);
     line-height: 1.3;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    padding: 0;
   }
   
   .header-controls {
@@ -1255,10 +1338,14 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
     align-items: center;
     gap: var(--spacing-sm);
     width: 100%;
+    flex-wrap: nowrap;
   }
   
   .theme-toggle {
     flex-shrink: 0;
+    padding: var(--spacing-xs);
+    min-width: 44px;
+    min-height: 44px;
   }
   
   .auth-buttons {
@@ -1266,22 +1353,27 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
     flex: 1;
     justify-content: flex-end;
     gap: var(--spacing-xs);
+    min-width: 0;
   }
   
   .auth-button {
-    padding: 8px 12px;
+    padding: 10px 14px;
     font-size: 0.8125rem;
-    min-height: 36px;
+    min-height: 44px;
+    flex-shrink: 0;
   }
   
   .auth-button span {
     display: inline;
   }
   
+  /* Filter Container */
   .filter-container {
     padding: var(--spacing-md);
     margin-bottom: var(--spacing-md);
     border-radius: var(--radius-md);
+    width: 100%;
+    box-sizing: border-box;
   }
   
   .form-group-grid {
@@ -1293,6 +1385,11 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
     grid-column: span 1;
   }
   
+  .form-group {
+    width: 100%;
+    margin-bottom: var(--spacing-md);
+  }
+  
   .form-group label {
     font-size: 0.875rem;
     margin-bottom: var(--spacing-xs);
@@ -1300,9 +1397,24 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
   
   .form-group input,
   .form-group select {
-    padding: 12px;
+    padding: 12px 14px;
     font-size: 0.9375rem;
     min-height: 44px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  
+  .input-with-icon {
+    width: 100%;
+  }
+  
+  .input-with-icon input {
+    padding-left: 44px;
+    width: 100%;
+  }
+  
+  .search-icon {
+    left: 14px;
   }
   
   .download-button {
@@ -1310,41 +1422,63 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
     padding: 14px;
     font-size: 0.9375rem;
     margin-top: var(--spacing-md);
+    min-height: 44px;
+    box-sizing: border-box;
   }
   
+  /* Job Count Summary */
   .job-count-summary {
     padding: var(--spacing-sm) var(--spacing-md);
     font-size: 0.875rem;
     margin-bottom: var(--spacing-md);
+    width: 100%;
+    box-sizing: border-box;
   }
   
+  /* Schedule Group Title */
   .schedule-group-title {
     font-size: 0.9375rem;
     padding: var(--spacing-sm) var(--spacing-md);
     margin-bottom: var(--spacing-lg);
+    margin-top: var(--spacing-md);
+    width: 100%;
+    box-sizing: border-box;
   }
   
   .schedule-group-title.ca-noi-special {
     font-size: 1rem;
     padding: var(--spacing-sm) var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
   }
   
+  /* Schedule Items */
   .schedule-item {
     padding: var(--spacing-md);
     margin: var(--spacing-md) 0;
     border-radius: var(--radius-md);
+    width: 100%;
+    box-sizing: border-box;
   }
   
   .schedule-item h4 {
     font-size: 1.125rem;
     line-height: 1.4;
     margin-bottom: var(--spacing-sm);
+    min-width: 0;
+    word-wrap: break-word;
   }
   
   .schedule-item p {
     font-size: 0.875rem;
     margin: 10px 0;
     line-height: 1.5;
+    word-wrap: break-word;
+  }
+  
+  .schedule-item p svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
   }
   
   .job-header-row {
@@ -1352,6 +1486,12 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
     align-items: stretch;
     gap: var(--spacing-sm);
     margin-bottom: var(--spacing-md);
+    width: 100%;
+  }
+  
+  .schedule-item h4 {
+    min-width: 0;
+    width: 100%;
   }
   
   .quick-report-button {
@@ -1360,12 +1500,20 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
     padding: 12px;
     font-size: 0.875rem;
     min-height: 44px;
+    box-sizing: border-box;
   }
   
+  .quick-report-text {
+    display: inline;
+  }
+  
+  /* Job Groups Footer */
   .job-groups-footer-container {
     grid-template-columns: 1fr;
     gap: var(--spacing-sm);
     margin-top: var(--spacing-md);
+    width: 100%;
+    box-sizing: border-box;
   }
   
   .job-group-item {
@@ -1374,6 +1522,14 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
     gap: var(--spacing-xs);
     padding: var(--spacing-sm);
     font-size: 0.875rem;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  
+  .job-group-icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
   }
   
   .job-group-label {
@@ -1385,16 +1541,31 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
     width: 100%;
     justify-content: center;
     margin-left: 0 !important;
-    padding: 10px;
+    padding: 10px 14px;
     min-height: 44px;
+    box-sizing: border-box;
   }
   
+  .job-group-link-text {
+    display: inline;
+  }
+  
+  .job-group-link-icon {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+  }
+  
+  /* Popup Modals */
   .popup-modal {
     width: 95%;
     max-width: 100%;
     max-height: 90vh;
     overflow-y: auto;
     margin: 0;
+    box-sizing: border-box;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
   }
   
   .popup-header {
@@ -1404,6 +1575,24 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
   .popup-header h3 {
     font-size: 1rem;
   }
+  
+  .popup-content {
+    padding: var(--spacing-md);
+    font-size: 0.9375rem;
+  }
+  
+  /* Virtual List Container */
+  .virtual-list-container {
+    width: 100%;
+    overflow-x: hidden;
+    box-sizing: border-box;
+  }
+  
+  .schedule-list {
+    width: 100%;
+    overflow-x: hidden;
+    box-sizing: border-box;
+  }
 }
 
 /* Mobile nhỏ (max-width: 480px) */
@@ -1411,22 +1600,35 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
   body {
     padding: var(--spacing-xs);
     font-size: 0.875rem;
+    overflow-x: hidden;
   }
   
   .App {
     padding: 0;
+    margin: 0 auto;
   }
   
+  main {
+    padding: 0;
+    width: 100%;
+    overflow-x: hidden;
+  }
+  
+  /* Header */
   .app-header {
     padding: var(--spacing-sm) var(--spacing-xs);
     margin-bottom: var(--spacing-sm);
+    width: 100%;
+    box-sizing: border-box;
   }
   
-  .app-header h1 {
+  .app-header h1,
+  .header-title-centered {
     font-size: 1.25rem;
     margin-bottom: var(--spacing-sm);
     line-height: 1.3;
-    padding: 0 var(--spacing-xs);
+    padding: 0;
+    white-space: normal;
   }
   
   .header-controls {
@@ -1434,26 +1636,30 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
     justify-content: space-between;
     align-items: center;
     gap: var(--spacing-xs);
-    padding: 0 var(--spacing-xs);
+    padding: 0;
+    width: 100%;
   }
   
   .theme-toggle {
     padding: var(--spacing-xs);
     min-width: 44px;
     min-height: 44px;
+    flex-shrink: 0;
   }
   
   .auth-buttons {
     gap: var(--spacing-xs);
     flex: 1;
     justify-content: flex-end;
+    min-width: 0;
   }
   
   .auth-button {
-    padding: 8px 10px;
+    padding: 10px 12px;
     font-size: 0.75rem;
-    min-height: 40px;
-    min-width: 40px;
+    min-height: 44px;
+    min-width: 44px;
+    flex-shrink: 0;
   }
   
   .auth-button span {
@@ -1462,16 +1668,22 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
   
   .auth-button svg {
     margin: 0;
+    width: 18px;
+    height: 18px;
   }
   
+  /* Filter Container */
   .filter-container {
     padding: var(--spacing-sm);
     margin-bottom: var(--spacing-sm);
     border-radius: var(--radius-md);
+    width: 100%;
+    box-sizing: border-box;
   }
   
   .form-group {
     margin-bottom: var(--spacing-md);
+    width: 100%;
   }
   
   .form-group label {
@@ -1485,14 +1697,23 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
     font-size: 0.875rem;
     min-height: 44px;
     border-radius: var(--radius-md);
+    width: 100%;
+    box-sizing: border-box;
+  }
+  
+  .input-with-icon {
+    width: 100%;
   }
   
   .input-with-icon input {
     padding-left: 40px;
+    width: 100%;
   }
   
   .search-icon {
     left: 12px;
+    width: 18px;
+    height: 18px;
   }
   
   .download-button {
@@ -1501,20 +1722,27 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
     width: 100%;
     min-height: 44px;
     margin-top: var(--spacing-sm);
+    box-sizing: border-box;
   }
   
+  /* Job Count Summary */
   .job-count-summary {
-    padding: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
     font-size: 0.8125rem;
     margin-bottom: var(--spacing-sm);
     border-radius: var(--radius-md);
+    width: 100%;
+    box-sizing: border-box;
   }
   
+  /* Schedule Group Title */
   .schedule-group-title {
     font-size: 0.875rem;
     padding: var(--spacing-sm) var(--spacing-md);
     margin-bottom: var(--spacing-md);
     margin-top: var(--spacing-sm);
+    width: 100%;
+    box-sizing: border-box;
   }
   
   .schedule-group-title.ca-noi-special {
@@ -1527,35 +1755,44 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
     width: 16px;
     height: 16px;
     margin-right: 6px;
+    flex-shrink: 0;
   }
   
+  /* Schedule Items */
   .schedule-item {
     padding: var(--spacing-sm);
     margin: var(--spacing-sm) 0;
     border-radius: var(--radius-md);
+    width: 100%;
+    box-sizing: border-box;
   }
   
   .schedule-item h4 {
     font-size: 1.0625rem;
     margin-bottom: var(--spacing-sm);
     line-height: 1.4;
+    min-width: 0;
+    word-wrap: break-word;
   }
   
   .schedule-item p {
     font-size: 0.8125rem;
     margin: 8px 0;
     line-height: 1.5;
+    word-wrap: break-word;
   }
   
   .schedule-item p svg {
-    width: 14px;
-    height: 14px;
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
   }
   
   .job-header-row {
     flex-direction: column;
     gap: var(--spacing-xs);
     margin-bottom: var(--spacing-sm);
+    width: 100%;
   }
   
   .quick-report-button {
@@ -1564,17 +1801,26 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
     font-size: 0.8125rem;
     min-height: 44px;
     justify-content: center;
+    box-sizing: border-box;
   }
   
   .quick-report-button svg {
     width: 16px;
     height: 16px;
+    flex-shrink: 0;
   }
   
+  .quick-report-text {
+    display: inline;
+  }
+  
+  /* Job Groups Footer */
   .job-groups-footer-container {
     flex-direction: column;
     gap: var(--spacing-xs);
     margin-top: var(--spacing-sm);
+    width: 100%;
+    box-sizing: border-box;
   }
   
   .job-group-item {
@@ -1583,11 +1829,14 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
     gap: var(--spacing-xs);
     padding: var(--spacing-xs);
     font-size: 0.8125rem;
+    width: 100%;
+    box-sizing: border-box;
   }
   
   .job-group-icon {
     width: 16px;
     height: 16px;
+    flex-shrink: 0;
   }
   
   .job-group-label {
@@ -1597,18 +1846,25 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
   
   .job-group-link {
     width: 100%;
-    padding: 10px;
+    padding: 10px 12px;
     font-size: 0.75rem;
     min-height: 44px;
     justify-content: center;
     margin-left: 0 !important;
+    box-sizing: border-box;
+  }
+  
+  .job-group-link-text {
+    display: inline;
   }
   
   .job-group-link-icon {
     width: 12px;
     height: 12px;
+    flex-shrink: 0;
   }
   
+  /* Popup Modals */
   .popup-modal {
     width: 98%;
     max-width: 100%;
@@ -1616,6 +1872,9 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
     padding: 0;
     margin: 0;
     border-radius: var(--radius-lg);
+    box-sizing: border-box;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
   }
   
   .popup-header {
@@ -1635,16 +1894,21 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
     width: 98%;
     max-width: 100%;
     max-height: 95vh;
+    box-sizing: border-box;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
   }
   
   .report-form-content {
     padding: var(--spacing-md);
     max-height: calc(95vh - 60px);
+    overflow-y: auto;
   }
   
   .form-section {
     margin-bottom: var(--spacing-md);
     padding-bottom: var(--spacing-md);
+    width: 100%;
   }
   
   .form-section-title {
@@ -1655,12 +1919,16 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
   .form-readonly-info {
     padding: var(--spacing-xs) var(--spacing-sm);
     font-size: 0.875rem;
+    width: 100%;
+    box-sizing: border-box;
   }
   
   .image-upload-button {
     padding: 12px;
     font-size: 0.875rem;
     min-height: 44px;
+    width: 100%;
+    box-sizing: border-box;
   }
   
   .form-actions {
@@ -1668,6 +1936,7 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
     gap: var(--spacing-sm);
     margin-top: var(--spacing-md);
     padding-top: var(--spacing-md);
+    width: 100%;
   }
   
   .form-button {
@@ -1676,11 +1945,13 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
     padding: 14px;
     font-size: 0.875rem;
     min-height: 44px;
+    box-sizing: border-box;
   }
   
   .image-preview {
     max-width: 100%;
     border-radius: var(--radius-md);
+    box-sizing: border-box;
   }
   
   .add-button,
@@ -1695,32 +1966,40 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
   body {
     padding: var(--spacing-xs);
     font-size: 0.8125rem;
+    overflow-x: hidden;
   }
   
   .app-header {
     padding: var(--spacing-xs);
+    width: 100%;
+    box-sizing: border-box;
   }
   
-  .app-header h1 {
+  .app-header h1,
+  .header-title-centered {
     font-size: 1.1rem;
     margin-bottom: var(--spacing-xs);
+    padding: 0;
   }
   
   .header-controls {
     gap: var(--spacing-xs);
     padding: 0;
+    width: 100%;
   }
   
   .auth-button {
-    padding: 6px 8px;
+    padding: 8px 10px;
     font-size: 0.6875rem;
-    min-width: 36px;
-    min-height: 36px;
+    min-width: 40px;
+    min-height: 40px;
   }
   
   .filter-container {
     padding: var(--spacing-xs);
     margin-bottom: var(--spacing-xs);
+    width: 100%;
+    box-sizing: border-box;
   }
   
   .form-group label {
@@ -1729,20 +2008,26 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
   
   .form-group input,
   .form-group select {
-    padding: 10px;
+    padding: 10px 12px;
     font-size: 0.8125rem;
-    min-height: 40px;
+    min-height: 44px;
+    width: 100%;
+    box-sizing: border-box;
   }
   
   .download-button {
     padding: 12px;
     font-size: 0.8125rem;
+    width: 100%;
+    box-sizing: border-box;
   }
   
   .schedule-group-title {
     font-size: 0.8125rem;
     padding: var(--spacing-xs) var(--spacing-sm);
     margin-bottom: var(--spacing-sm);
+    width: 100%;
+    box-sizing: border-box;
   }
   
   .schedule-group-title.ca-noi-special {
@@ -1752,11 +2037,14 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
   .schedule-item {
     padding: var(--spacing-xs);
     margin: var(--spacing-xs) 0;
+    width: 100%;
+    box-sizing: border-box;
   }
   
   .schedule-item h4 {
     font-size: 1rem;
     margin-bottom: var(--spacing-xs);
+    min-width: 0;
   }
   
   .schedule-item p {
@@ -1764,20 +2052,32 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
     margin: 6px 0;
   }
   
+  .schedule-item p svg {
+    width: 14px;
+    height: 14px;
+  }
+  
   .job-group-item {
     font-size: 0.75rem;
     padding: var(--spacing-xs);
+    width: 100%;
+    box-sizing: border-box;
   }
   
   .job-group-link {
-    padding: 8px;
+    padding: 8px 10px;
     font-size: 0.6875rem;
+    width: 100%;
+    box-sizing: border-box;
   }
   
   .popup-modal {
     width: 100%;
     max-height: 100vh;
     border-radius: var(--radius-md);
+    box-sizing: border-box;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
   }
   
   .popup-header {
@@ -1786,6 +2086,11 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
   
   .popup-header h3 {
     font-size: 0.875rem;
+  }
+  
+  .report-form-modal {
+    width: 100%;
+    box-sizing: border-box;
   }
   
   .report-form-content {
@@ -1801,42 +2106,60 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
 @media (max-width: 768px) and (orientation: landscape) {
   body {
     padding: var(--spacing-xs);
+    overflow-x: hidden;
   }
   
   .app-header {
     padding: var(--spacing-sm) var(--spacing-xs);
     margin-bottom: var(--spacing-sm);
+    width: 100%;
+    box-sizing: border-box;
   }
   
-  .app-header h1 {
+  .app-header h1,
+  .header-title-centered {
     font-size: 1.3rem;
     margin-bottom: var(--spacing-xs);
   }
   
   .header-controls {
     gap: var(--spacing-xs);
+    width: 100%;
   }
   
   .filter-container {
     padding: var(--spacing-sm);
     margin-bottom: var(--spacing-sm);
+    width: 100%;
+    box-sizing: border-box;
   }
   
   .schedule-item {
     padding: var(--spacing-sm);
     margin: var(--spacing-sm) 0;
+    width: 100%;
+    box-sizing: border-box;
   }
   
   .popup-modal {
     max-height: 85vh;
+    width: 95%;
+    box-sizing: border-box;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
   }
   
   .report-form-modal {
     max-height: 85vh;
+    width: 95%;
+    box-sizing: border-box;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
   }
   
   .report-form-content {
     max-height: calc(85vh - 60px);
+    overflow-y: auto;
   }
 }
 
