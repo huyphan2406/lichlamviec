@@ -285,6 +285,26 @@ const findGroupLink = (job, groups, type) => {
       return value;
     }
 
+    // Cải thiện: Kiểm tra subset matching - nếu tất cả tokens của key có trong normalizedStore
+    // Ví dụ: "mustela tiktok" (key) có trong "mustela shopee tiktok team livestream inhouse" (normalizedStore)
+    if (keyCoreTokens.length > 0) {
+      const normalizedStoreTokens = tokenize(normalizedStore);
+      const allKeyTokensInStore = keyCoreTokens.every(token => normalizedStoreTokens.includes(token));
+      if (allKeyTokensInStore && keyCoreTokens.length >= 2) {
+        // Nếu có ít nhất 2 tokens và tất cả đều có trong store, match ngay
+        return value;
+      }
+    }
+
+    // Kiểm tra ngược lại: nếu tất cả tokens của normalizedStore có trong key
+    if (coreTokens.length > 0) {
+      const keyTokens = tokenize(key);
+      const allStoreTokensInKey = coreTokens.every(token => keyTokens.includes(token));
+      if (allStoreTokensInKey && coreTokens.length >= 2) {
+        return value;
+      }
+    }
+
     if (coreName && keyCoreName && (coreName.includes(keyCoreName) || keyCoreName.includes(coreName))) {
       bestMatch = value;
       bestScore = 1;
@@ -796,8 +816,11 @@ function App() {
     estimateSize: (index) => {
       const item = flatRowItems[index];
       if (!item) return 50;
-      // Tăng estimate size để đảm bảo đủ không gian, tránh items dính nhau
-      return item.type === 'HEADER' ? 80 : 450;
+      // Tăng estimate size cho mobile để đảm bảo đủ không gian, tránh items dính nhau
+      const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
+      return item.type === 'HEADER' 
+        ? (isMobile ? 90 : 80)
+        : (isMobile ? 550 : 450);
     },
     overscan: 3,
     measureElement,
@@ -860,8 +883,8 @@ function App() {
                         // Tăng paddingBottom cho mobile để tránh items dính nhau
                         const isMobile = window.innerWidth <= 768;
                         const paddingBottom = item.type === 'HEADER' 
-                          ? (isMobile ? '20px' : '24px')
-                          : (isMobile ? '100px' : '80px');
+                          ? (isMobile ? '24px' : '24px')
+                          : (isMobile ? '120px' : '72px');
                         
                         return (
                             <div

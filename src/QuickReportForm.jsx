@@ -6,43 +6,51 @@ import {
   FiDollarSign, FiHash, FiUpload
 } from 'react-icons/fi';
 
+// Hàm cleanup cho Blob URL
+const revokeBlobUrl = (url) => {
+  if (url && url.startsWith('blob:')) {
+    URL.revokeObjectURL(url);
+  }
+};
+
 const QuickReportForm = memo(({ isVisible, setIsVisible, job, showTempNotification }) => {
   const [formData, setFormData] = useState({
     email: '',
-    keyLivestream: '',
-    idLive1: '',
-    idLive2: '',
+    // keyLivestream được tính toán bởi useMemo
     gmv: '',
     startTimeActual: ''
   });
-
-  const [imagePreview, setImagePreview] = useState(null);
+  const [liveIds, setLiveIds] = useState(['']); // Mảng duy nhất cho tất cả các ID Live
+  const [imagePreview, setImagePreview] = useState(null); // Sẽ là Blob URL
   const [isProcessing, setIsProcessing] = useState(false);
-  const [liveIds, setLiveIds] = useState(['']); // Array để quản lý nhiều ID
+  
   const fileInputRef = useRef(null);
-  const imageRef = useRef(null);
+  // imageRef vẫn được giữ để tham chiếu DOM nếu cần
+  // const imageRef = useRef(null); 
 
-  // Lock scroll khi form mở
+  // --- Tối ưu hóa 1: Lock scroll và Cleanup Blob URL ---
   useEffect(() => {
+    let originalOverflow = 'auto'; // Giá trị mặc định an toàn
+
     if (isVisible) {
-      const originalOverflow = document.body.style.overflow;
+      originalOverflow = document.body.style.overflow;
       document.body.style.overflow = 'hidden';
-      return () => {
-        document.body.style.overflow = originalOverflow;
-      };
     }
+
+    // Cleanup khi component unmount HOẶC isVisible thay đổi
+    return () => {
+      // Đặt lại scroll
+      document.body.style.overflow = originalOverflow;
+      // Cleanup Blob URL cũ khi đóng form/unmount
+      setImagePreview(prev => {
+        revokeBlobUrl(prev);
+        return null;
+      });
+    };
   }, [isVisible]);
 
-  // Separate cleanup cho image preview
-  useEffect(() => {
-    return () => {
-      if (imagePreview && imagePreview.startsWith('blob:')) {
-        URL.revokeObjectURL(imagePreview);
-      }
-    };
-  }, [imagePreview]);
 
-  // Tạo key livestream từ job data - Memoized để tránh tính toán lại
+  // Tạo key livestream từ job data - Memoized (Tối ưu hóa tốt)
   const keyLivestream = useMemo(() => {
     if (!job) return '';
     const date = (job['Date livestream'] || '').replace(/\//g, '');
@@ -51,37 +59,42 @@ const QuickReportForm = memo(({ isVisible, setIsVisible, job, showTempNotificati
     return `${date}_${store}_${time}`.toUpperCase();
   }, [job]);
 
-  // Điền dữ liệu từ job vào form khi mở
+  // Điền dữ liệu ban đầu khi form mở/job thay đổi
   useEffect(() => {
     if (job && isVisible) {
       setFormData({
         email: '',
-        keyLivestream: keyLivestream,
-        idLive1: '',
-        idLive2: '',
         gmv: '',
         startTimeActual: ''
       });
       setLiveIds(['']);
-      setImagePreview(null);
+      // Cleanup preview cũ nếu có
+      setImagePreview(prev => {
+        revokeBlobUrl(prev);
+        return null;
+      });
     }
-  }, [job, isVisible, keyLivestream]);
+  }, [job, isVisible]);
 
+  // Hàm loại bỏ (Dismiss) Form - useCallback (Tối ưu hóa tốt)
   const handleDismiss = useCallback(() => {
     setIsVisible(false);
     setFormData({
       email: '',
-      keyLivestream: '',
-      idLive1: '',
-      idLive2: '',
       gmv: '',
       startTimeActual: ''
     });
     setLiveIds(['']);
-    setImagePreview(null);
     setIsProcessing(false);
+    
+    // Cleanup Blob URL ngay lập tức khi đóng form
+    setImagePreview(prev => {
+      revokeBlobUrl(prev);
+      return null;
+    });
   }, [setIsVisible]);
 
+  // Xử lý thay đổi input form (trừ Live ID) - useCallback (Tối ưu hóa tốt)
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -90,18 +103,16 @@ const QuickReportForm = memo(({ isVisible, setIsVisible, job, showTempNotificati
     }));
   }, []);
 
-  // Xử lý upload ảnh với cleanup
+  // --- Tối ưu hóa 2: Xử lý upload ảnh bằng Blob URL ---
   const handleImageUpload = useCallback((e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Kiểm tra loại file
     if (!file.type.startsWith('image/')) {
       showTempNotification?.('Vui lòng chọn file ảnh hợp lệ!');
       return;
     }
 
-    // Kiểm tra kích thước (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       showTempNotification?.('Kích thước ảnh không được vượt quá 5MB!');
       return;
@@ -109,76 +120,60 @@ const QuickReportForm = memo(({ isVisible, setIsVisible, job, showTempNotificati
 
     setIsProcessing(true);
 
-    // Hiển thị preview với cleanup và lazy loading
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      // Cleanup preview cũ nếu có
-      setImagePreview(prev => {
-        if (prev && prev.startsWith('blob:')) {
-          URL.revokeObjectURL(prev);
-        }
-        return event.target.result;
-      });
+    // Tạo Blob URL (nhanh hơn Data URL)
+    const newPreviewUrl = URL.createObjectURL(file);
+
+    // Cleanup preview cũ và đặt preview mới
+    setImagePreview(prev => {
+      revokeBlobUrl(prev); // Cleanup cũ
+      return newPreviewUrl; // Đặt mới
+    });
+    
+    // Giả lập xử lý/trích xuất thông tin
+    setTimeout(() => {
       setIsProcessing(false);
-      // Delay notification để không block UI
-      requestAnimationFrame(() => {
-        showTempNotification?.('Ảnh đã được tải lên. Vui lòng nhập thông tin thủ công từ ảnh.');
-      });
-    };
-    reader.onerror = () => {
-      setIsProcessing(false);
-      showTempNotification?.('Lỗi khi đọc file ảnh!');
-    };
-    reader.readAsDataURL(file);
+      showTempNotification?.('Ảnh đã được tải lên. Vui lòng nhập thông tin thủ công từ ảnh.');
+    }, 500); // Giảm thời gian giả lập
+    
+    // Xóa giá trị file input để cho phép upload lại cùng 1 file
+    e.target.value = null; 
   }, [showTempNotification]);
 
-  // Thêm ID phiên live mới
+  // Thêm ID phiên live mới - useCallback (Tối ưu hóa tốt)
   const handleAddLiveId = useCallback(() => {
     setLiveIds(prev => [...prev, '']);
   }, []);
 
-  // Xóa ID phiên live
+  // Xóa ID phiên live - useCallback (Tối ưu hóa tốt)
   const handleRemoveLiveId = useCallback((index) => {
     if (liveIds.length > 1) {
-      setLiveIds(prev => {
-        const newIds = prev.filter((_, i) => i !== index);
-        setFormData(prevData => ({
-          ...prevData,
-          idLive2: newIds.slice(1).join(', ')
-        }));
-        return newIds;
-      });
+      setLiveIds(prev => prev.filter((_, i) => i !== index));
     }
   }, [liveIds.length]);
 
-  // Cập nhật ID phiên live
+  // Cập nhật ID phiên live - Chỉ cập nhật liveIds (Tối ưu hóa)
   const handleLiveIdChange = useCallback((index, value) => {
     setLiveIds(prev => {
       const newIds = [...prev];
       newIds[index] = value;
-      
-      if (index === 0) {
-        setFormData(prevData => ({ ...prevData, idLive1: value }));
-      } else {
-        setFormData(prevData => ({ 
-          ...prevData, 
-          idLive2: newIds.slice(1).filter(id => id).join(', ') 
-        }));
-      }
       return newIds;
     });
   }, []);
 
-  // Submit form đến Google Forms
+  // Submit form - Tính toán idLive1/idLive2 ngay trước khi submit
   const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
     
+    const validLiveIds = liveIds.filter(id => id.trim() !== '');
+    const idLive1 = validLiveIds[0] || '';
+    const idLive2 = validLiveIds.slice(1).join(', ');
+
     if (!formData.email) {
       showTempNotification?.('Vui lòng nhập email!');
       return;
     }
 
-    if (!formData.idLive1) {
+    if (!idLive1) {
       showTempNotification?.('Vui lòng nhập ID phiên live 1!');
       return;
     }
@@ -186,43 +181,35 @@ const QuickReportForm = memo(({ isVisible, setIsVisible, job, showTempNotificati
     setIsProcessing(true);
 
     try {
-      // Google Forms entry URL
       const formUrl = 'https://docs.google.com/forms/d/e/1FAIpQLSeZAOqU-pF3DEa7PB_GL4xzWg5K1lhIqy0m2LuUnDf_HV4_QA/formResponse';
       
-      // Tạo form data
       const formDataToSubmit = new FormData();
       
-      // Entry IDs (cần điều chỉnh theo form thực tế)
-      // Email field
-      formDataToSubmit.append('entry.123456789', formData.email); // Thay bằng entry ID thực tế
-      // Key livestream
-      formDataToSubmit.append('entry.987654321', formData.keyLivestream); // Thay bằng entry ID thực tế
-      // ID phiên live 1
-      formDataToSubmit.append('entry.111111111', formData.idLive1); // Thay bằng entry ID thực tế
-      // ID phiên live 2 (nếu có)
-      if (formData.idLive2) {
-        formDataToSubmit.append('entry.222222222', formData.idLive2); // Thay bằng entry ID thực tế
+      // *** CÁC ENTRY ID NÀY CẦN ĐƯỢC THAY THẾ BẰNG ENTRY ID THỰC TẾ CỦA GOOGLE FORM CỦA BẠN ***
+      formDataToSubmit.append('entry.123456789', formData.email); 
+      formDataToSubmit.append('entry.987654321', keyLivestream); 
+      formDataToSubmit.append('entry.111111111', idLive1); 
+      
+      if (idLive2) {
+        formDataToSubmit.append('entry.222222222', idLive2); 
       }
-      // GMV
       if (formData.gmv) {
-        formDataToSubmit.append('entry.333333333', formData.gmv); // Thay bằng entry ID thực tế
+        formDataToSubmit.append('entry.333333333', formData.gmv); 
       }
-      // Start time thực tế
       if (formData.startTimeActual) {
-        formDataToSubmit.append('entry.444444444', formData.startTimeActual); // Thay bằng entry ID thực tế
+        formDataToSubmit.append('entry.444444444', formData.startTimeActual); 
       }
-
-      // Submit form
+      
       const response = await fetch(formUrl, {
         method: 'POST',
-        mode: 'no-cors', // Google Forms không trả về CORS
+        mode: 'no-cors',
         body: formDataToSubmit
       });
 
+      // Bỏ qua kiểm tra response do 'no-cors'
       setIsProcessing(false);
       showTempNotification?.('Đã gửi form thành công!');
       
-      // Đóng form sau 1 giây
       setTimeout(() => {
         handleDismiss();
       }, 1000);
@@ -232,8 +219,9 @@ const QuickReportForm = memo(({ isVisible, setIsVisible, job, showTempNotificati
       setIsProcessing(false);
       showTempNotification?.('Lỗi khi gửi form. Vui lòng thử lại!');
     }
-  }, [formData, showTempNotification, handleDismiss]);
+  }, [formData.email, formData.gmv, formData.startTimeActual, keyLivestream, liveIds, showTempNotification, handleDismiss]);
 
+  // Không re-render nếu không cần thiết
   if (!isVisible || !job) return null;
 
   return (
@@ -327,17 +315,18 @@ const QuickReportForm = memo(({ isVisible, setIsVisible, job, showTempNotificati
                     {imagePreview && (
                       <div className="image-preview">
                         <img 
-                          ref={imageRef}
+                          // ref={imageRef} // Không cần thiết nếu không dùng để thao tác DOM cụ thể
                           src={imagePreview} 
                           alt="Preview" 
                           loading="lazy"
                           decoding="async"
                           style={{ willChange: 'transform' }}
                         />
+                        {/* Thay thế lớp phủ loading bằng thông báo trạng thái ngắn gọn hơn */}
                         {isProcessing && (
                           <div className="processing-overlay">
                             <div className="spinner"></div>
-                            <p>Đang trích xuất thông tin...</p>
+                            <p>Đang tải...</p>
                           </div>
                         )}
                       </div>
@@ -375,54 +364,42 @@ const QuickReportForm = memo(({ isVisible, setIsVisible, job, showTempNotificati
                     type="text"
                     id="keyLivestream"
                     name="keyLivestream"
-                    value={formData.keyLivestream}
+                    value={keyLivestream}
                     onChange={handleChange}
                     readOnly
                     className="readonly-input"
                   />
                 </div>
 
-                <div className="form-group">
-                  <label>
-                    <FiHash size={16} style={{ marginRight: '8px' }} />
-                    ID Phiên Live 1 *
-                  </label>
-                  <input
-                    type="text"
-                    value={liveIds[0] || ''}
-                    onChange={(e) => handleLiveIdChange(0, e.target.value)}
-                    placeholder="Nhập ID phiên live 1"
-                    required
-                  />
-                </div>
-
-                {liveIds.map((id, index) => {
-                  if (index === 0) return null;
-                  return (
-                    <div key={index} className="form-group">
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                        <label style={{ margin: 0, flex: 1 }}>
-                          <FiHash size={16} style={{ marginRight: '8px' }} />
-                          ID Phiên Live {index + 1}
-                        </label>
+                {/* Live IDs */}
+                {liveIds.map((id, index) => (
+                  <div key={index} className="form-group">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                      <label style={{ margin: 0, flex: 1 }}>
+                        <FiHash size={16} style={{ marginRight: '8px' }} />
+                        ID Phiên Live {index === 0 ? '1 *' : index + 1}
+                      </label>
+                      {index > 0 && (
                         <button
                           type="button"
                           className="remove-button"
                           onClick={() => handleRemoveLiveId(index)}
                           title="Xóa"
+                          disabled={liveIds.length <= 1}
                         >
                           <FiTrash2 size={16} />
                         </button>
-                      </div>
-                      <input
-                        type="text"
-                        value={id}
-                        onChange={(e) => handleLiveIdChange(index, e.target.value)}
-                        placeholder={`Nhập ID phiên live ${index + 1}`}
-                      />
+                      )}
                     </div>
-                  );
-                })}
+                    <input
+                      type="text"
+                      value={id || ''}
+                      onChange={(e) => handleLiveIdChange(index, e.target.value)}
+                      placeholder={`Nhập ID phiên live ${index + 1}`}
+                      required={index === 0}
+                    />
+                  </div>
+                ))}
 
                 <div className="form-group">
                   <button
@@ -502,10 +479,10 @@ const QuickReportForm = memo(({ isVisible, setIsVisible, job, showTempNotificati
   );
 }, (prevProps, nextProps) => {
   // Custom comparison để tránh re-render không cần thiết
+  // Chỉ so sánh các props thực sự ảnh hưởng đến việc render và logic
   return prevProps.isVisible === nextProps.isVisible && 
-         prevProps.job === nextProps.job &&
-         prevProps.setIsVisible === nextProps.setIsVisible &&
-         prevProps.showTempNotification === nextProps.showTempNotification;
+         prevProps.job === nextProps.job; // job được dùng trong useMemo và read-only fields
+  // setIsVisible và showTempNotification là hàm, chúng thường ổn định với useCallback từ bên ngoài
 });
 
 QuickReportForm.displayName = 'QuickReportForm';

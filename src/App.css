@@ -460,7 +460,7 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
   border-radius: var(--radius-lg);
   box-shadow: 0 2px 8px var(--color-shadow);
   padding: var(--spacing-lg);
-  margin: var(--spacing-lg) 0;
+  margin: var(--spacing-md) 0;
   border: 1px solid var(--color-border);
   transition: all var(--transition-speed);
   position: relative;
@@ -1500,7 +1500,7 @@ body[data-theme='dark'] .schedule-item p.session svg {
   /* Schedule Items */
   .schedule-item {
     padding: var(--spacing-lg);
-    margin: 48px 0;
+    margin: 64px 0 !important;
     border-radius: var(--radius-md);
     width: 100%;
     box-sizing: border-box;
@@ -1513,14 +1513,14 @@ body[data-theme='dark'] .schedule-item p.session svg {
   .schedule-item h4 {
     font-size: 1.125rem;
     line-height: 1.4;
-    margin-bottom: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
     min-width: 0;
     word-wrap: break-word;
   }
   
   .schedule-item p {
     font-size: 0.875rem;
-    margin: 14px 0;
+    margin: 16px 0;
     line-height: 1.6;
     word-wrap: break-word;
   }
@@ -1825,7 +1825,7 @@ body[data-theme='dark'] .schedule-item p.session svg {
   /* Schedule Items */
   .schedule-item {
     padding: var(--spacing-lg);
-    margin: 56px 0;
+    margin: 72px 0 !important;
     border-radius: var(--radius-md);
     width: 100%;
     box-sizing: border-box;
@@ -1833,7 +1833,7 @@ body[data-theme='dark'] .schedule-item p.session svg {
   
   .schedule-item h4 {
     font-size: 1.0625rem;
-    margin-bottom: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
     line-height: 1.4;
     min-width: 0;
     word-wrap: break-word;
@@ -1841,7 +1841,7 @@ body[data-theme='dark'] .schedule-item p.session svg {
   
   .schedule-item p {
     font-size: 0.8125rem;
-    margin: 14px 0;
+    margin: 16px 0;
     line-height: 1.6;
     word-wrap: break-word;
   }
@@ -2120,20 +2120,20 @@ body[data-theme='dark'] .schedule-item p.session svg {
   
   .schedule-item {
     padding: var(--spacing-md);
-    margin: 48px 0;
+    margin: 64px 0 !important;
     width: 100%;
     box-sizing: border-box;
   }
   
   .schedule-item h4 {
     font-size: 1rem;
-    margin-bottom: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
     min-width: 0;
   }
   
   .schedule-item p {
     font-size: 0.75rem;
-    margin: 12px 0;
+    margin: 14px 0;
   }
   
   .schedule-list {
@@ -2224,7 +2224,7 @@ body[data-theme='dark'] .schedule-item p.session svg {
   
   .schedule-item {
     padding: var(--spacing-md);
-    margin: 40px 0;
+    margin: 56px 0 !important;
     width: 100%;
     box-sizing: border-box;
   }
