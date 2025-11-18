@@ -1230,6 +1230,7 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
 @media (max-width: 768px) {
   body {
     padding: var(--spacing-sm);
+    font-size: 0.9375rem;
   }
   
   .App {
@@ -1238,26 +1239,49 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
   }
   
   .app-header {
-    padding: var(--spacing-md) 0;
+    padding: var(--spacing-md) var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
   }
   
   .app-header h1 {
     font-size: 1.5rem;
+    margin-bottom: var(--spacing-md);
+    line-height: 1.3;
   }
   
   .header-controls {
-    flex-direction: column;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
     gap: var(--spacing-sm);
+    width: 100%;
+  }
+  
+  .theme-toggle {
+    flex-shrink: 0;
   }
   
   .auth-buttons {
-    width: 100%;
-    justify-content: center;
+    width: auto;
+    flex: 1;
+    justify-content: flex-end;
+    gap: var(--spacing-xs);
+  }
+  
+  .auth-button {
+    padding: 8px 12px;
+    font-size: 0.8125rem;
+    min-height: 36px;
+  }
+  
+  .auth-button span {
+    display: inline;
   }
   
   .filter-container {
     padding: var(--spacing-md);
     margin-bottom: var(--spacing-md);
+    border-radius: var(--radius-md);
   }
   
   .form-group-grid {
@@ -1269,35 +1293,100 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
     grid-column: span 1;
   }
   
+  .form-group label {
+    font-size: 0.875rem;
+    margin-bottom: var(--spacing-xs);
+  }
+  
+  .form-group input,
+  .form-group select {
+    padding: 12px;
+    font-size: 0.9375rem;
+    min-height: 44px;
+  }
+  
+  .download-button {
+    width: 100%;
+    padding: 14px;
+    font-size: 0.9375rem;
+    margin-top: var(--spacing-md);
+  }
+  
+  .job-count-summary {
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: 0.875rem;
+    margin-bottom: var(--spacing-md);
+  }
+  
+  .schedule-group-title {
+    font-size: 0.9375rem;
+    padding: var(--spacing-sm) var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+  }
+  
+  .schedule-group-title.ca-noi-special {
+    font-size: 1rem;
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+  
   .schedule-item {
     padding: var(--spacing-md);
     margin: var(--spacing-md) 0;
+    border-radius: var(--radius-md);
+  }
+  
+  .schedule-item h4 {
+    font-size: 1.125rem;
+    line-height: 1.4;
+    margin-bottom: var(--spacing-sm);
+  }
+  
+  .schedule-item p {
+    font-size: 0.875rem;
+    margin: 10px 0;
+    line-height: 1.5;
   }
   
   .job-header-row {
     flex-direction: column;
     align-items: stretch;
     gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
   }
   
   .quick-report-button {
     width: 100%;
     justify-content: center;
+    padding: 12px;
+    font-size: 0.875rem;
+    min-height: 44px;
   }
   
   .job-groups-footer-container {
     grid-template-columns: 1fr;
     gap: var(--spacing-sm);
+    margin-top: var(--spacing-md);
   }
   
-  .group-host .job-group-item {
-    justify-content: flex-start;
+  .job-group-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm);
+    font-size: 0.875rem;
+  }
+  
+  .job-group-label {
+    font-size: 0.8125rem;
+    margin-bottom: var(--spacing-xs);
   }
   
   .job-group-link {
     width: 100%;
     justify-content: center;
     margin-left: 0 !important;
+    padding: 10px;
+    min-height: 44px;
   }
   
   .popup-modal {
@@ -1305,6 +1394,15 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
     max-width: 100%;
     max-height: 90vh;
     overflow-y: auto;
+    margin: 0;
+  }
+  
+  .popup-header {
+    padding: var(--spacing-md);
+  }
+  
+  .popup-header h3 {
+    font-size: 1rem;
   }
 }
 
@@ -1312,100 +1410,225 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
 @media (max-width: 480px) {
   body {
     padding: var(--spacing-xs);
+    font-size: 0.875rem;
+  }
+  
+  .App {
+    padding: 0;
+  }
+  
+  .app-header {
+    padding: var(--spacing-sm) var(--spacing-xs);
+    margin-bottom: var(--spacing-sm);
   }
   
   .app-header h1 {
     font-size: 1.25rem;
     margin-bottom: var(--spacing-sm);
+    line-height: 1.3;
+    padding: 0 var(--spacing-xs);
   }
   
   .header-controls {
-    width: 100%;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: 0 var(--spacing-xs);
+  }
+  
+  .theme-toggle {
+    padding: var(--spacing-xs);
+    min-width: 44px;
+    min-height: 44px;
+  }
+  
+  .auth-buttons {
+    gap: var(--spacing-xs);
+    flex: 1;
+    justify-content: flex-end;
   }
   
   .auth-button {
-    padding: 8px 12px;
-    font-size: 0.8125rem;
+    padding: 8px 10px;
+    font-size: 0.75rem;
+    min-height: 40px;
+    min-width: 40px;
   }
   
   .auth-button span {
     display: none;
   }
   
-  .theme-toggle {
-    padding: var(--spacing-xs);
+  .auth-button svg {
+    margin: 0;
   }
   
   .filter-container {
     padding: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
+    border-radius: var(--radius-md);
+  }
+  
+  .form-group {
+    margin-bottom: var(--spacing-md);
   }
   
   .form-group label {
     font-size: 0.8125rem;
+    margin-bottom: var(--spacing-xs);
   }
   
   .form-group input,
   .form-group select {
-    padding: 10px 12px;
+    padding: 12px;
     font-size: 0.875rem;
+    min-height: 44px;
+    border-radius: var(--radius-md);
+  }
+  
+  .input-with-icon input {
+    padding-left: 40px;
+  }
+  
+  .search-icon {
+    left: 12px;
+  }
+  
+  .download-button {
+    padding: 14px;
+    font-size: 0.875rem;
+    width: 100%;
+    min-height: 44px;
+    margin-top: var(--spacing-sm);
+  }
+  
+  .job-count-summary {
+    padding: var(--spacing-sm);
+    font-size: 0.8125rem;
+    margin-bottom: var(--spacing-sm);
+    border-radius: var(--radius-md);
+  }
+  
+  .schedule-group-title {
+    font-size: 0.875rem;
+    padding: var(--spacing-sm) var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    margin-top: var(--spacing-sm);
+  }
+  
+  .schedule-group-title.ca-noi-special {
+    font-size: 0.9375rem;
+    padding: var(--spacing-sm) var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+  }
+  
+  .schedule-group-title.ca-noi-special svg {
+    width: 16px;
+    height: 16px;
+    margin-right: 6px;
   }
   
   .schedule-item {
     padding: var(--spacing-sm);
     margin: var(--spacing-sm) 0;
+    border-radius: var(--radius-md);
   }
   
   .schedule-item h4 {
-    font-size: 1.1rem;
+    font-size: 1.0625rem;
     margin-bottom: var(--spacing-sm);
+    line-height: 1.4;
   }
   
   .schedule-item p {
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
     margin: 8px 0;
+    line-height: 1.5;
+  }
+  
+  .schedule-item p svg {
+    width: 14px;
+    height: 14px;
+  }
+  
+  .job-header-row {
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    margin-bottom: var(--spacing-sm);
+  }
+  
+  .quick-report-button {
+    width: 100%;
+    padding: 12px;
+    font-size: 0.8125rem;
+    min-height: 44px;
+    justify-content: center;
+  }
+  
+  .quick-report-button svg {
+    width: 16px;
+    height: 16px;
   }
   
   .job-groups-footer-container {
     flex-direction: column;
     gap: var(--spacing-xs);
+    margin-top: var(--spacing-sm);
   }
   
   .job-group-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xs);
     font-size: 0.8125rem;
   }
   
-  .job-group-link {
-    padding: 6px 12px;
+  .job-group-icon {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .job-group-label {
     font-size: 0.75rem;
+    margin-bottom: var(--spacing-xs);
   }
   
-  .download-button {
-    padding: 12px;
-    font-size: 0.875rem;
+  .job-group-link {
+    width: 100%;
+    padding: 10px;
+    font-size: 0.75rem;
+    min-height: 44px;
+    justify-content: center;
+    margin-left: 0 !important;
   }
   
-  .job-count-summary {
-    padding: var(--spacing-sm) var(--spacing-md);
-    font-size: 0.875rem;
-  }
-  
-  .schedule-group-title {
-    font-size: 0.875rem;
-    padding: var(--spacing-sm) 0;
-    margin-bottom: var(--spacing-md);
+  .job-group-link-icon {
+    width: 12px;
+    height: 12px;
   }
   
   .popup-modal {
     width: 98%;
-    padding: var(--spacing-md);
+    max-width: 100%;
+    max-height: 95vh;
+    padding: 0;
+    margin: 0;
+    border-radius: var(--radius-lg);
   }
   
   .popup-header {
-    padding: var(--spacing-md);
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+  
+  .popup-header h3 {
+    font-size: 0.9375rem;
   }
   
   .popup-content {
     padding: var(--spacing-md);
+    font-size: 0.875rem;
   }
   
   .report-form-modal {
@@ -1425,65 +1648,195 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
   }
   
   .form-section-title {
-    font-size: 1rem;
+    font-size: 0.9375rem;
+    margin-bottom: var(--spacing-sm);
+  }
+  
+  .form-readonly-info {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: 0.875rem;
+  }
+  
+  .image-upload-button {
+    padding: 12px;
+    font-size: 0.875rem;
+    min-height: 44px;
   }
   
   .form-actions {
     flex-direction: column;
     gap: var(--spacing-sm);
+    margin-top: var(--spacing-md);
+    padding-top: var(--spacing-md);
   }
   
   .form-button {
     width: 100%;
     min-width: auto;
+    padding: 14px;
+    font-size: 0.875rem;
+    min-height: 44px;
   }
   
   .image-preview {
     max-width: 100%;
+    border-radius: var(--radius-md);
+  }
+  
+  .add-button,
+  .remove-button {
+    min-height: 44px;
+    min-width: 44px;
   }
 }
 
 /* Mobile rất nhỏ (max-width: 360px) */
 @media (max-width: 360px) {
-  .app-header h1 {
-    font-size: 1.1rem;
+  body {
+    padding: var(--spacing-xs);
+    font-size: 0.8125rem;
   }
   
-  .schedule-item {
+  .app-header {
     padding: var(--spacing-xs);
   }
   
-  .schedule-item h4 {
-    font-size: 1rem;
+  .app-header h1 {
+    font-size: 1.1rem;
+    margin-bottom: var(--spacing-xs);
+  }
+  
+  .header-controls {
+    gap: var(--spacing-xs);
+    padding: 0;
+  }
+  
+  .auth-button {
+    padding: 6px 8px;
+    font-size: 0.6875rem;
+    min-width: 36px;
+    min-height: 36px;
   }
   
   .filter-container {
     padding: var(--spacing-xs);
+    margin-bottom: var(--spacing-xs);
+  }
+  
+  .form-group label {
+    font-size: 0.75rem;
   }
   
   .form-group input,
   .form-group select {
-    padding: 8px 10px;
+    padding: 10px;
     font-size: 0.8125rem;
+    min-height: 40px;
+  }
+  
+  .download-button {
+    padding: 12px;
+    font-size: 0.8125rem;
+  }
+  
+  .schedule-group-title {
+    font-size: 0.8125rem;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
+  }
+  
+  .schedule-group-title.ca-noi-special {
+    font-size: 0.875rem;
+  }
+  
+  .schedule-item {
+    padding: var(--spacing-xs);
+    margin: var(--spacing-xs) 0;
+  }
+  
+  .schedule-item h4 {
+    font-size: 1rem;
+    margin-bottom: var(--spacing-xs);
+  }
+  
+  .schedule-item p {
+    font-size: 0.75rem;
+    margin: 6px 0;
+  }
+  
+  .job-group-item {
+    font-size: 0.75rem;
+    padding: var(--spacing-xs);
+  }
+  
+  .job-group-link {
+    padding: 8px;
+    font-size: 0.6875rem;
+  }
+  
+  .popup-modal {
+    width: 100%;
+    max-height: 100vh;
+    border-radius: var(--radius-md);
+  }
+  
+  .popup-header {
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+  
+  .popup-header h3 {
+    font-size: 0.875rem;
+  }
+  
+  .report-form-content {
+    padding: var(--spacing-sm);
+  }
+  
+  .form-section-title {
+    font-size: 0.875rem;
   }
 }
 
 /* Landscape orientation cho mobile */
 @media (max-width: 768px) and (orientation: landscape) {
+  body {
+    padding: var(--spacing-xs);
+  }
+  
   .app-header {
-    padding: var(--spacing-sm) 0;
+    padding: var(--spacing-sm) var(--spacing-xs);
+    margin-bottom: var(--spacing-sm);
   }
   
   .app-header h1 {
     font-size: 1.3rem;
+    margin-bottom: var(--spacing-xs);
+  }
+  
+  .header-controls {
+    gap: var(--spacing-xs);
   }
   
   .filter-container {
     padding: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
   }
   
   .schedule-item {
     padding: var(--spacing-sm);
+    margin: var(--spacing-sm) 0;
+  }
+  
+  .popup-modal {
+    max-height: 85vh;
+  }
+  
+  .report-form-modal {
+    max-height: 85vh;
+  }
+  
+  .report-form-content {
+    max-height: calc(85vh - 60px);
   }
 }
 
