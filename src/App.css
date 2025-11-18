@@ -408,10 +408,10 @@ input:checked + .theme-toggle-slider:before {
   font-size: 1rem;
   font-weight: 700;
   color: var(--color-brand);
-  padding: var(--spacing-md) 0 var(--spacing-md) 0; /* Tăng padding bottom */
+  padding: var(--spacing-lg) 0 var(--spacing-md) 0; /* Tăng padding top từ md lên lg */
   border-top: 2px solid var(--color-border);
-  margin-top: var(--spacing-lg);
-  margin-bottom: var(--spacing-md); /* Thêm margin-bottom */
+  margin-top: var(--spacing-xl); /* Tăng từ lg lên xl */
+  margin-bottom: var(--spacing-lg); /* Tăng từ md lên lg */
   text-transform: uppercase;
   letter-spacing: 1px;
   position: static;
