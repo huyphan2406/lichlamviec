@@ -1,389 +1,976 @@
 /*
 =================================================
-  File: App.css (Original Clean Style - Tối ưu chức năng)
+  File: App.css (Premium UI/UX - Chuẩn FE)
+  Version: 3.0 - Modern & Clean Design
 =================================================
 */
 
-/* --- 1. BIẾN MÀU (CƠ BẢN & SẠCH) --- */
+/* --- 1. BIẾN MÀU (MODERN COLOR SYSTEM) --- */
 :root {
-    --font-main: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    --color-bg: #f7f8fa; /* Nền xám nhạt gốc */
-    --color-card: #ffffff;
-    --color-text-primary: #1a1a1a;
-    --color-text-secondary: #555555;
-    --color-border: #eeeeee;
-    --color-input-bg: #fdfdfd;
-    
-    /* Bóng đổ nhẹ nhàng ban đầu */
-    --color-shadow: rgba(0, 0, 0, 0.04);
-    --color-shadow-hover: rgba(0, 0, 0, 0.08);
-    
-    /* Màu thương hiệu (Solid Blue) */
-    --color-brand: #007bff;
-    --color-brand-hover: #0069d9;
-    --color-brand-active: #0056b3;
-    --color-brand-light: rgba(0, 123, 255, 0.1);
-    --color-brand-rgb: 0, 123, 255;
+  --font-main: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   
-    /* Màu chức năng */
-    --color-danger: #dc3545;
-    --color-grey: #6c757d;
-    --color-warning: #ffc107;
-    --color-warning-light: #fff3cd;
+  /* Light Mode Colors */
+  --color-bg: #f8f9fa;
+  --color-card: #ffffff;
+  --color-text-primary: #1a1a1a;
+  --color-text-secondary: #6c757d;
+  --color-border: #e9ecef;
+  --color-input-bg: #ffffff;
   
-    /* Màu Nút Report (Xanh lá phẳng) */
-    --color-report-primary: #28a745; 
-    --color-report-hover: #218838;
-    
-    --transition-speed: 0.2s ease;
-    --radius-md: 8px;
-    --spacing-md: 15px;
-  }
+  /* Shadows - Modern & Subtle */
+  --color-shadow: rgba(0, 0, 0, 0.06);
+  --color-shadow-hover: rgba(0, 0, 0, 0.12);
+  --color-shadow-lg: rgba(0, 0, 0, 0.15);
   
-  /* Chế độ Tối (Dark Mode) */
-  body[data-theme='dark'] {
-    --color-bg: #121212;
-    --color-card: #1e1e1e;
-    --color-text-primary: #f1f1f1;
-    --color-text-secondary: #aaaaaa;
-    --color-border: #333333;
-    --color-input-bg: #2a2a2a;
-    --color-shadow: rgba(0, 0, 0, 0.2);
-    --color-shadow-hover: rgba(0, 0, 0, 0.3);
-    --color-brand: #0d8eff;
-    --color-brand-light: rgba(13, 142, 255, 0.15);
-    --color-report-primary: #2ea043;
-  }
+  /* Brand Colors - Modern Blue */
+  --color-brand: #2563eb;
+  --color-brand-hover: #1d4ed8;
+  --color-brand-active: #1e40af;
+  --color-brand-light: rgba(37, 99, 235, 0.1);
+  --color-brand-rgb: 37, 99, 235;
   
-  /* --- 2. CÀI ĐẶT CƠ BẢN --- */
-  body {
-    font-family: var(--font-main);
-    background-color: var(--color-bg);
-    color: var(--color-text-primary);
-    margin: 0;
-    padding: 20px;
-    -webkit-font-smoothing: antialiased;
-    transition: background-color var(--transition-speed), color var(--transition-speed);
-  }
+  /* Functional Colors */
+  --color-danger: #ef4444;
+  --color-danger-light: rgba(239, 68, 68, 0.1);
+  --color-grey: #64748b;
+  --color-warning: #f59e0b;
+  --color-warning-light: #fef3c7;
   
-  .App { max-width: 700px; margin: 0 auto; } /* Giữ độ rộng 700px như ban đầu */
-  main { padding: 0; }
+  /* Report Button - Modern Green */
+  --color-report-primary: #10b981; 
+  --color-report-hover: #059669;
+  --color-report-active: #047857;
+  --color-report-light: rgba(16, 185, 129, 0.1);
   
-  /* --- 3. HEADER (Giao diện cũ) --- */
-  .app-header {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 10px 0;
-    margin-bottom: 15px;
-  }
+  /* Transitions */
+  --transition-speed: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-smooth: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   
-  .app-header h1,
-  .header-title-centered {
-    margin: 0 0 10px 0;
-    width: 100%;
-    color: var(--color-text-primary);
-    font-size: 1.8rem;
-    font-weight: 700;
-    text-align: center;
-    letter-spacing: normal;
-    background: none;
-    -webkit-text-fill-color: initial;
-    flex-shrink: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    padding-right: 0;
-  }
+  /* Spacing System */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
   
-  .header-controls {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    flex-wrap: wrap;
-  }
+  /* Border Radius */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+}
+
+/* Dark Mode */
+body[data-theme='dark'] {
+  --color-bg: #0f172a;
+  --color-card: #1e293b;
+  --color-text-primary: #f1f5f9;
+  --color-text-secondary: #94a3b8;
+  --color-border: #334155;
+  --color-input-bg: #1e293b;
   
-  /* Auth Buttons (Giao diện phẳng cũ) */
-  .auth-buttons {
-    display: flex;
-    align-items: center;
-    gap: 0;
-    border-radius: 6px;
-    overflow: hidden;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-  }
+  --color-shadow: rgba(0, 0, 0, 0.3);
+  --color-shadow-hover: rgba(0, 0, 0, 0.4);
+  --color-shadow-lg: rgba(0, 0, 0, 0.5);
   
-  .auth-button {
-    padding: 8px 12px;
-    font-size: 0.85rem;
-    font-weight: 500;
-    border: none;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    transition: background-color 0.2s;
-  }
+  --color-brand: #3b82f6;
+  --color-brand-hover: #2563eb;
+  --color-brand-active: #1d4ed8;
+  --color-brand-light: rgba(59, 130, 246, 0.15);
+  --color-brand-rgb: 59, 130, 246;
   
-  .auth-button.login {
-    background-color: var(--color-card);
-    color: var(--color-text-secondary);
-    border-right: 1px solid var(--color-border);
-  }
-  .auth-button.login:hover { background-color: var(--color-input-bg); color: var(--color-text-primary); }
+  --color-danger: #f87171;
+  --color-danger-light: rgba(248, 113, 113, 0.15);
+  --color-warning: #fbbf24;
+  --color-warning-light: #78350f;
   
-  .auth-button.register {
-    background-color: var(--color-brand);
-    color: white;
-  }
-  .auth-button.register:hover { background-color: var(--color-brand-hover); }
-  
-  /* Dark Mode Toggle */
-  .theme-toggle {
-    display: flex; align-items: center; gap: 8px; cursor: pointer;
-    color: var(--color-text-secondary); padding: 5px;
-    border-radius: 20px;
-  }
-  .theme-toggle:hover { background-color: var(--color-border); }
-  
-  .theme-toggle-switch { position: relative; display: inline-block; width: 44px; height: 24px; }
-  .theme-toggle-switch input { opacity: 0; width: 0; height: 0; }
-  .theme-toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
-  .theme-toggle-slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
-  input:checked + .theme-toggle-slider { background-color: var(--color-brand); }
-  input:checked + .theme-toggle-slider:before { transform: translateX(20px); }
-  
-  
-  /* --- 4. FILTER BAR (Giao diện cũ - Grid Responsive) --- */
-  .filter-container {
-    padding: 20px;
-    background-color: var(--color-card);
-    border-radius: 12px;
-    box-shadow: 0 4px 12px var(--color-shadow);
-    margin-bottom: 25px;
-    border: none; /* Bỏ border dày */
-  }
-  
+  --color-report-primary: #34d399;
+  --color-report-hover: #10b981;
+  --color-report-light: rgba(52, 211, 153, 0.15);
+}
+
+/* --- 2. BASE STYLES --- */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-main);
+  background-color: var(--color-bg);
+  color: var(--color-text-primary);
+  margin: 0;
+  padding: var(--spacing-md);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color var(--transition-smooth), color var(--transition-smooth);
+  line-height: 1.6;
+}
+
+.App { 
+  max-width: 800px; 
+  margin: 0 auto;
+  width: 100%;
+}
+
+main { 
+  padding: 0;
+  width: 100%;
+}
+
+/* --- 3. HEADER (Modern & Clean) --- */
+.app-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--spacing-lg) 0;
+  margin-bottom: var(--spacing-lg);
+  gap: var(--spacing-md);
+}
+
+.app-header h1,
+.header-title-centered {
+  margin: 0;
+  width: 100%;
+  color: var(--color-text-primary);
+  font-size: 2rem;
+  font-weight: 800;
+  text-align: center;
+  letter-spacing: -0.5px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+/* Auth Buttons - Modern Design */
+.auth-buttons {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: 0 2px 8px var(--color-shadow);
+  background: var(--color-card);
+}
+
+.auth-button {
+  padding: 10px 16px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all var(--transition-speed);
+  white-space: nowrap;
+}
+
+.auth-button.login {
+  background-color: var(--color-card);
+  color: var(--color-text-secondary);
+  border-right: 1px solid var(--color-border);
+}
+
+.auth-button.login:hover {
+  background-color: var(--color-input-bg);
+  color: var(--color-text-primary);
+}
+
+.auth-button.register {
+  background-color: var(--color-brand);
+  color: white;
+}
+
+.auth-button.register:hover {
+  background-color: var(--color-brand-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(var(--color-brand-rgb), 0.3);
+}
+
+/* Theme Toggle - Modern Switch */
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  padding: var(--spacing-sm);
+  border-radius: var(--radius-lg);
+  transition: all var(--transition-speed);
+}
+
+.theme-toggle:hover {
+  background-color: var(--color-border);
+  color: var(--color-text-primary);
+}
+
+.theme-toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 48px;
+  height: 26px;
+}
+
+.theme-toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.theme-toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--color-grey);
+  transition: var(--transition-speed);
+  border-radius: 26px;
+}
+
+.theme-toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: var(--transition-speed);
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+input:checked + .theme-toggle-slider {
+  background-color: var(--color-brand);
+}
+
+input:checked + .theme-toggle-slider:before {
+  transform: translateX(22px);
+}
+
+/* --- 4. FILTER BAR (Modern Card Design) --- */
+.filter-container {
+  padding: var(--spacing-lg);
+  background-color: var(--color-card);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 2px 8px var(--color-shadow);
+  margin-bottom: var(--spacing-lg);
+  border: 1px solid var(--color-border);
+  transition: all var(--transition-speed);
+}
+
+.filter-container:hover {
+  box-shadow: 0 4px 16px var(--color-shadow-hover);
+}
+
+.form-group-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.form-group-grid .full-width {
+  grid-column: span 3;
+}
+
+@media (max-width: 640px) {
   .form-group-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 15px;
-    margin-bottom: 15px;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
   }
-  .form-group-grid .full-width { grid-column: span 3; }
-  
-  @media (max-width: 640px) {
-    .form-group-grid { grid-template-columns: 1fr; gap: 10px; }
-    .form-group-grid .full-width { grid-column: span 1; }
+  .form-group-grid .full-width {
+    grid-column: span 1;
+  }
+}
+
+.form-group label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: var(--spacing-sm);
+  font-size: 0.875rem;
+  color: var(--color-text-primary);
+  letter-spacing: 0.2px;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 12px 16px;
+  font-size: 0.9375rem;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-input-bg);
+  color: var(--color-text-primary);
+  transition: all var(--transition-speed);
+  font-family: var(--font-main);
+}
+
+.form-group select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236c757d' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+  cursor: pointer;
+  padding-right: 40px;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--color-brand);
+  box-shadow: 0 0 0 4px var(--color-brand-light);
+  transform: translateY(-1px);
+}
+
+.input-with-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-with-icon input {
+  padding-left: 44px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 14px;
+  color: var(--color-text-secondary);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.download-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  width: 100%;
+  padding: 14px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  background-color: var(--color-brand);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  margin-top: var(--spacing-md);
+  transition: all var(--transition-speed);
+  box-shadow: 0 2px 8px rgba(var(--color-brand-rgb), 0.25);
+}
+
+.download-button:hover:not(:disabled) {
+  background-color: var(--color-brand-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(var(--color-brand-rgb), 0.35);
+}
+
+.download-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.download-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* --- 5. JOB ITEM (Premium Card Design) --- */
+.schedule-list {
+  padding: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.virtual-list-container {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+.schedule-group-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-brand);
+  padding: var(--spacing-md) 0 var(--spacing-sm) 0;
+  border-top: 2px solid var(--color-border);
+  margin-top: var(--spacing-lg);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  position: static;
+}
+
+.schedule-item {
+  background-color: var(--color-card);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 2px 8px var(--color-shadow);
+  padding: var(--spacing-lg);
+  margin: var(--spacing-md) 0;
+  border: 1px solid var(--color-border);
+  transition: all var(--transition-speed);
+  position: relative;
+  overflow: hidden;
+}
+
+.schedule-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--color-brand), var(--color-brand-hover));
+  opacity: 0;
+  transition: opacity var(--transition-speed);
+}
+
+.schedule-item:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px var(--color-shadow-hover);
+  border-color: var(--color-brand);
+}
+
+.schedule-item:hover::before {
+  opacity: 1;
+}
+
+.schedule-item.job-active {
+  border: 2px solid var(--color-warning);
+  background-color: var(--color-warning-light);
+  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.3);
+  animation: pulse-border 2s infinite ease-in-out;
+}
+
+@keyframes pulse-border {
+  0%, 100% {
+    box-shadow: 0 4px 16px rgba(245, 158, 11, 0.3);
+  }
+  50% {
+    box-shadow: 0 6px 24px rgba(245, 158, 11, 0.5);
+  }
+}
+
+/* Job Header */
+.job-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.schedule-item h4 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: var(--color-text-primary);
+  font-weight: 700;
+  padding-right: var(--spacing-sm);
+  flex: 1;
+  min-width: 200px;
+  line-height: 1.4;
+}
+
+/* Quick Report Button */
+.quick-report-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  background-color: var(--color-report-primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-speed);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
+  white-space: nowrap;
+}
+
+.quick-report-button:hover {
+  background-color: var(--color-report-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
+}
+
+.quick-report-button:active {
+  transform: translateY(0);
+}
+
+/* Job Info */
+.schedule-item p {
+  margin: 10px 0;
+  display: flex;
+  align-items: center;
+  color: var(--color-text-secondary);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1.6;
+}
+
+.schedule-item p svg {
+  margin-right: var(--spacing-sm);
+  font-size: 1.1em;
+  color: var(--color-brand);
+  flex-shrink: 0;
+  width: 20px;
+}
+
+.schedule-item p.location svg {
+  color: var(--color-danger);
+}
+
+.schedule-item p.time svg {
+  color: var(--color-grey);
+}
+
+.schedule-item p.session svg {
+  color: var(--color-warning);
+}
+
+/* --- 6. GROUP LINKS (Modern Link Design) --- */
+.job-groups-footer-container {
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 2px solid var(--color-border);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-md);
+  align-items: flex-start;
+}
+
+.job-group-item {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+  font-size: 0.875rem;
+  color: var(--color-text-primary);
+  line-height: 1.5;
+}
+
+.job-group-icon {
+  margin-right: var(--spacing-xs);
+  color: var(--color-brand);
+  flex-shrink: 0;
+}
+
+.job-group-label {
+  margin-right: var(--spacing-xs);
+  color: var(--color-text-primary);
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.job-group-value {
+  color: var(--color-text-secondary);
+  font-weight: 400;
+  font-style: italic;
+}
+
+/* Group Link - Premium Button Style */
+.job-group-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: linear-gradient(135deg, var(--color-brand) 0%, var(--color-brand-hover) 100%);
+  color: white !important;
+  text-decoration: none;
+  border-radius: var(--radius-md);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  transition: all var(--transition-speed);
+  box-shadow: 0 2px 8px rgba(var(--color-brand-rgb), 0.3);
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.job-group-link:hover {
+  background: linear-gradient(135deg, var(--color-brand-hover) 0%, var(--color-brand-active) 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(var(--color-brand-rgb), 0.4);
+  color: white !important;
+}
+
+.job-group-link:active {
+  transform: translateY(0);
+}
+
+.job-group-link-text {
+  white-space: nowrap;
+}
+
+.job-group-link-icon {
+  flex-shrink: 0;
+  opacity: 0.9;
+}
+
+.group-brand {
+  justify-self: start;
+}
+
+.group-host {
+  justify-self: end;
+}
+
+.group-host .job-group-item {
+  justify-content: flex-end;
+}
+
+.group-host .job-group-link {
+  margin-left: var(--spacing-sm);
+}
+
+@media (max-width: 640px) {
+  .job-groups-footer-container {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-sm);
   }
   
-  .form-group label {
-    display: block; font-weight: 600; margin-bottom: 8px; font-size: 0.9em;
-    color: var(--color-text-secondary);
+  .group-brand,
+  .group-host {
+    justify-self: stretch;
   }
   
-  .form-group input, .form-group select {
-    width: 100%; padding: 10px 12px; font-size: 1em;
-    border: 1px solid var(--color-border);
-    border-radius: 8px;
-    background-color: var(--color-input-bg);
-    color: var(--color-text-primary);
-    box-shadow: none; /* Bỏ shadow mặc định */
+  .group-host .job-group-item {
+    justify-content: flex-start;
   }
   
-  .form-group input:focus, .form-group select:focus {
-    outline: none; border-color: var(--color-brand);
-    box-shadow: 0 0 0 3px var(--color-brand-light);
-  }
-  
-  .input-with-icon {
-    position: relative;
-    display: flex;
-    align-items: center;
-  }
-  
-  .input-with-icon input {
-    padding-left: 40px;
-  }
-  
-  .search-icon {
-    position: absolute;
-    left: 12px;
-    color: var(--color-text-secondary);
-    pointer-events: none;
-    z-index: 1;
-  }
-  
-  .download-button {
-    display: flex; align-items: center; justify-content: center; gap: 10px;
-    width: 100%; padding: 12px; font-size: 1rem; font-weight: 600;
-    background-color: var(--color-brand); color: white; border: none;
-    border-radius: 8px; cursor: pointer; margin-top: 15px;
-    box-shadow: none; /* Bỏ bóng đổ đậm */
-  }
-  .download-button:hover { background-color: var(--color-brand-hover); }
-  
-  
-  /* --- 5. JOB ITEM (Giao diện gốc + Nút Report) --- */
-  .schedule-list { 
-    padding: 0;
+  .group-host .job-group-link {
+    margin-left: 0;
     width: 100%;
-    box-sizing: border-box;
+    justify-content: center;
   }
   
-  .virtual-list-container {
-    width: 100%;
-    height: 100%;
-    overflow-y: auto;
-    overflow-x: hidden;
-    box-sizing: border-box;
+  .quick-report-text {
+    display: none;
   }
   
-  .schedule-group-title {
-    font-size: 1.1em; font-weight: 600; color: var(--color-brand);
-    padding: 15px 0 10px 0; border-top: 1px solid var(--color-border);
-    margin-top: 20px; text-transform: uppercase;
-    background: none; /* Bỏ nền sticky */
-    position: static;
+  .quick-report-button::after {
+    content: "Report";
+    margin-left: 4px;
+  }
+}
+
+/* --- 7. NOTIFICATIONS & POPUPS --- */
+.temporary-notification {
+  position: fixed;
+  top: var(--spacing-md);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, var(--color-brand) 0%, var(--color-brand-hover) 100%);
+  color: white;
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 16px rgba(var(--color-brand-rgb), 0.4);
+  font-size: 0.875rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  max-width: 90%;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.job-count-summary {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-md) var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+  background: linear-gradient(135deg, var(--color-brand-light) 0%, transparent 100%);
+  color: var(--color-text-primary);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  box-shadow: 0 2px 4px var(--color-shadow);
+}
+
+.job-count-summary strong {
+  color: var(--color-brand);
+  font-weight: 700;
+  margin: 0 4px;
+}
+
+/* Popup Modal */
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  cursor: pointer;
+}
+
+.popup-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 90%;
+  max-width: 480px;
+  background: var(--color-card);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  z-index: 1001;
+  transform: translate(-50%, -50%);
+  border: 1px solid var(--color-border);
+  overflow: hidden;
+}
+
+.popup-header {
+  padding: var(--spacing-lg);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  background: linear-gradient(135deg, var(--color-brand-light) 0%, transparent 100%);
+  position: relative;
+}
+
+.popup-header h3 {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  flex: 1;
+}
+
+.popup-icon-zap {
+  color: var(--color-brand);
+  flex-shrink: 0;
+}
+
+.popup-dismiss-btn {
+  position: absolute;
+  top: var(--spacing-md);
+  right: var(--spacing-md);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  padding: var(--spacing-xs);
+  border-radius: 50%;
+  transition: all var(--transition-speed);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.popup-dismiss-btn:hover {
+  background-color: var(--color-border);
+  color: var(--color-text-primary);
+  transform: rotate(90deg);
+}
+
+.popup-content {
+  padding: var(--spacing-lg);
+  text-align: center;
+  line-height: 1.7;
+}
+
+.popup-main-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: var(--spacing-md);
+  color: var(--color-text-primary);
+}
+
+.popup-main-title strong {
+  color: var(--color-brand);
+}
+
+.popup-content-text {
+  font-size: 0.9375rem;
+  color: var(--color-text-secondary);
+  margin: 0 0 var(--spacing-md) 0;
+}
+
+.popup-content-text strong {
+  color: var(--color-text-primary);
+}
+
+.popup-divider {
+  border: none;
+  border-top: 1px dashed var(--color-border);
+  margin: var(--spacing-md) 0;
+}
+
+.popup-highlight-area {
+  background: linear-gradient(135deg, var(--color-brand-light) 0%, transparent 100%);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  margin: var(--spacing-md) 0;
+  border: 1px solid var(--color-border);
+}
+
+.popup-highlight-area strong.highlight-date {
+  color: white;
+  background: var(--color-brand);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+}
+
+.popup-footer-area {
+  text-align: left;
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  margin-bottom: 0;
+}
+
+.popup-author-simple {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: var(--spacing-md);
+  font-style: italic;
+  color: var(--color-grey);
+  justify-content: flex-end;
+}
+
+/* --- 8. SKELETON & EMPTY STATE --- */
+.skeleton-container {
+  padding: var(--spacing-md) 0;
+}
+
+.skeleton-item {
+  background-color: var(--color-card);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-md);
+  box-shadow: 0 2px 8px var(--color-shadow);
+}
+
+.skeleton-line {
+  background: linear-gradient(90deg, var(--color-border) 25%, var(--color-input-bg) 50%, var(--color-border) 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--spacing-sm);
+  height: 16px;
+}
+
+.skeleton-line.h4 {
+  height: 24px;
+  width: 60%;
+  margin-bottom: var(--spacing-md);
+}
+
+.skeleton-line.p {
+  height: 14px;
+  width: 80%;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.empty-state {
+  padding: var(--spacing-xl);
+  text-align: center;
+  color: var(--color-text-secondary);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.empty-state-icon {
+  font-size: 3em;
+  margin-bottom: var(--spacing-md);
+  opacity: 0.5;
+}
+
+.empty-state h3 {
+  margin: 0 0 var(--spacing-md) 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+/* --- 9. RESPONSIVE --- */
+@media (max-width: 768px) {
+  body {
+    padding: var(--spacing-sm);
+  }
+  
+  .App {
+    max-width: 100%;
+  }
+  
+  .app-header h1 {
+    font-size: 1.5rem;
+  }
+  
+  .filter-container {
+    padding: var(--spacing-md);
   }
   
   .schedule-item {
-    background-color: var(--color-card);
-    border-radius: 12px;
-    box-shadow: 0 4px 12px var(--color-shadow); /* Shadow nhẹ gốc */
-    padding: 20px;
-    margin: 15px 0;
-    border: none; /* Bỏ border */
-  }
-  .schedule-item:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 16px var(--color-shadow-hover);
-    background-color: var(--color-card); /* Giữ nền trắng */
+    padding: var(--spacing-md);
   }
   
-  /* Header Hàng Ngang: Tiêu đề & Nút Report */
   .job-header-row {
-    display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .quick-report-button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-header h1 {
+    font-size: 1.25rem;
+  }
+  
+  .auth-button span {
+    display: none;
   }
   
   .schedule-item h4 {
-    margin: 0; font-size: 1.25em; color: var(--color-text-primary); font-weight: 600;
-    padding-right: 10px;
+    font-size: 1.1rem;
   }
-  
-  /* Nút Report Nhanh - Đẹp & Gọn */
-  .quick-report-button {
-    display: flex; align-items: center; gap: 6px;
-    padding: 8px 14px; /* Kích thước vừa phải */
-    font-size: 0.85em; font-weight: 600;
-    background-color: var(--color-report-primary); /* Xanh lá phẳng */
-    color: white;
-    border: none; border-radius: 6px;
-    cursor: pointer; transition: background-color 0.2s;
-    box-shadow: none; /* Bỏ bóng đổ 3D */
-  }
-  .quick-report-button:hover { background-color: var(--color-report-hover); }
-  
-  /* Thông tin chi tiết */
-  .schedule-item p {
-    margin: 8px 0; display: flex; align-items: center;
-    color: var(--color-text-secondary); font-size: 0.95em; font-weight: 500;
-  }
-  .schedule-item p svg {
-    margin-right: 12px; font-size: 1.2em; color: var(--color-brand); flex-shrink: 0;
-  }
-  .schedule-item p.location svg { color: var(--color-danger); }
-  .schedule-item p.time svg { color: var(--color-grey); }
-  
-  
-  /* --- 6. GROUP HOST/BRAND (Giao diện đơn giản) --- */
-  .job-groups-footer-container {
-    margin-top: 15px; padding-top: 10px;
-    border-top: 1px solid var(--color-border);
-    /* Sử dụng Flexbox đơn giản thay vì Grid phức tạp */
-    display: flex; 
-    flex-wrap: wrap;
-    gap: 10px;
-    justify-content: space-between;
-  }
-  
-  .job-group-item {
-    display: flex; align-items: center; font-size: 0.9em; color: var(--color-text-primary);
-  }
-  .job-group-icon { margin-right: 8px; color: var(--color-brand); }
-  .job-group-value { color: var(--color-text-secondary); font-weight: 400; }
-  
-  /* Link Group Zalo - Đơn giản hóa */
-  .job-group-link {
-    display: inline-flex; align-items: center; gap: 5px;
-    padding: 6px 10px;
-    background-color: var(--color-brand-light); /* Nền xanh nhạt phẳng */
-    color: var(--color-brand) !important;
-    text-decoration: none;
-    border-radius: 6px;
-    font-size: 0.85em;
-    font-weight: 600;
-    transition: background-color 0.2s;
-    box-shadow: none;
-  }
-  .job-group-link:hover {
-    background-color: var(--color-brand);
-    color: white !important;
-  }
-  
-  @media (max-width: 480px) {
-    .job-groups-footer-container {
-      flex-direction: column; /* Xếp chồng trên mobile */
-      align-items: flex-start;
-    }
-    .quick-report-button span {
-        display: none; /* Ẩn chữ "Điền Report Nhanh" trên mobile siêu nhỏ, chỉ hiện icon nếu cần */
-    }
-     .quick-report-button::after {
-         content: "Report"; /* Thay thế bằng chữ ngắn hơn */
-         margin-left: 4px;
-     }
-  }
-  
-  
-  /* --- 7. CÁC THÀNH PHẦN PHỤ (Popup, Toast, v.v.) --- */
-  /* Temporary Notification */
-  .temporary-notification {
-    position: fixed; top: 10px; left: 50%; transform: translateX(-50%); z-index: 2000;
-    padding: 10px 20px; background-color: var(--color-text-primary); color: white;
-    border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    font-size: 0.9rem; display: flex; align-items: center;
-  }
-  
-  /* Job Count Summary */
-  .job-count-summary {
-    display: flex; align-items: center; padding: 10px 15px; margin-bottom: 20px;
-    background-color: var(--color-brand-light); color: var(--color-text-primary);
-    border-radius: 8px; border: 1px solid var(--color-border); font-size: 0.9em;
-  }
-  
-  /* Active Job Highlight */
-  .schedule-item.job-active {
-    border: 2px solid var(--color-warning);
-    background-color: var(--color-warning-light);
-  }
-  
-  /* Popup Modal (Đơn giản hóa) */
-  .popup-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; }
-  .popup-modal {
-    position: fixed; top: 50%; left: 50%; width: 90%; max-width: 450px;
-    background: var(--color-card); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-    z-index: 1001; transform: translate(-50%, -50%);
-    border: 1px solid var(--color-border);
-  }
-  .popup-header { padding: 15px; border-bottom: 1px solid var(--color-border); display: flex; align-items: center; background-color: var(--color-bg); }
-  .popup-content { padding: 20px; text-align: center; }
-  .popup-main-title { font-size: 1.2em; font-weight: 700; margin-bottom: 15px; color: var(--color-text-primary); }
-  .popup-highlight-area { background-color: var(--color-brand-light); padding: 10px; border-radius: 8px; margin: 15px 0; }
-  
-  /* Skeleton & Empty State */
-  .empty-state { padding: 40px 20px; text-align: center; color: var(--color-text-secondary); }
-  .empty-state-icon { font-size: 2.5em; margin-bottom: 10px; opacity: 0.5; }
-  .skeleton-item { background-color: var(--color-card); border-radius: 12px; padding: 20px; margin-bottom: 15px; }
-  .skeleton-line { background-color: var(--color-border); height: 12px; margin-bottom: 10px; border-radius: 4px; }
+}

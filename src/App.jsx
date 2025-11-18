@@ -7,7 +7,8 @@ import {
   FiSearch, FiDownload, FiX, FiZap,
   FiCalendar, FiInfo, FiTag, FiAward,
   FiLogIn, FiUserPlus,
-  FiFilter, FiUsers, FiUserCheck, FiEdit3 
+  FiFilter, FiUsers, FiUserCheck, FiEdit3,
+  FiExternalLink
 } from 'react-icons/fi';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import QuickReportForm from './QuickReportForm.jsx';
@@ -126,6 +127,87 @@ function useJobData() {
     error 
   };
 }
+
+// Hook để fetch Groups data
+function useGroupsData() {
+  const API_URL = '/api/get-groups';
+
+  const { data, error, isLoading } = useSWR(
+    API_URL,
+    jsonFetcher,
+    {
+      refreshInterval: 300000, // Refresh mỗi 5 phút
+      revalidateOnFocus: false
+    }
+  );
+
+  return {
+    hostGroups: data?.hostGroups || {},
+    brandGroups: data?.brandGroups || {},
+    isLoading: isLoading,
+    error
+  };
+}
+
+// Hàm normalize brand name (giống API)
+const normalizeBrandName = (name) => {
+  if (!name) return '';
+  let normalized = String(name).toLowerCase();
+  normalized = normalized.replace(/\(([^)]+)\)/g, (match, content) => {
+    return ' ' + content.replace(/\+/g, ' ').trim();
+  });
+  normalized = normalized
+    .replace(/\btts\b/g, 'tiktok')
+    .replace(/\bshp\b/g, 'shopee')
+    .replace(/\blaz\b/g, 'lazada')
+    .replace(/\becom\b/g, 'ecommerce')
+    .replace(/([a-z])tts(?![a-z])/g, '$1tiktok')
+    .replace(/([a-z])shp(?![a-z])/g, '$1shopee')
+    .replace(/([a-z])laz(?![a-z])/g, '$1lazada')
+    .replace(/([a-z])ecom(?![a-z])/g, '$1ecommerce');
+  normalized = normalized.replace(/\+/g, ' ').replace(/&/g, ' ').replace(/\//g, ' ').replace(/[-|]/g, ' ');
+  normalized = normalized.replace(/\s+/g, ' ').trim();
+  return normalized;
+};
+
+// Hàm normalize tên để so sánh (giống API)
+const normalizeNameForMatch = (name) => {
+  if (!name) return '';
+  let str = String(name);
+  str = str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  str = str.replace(/đ/g, "d").replace(/Đ/g, "D");
+  str = str.toLowerCase();
+  str = str.replace(/[^a-z\s]/g, '');
+  str = str.replace(/\s+/g, ' ').trim();
+  return str;
+};
+
+// Hàm tìm group link cho job
+const findGroupLink = (job, groups, type) => {
+  if (!job || !groups || Object.keys(groups).length === 0) return null;
+  
+  const storeName = job.Store || '';
+  if (!storeName) return null;
+  
+  // Normalize store name
+  const normalizedStore = type === 'brand' 
+    ? normalizeNameForMatch(normalizeBrandName(storeName))
+    : normalizeNameForMatch(storeName);
+  
+  // Tìm exact match trước
+  if (groups[normalizedStore]) {
+    return groups[normalizedStore];
+  }
+  
+  // Tìm partial match
+  for (const [key, value] of Object.entries(groups)) {
+    if (normalizedStore.includes(key) || key.includes(normalizedStore)) {
+      return value;
+    }
+  }
+  
+  return null;
+};
 
 // --- COMPONENTS ---
 
@@ -364,7 +446,7 @@ const EmptyState = ({ dateFilter }) => (
   </motion.div>
 );
 
-const JobItem = memo(({ job, isActive, onQuickReport }) => {
+const JobItem = memo(({ job, isActive, onQuickReport, hostGroups, brandGroups }) => {
   const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } };
   const timeGroup = `${job['Time slot'] || 'N/A'}`;
   const talentDisplay = combineNames(job['Talent 1'], job['Talent 2']);
@@ -372,7 +454,27 @@ const JobItem = memo(({ job, isActive, onQuickReport }) => {
   const locationDisplay = combineLocation(job);
   const sessionTypeDisplay = job['Type of session'] && job['Type of session'].trim() !== '' ? job['Type of session'] : '—';
   
-  const defaultUpdateMessage = "Đang cập nhật...";
+  // Tìm group links
+  const brandGroup = findGroupLink(job, brandGroups, 'brand');
+  const hostGroup = findGroupLink(job, hostGroups, 'host');
+  
+  // Tìm host group từ tên MC/Coordinator
+  let hostGroupFromName = null;
+  if (!hostGroup && (talentDisplay || coordDisplay)) {
+    const namesToCheck = [talentDisplay, coordDisplay].filter(Boolean);
+    for (const name of namesToCheck) {
+      const normalizedName = normalizeNameForMatch(name);
+      for (const [key, value] of Object.entries(hostGroups || {})) {
+        if (normalizedName.includes(key) || key.includes(normalizedName)) {
+          hostGroupFromName = value;
+          break;
+        }
+      }
+      if (hostGroupFromName) break;
+    }
+  }
+  
+  const finalHostGroup = hostGroup || hostGroupFromName;
 
   const handleQuickReport = useCallback(() => {
     if (onQuickReport) {
@@ -385,7 +487,7 @@ const JobItem = memo(({ job, isActive, onQuickReport }) => {
       <div className="job-header-row">
         <h4 className="job-title-with-button">{job.Store || 'Unnamed Job'}</h4> 
         <button className="quick-report-button" onClick={handleQuickReport} title="Điền Report Nhanh">
-          <FiEdit3 size={16} /> Điền Report Nhanh
+          <FiEdit3 size={16} /> <span className="quick-report-text">Điền Report</span>
         </button>
       </div>
       
@@ -398,11 +500,39 @@ const JobItem = memo(({ job, isActive, onQuickReport }) => {
       <div className="job-groups-footer-container">
           <div className="group-brand job-group-item">
             <FiUsers size={18} className="job-group-icon" /> 
-            Group Brand: <span className="job-group-value">{defaultUpdateMessage}</span>
+            <span className="job-group-label">Group Brand:</span>
+            {brandGroup ? (
+              <a 
+                href={brandGroup.link} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="job-group-link"
+                title={brandGroup.originalName}
+              >
+                <span className="job-group-link-text">Join Group</span>
+                <FiExternalLink size={14} className="job-group-link-icon" />
+              </a>
+            ) : (
+              <span className="job-group-value">Chưa có link</span>
+            )}
           </div>
           <div className="group-host job-group-item">
             <FiUserCheck size={18} className="job-group-icon" />
-            Group Host: <span className="job-group-value">{defaultUpdateMessage}</span>
+            <span className="job-group-label">Group Host:</span>
+            {finalHostGroup ? (
+              <a 
+                href={finalHostGroup.link} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="job-group-link"
+                title={finalHostGroup.originalName}
+              >
+                <span className="job-group-link-text">Join Group</span>
+                <FiExternalLink size={14} className="job-group-link-icon" />
+              </a>
+            ) : (
+              <span className="job-group-value">Chưa có link</span>
+            )}
           </div>
       </div>
     </motion.div>
@@ -413,6 +543,7 @@ const JobItem = memo(({ job, isActive, onQuickReport }) => {
 function App() {
   const [theme, toggleTheme] = useDarkMode();
   const { jobs, isLoading, uniqueDates, uniqueSessions, uniqueStores, error } = useJobData();
+  const { hostGroups, brandGroups } = useGroupsData();
   
   const [dateFilter, setDateFilter] = useState(() => getFormattedToday());
   const [nameFilter, setNameFilter] = useState(''); 
@@ -557,6 +688,8 @@ function App() {
                                       job={item.content} 
                                       isActive={item.isActive}
                                       onQuickReport={handleQuickReport}
+                                      hostGroups={hostGroups}
+                                      brandGroups={brandGroups}
                                     />
                                 )}
                             </div>
