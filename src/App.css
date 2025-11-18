@@ -193,8 +193,12 @@ main {
 
 .auth-button.register:hover {
   background-color: var(--color-brand-hover);
-  transform: translateY(-1px);
+  transform: translateY(-1px) scale(1.02);
   box-shadow: 0 4px 12px rgba(var(--color-brand-rgb), 0.3);
+}
+
+.auth-button:active {
+  transform: translateY(0) scale(1);
 }
 
 /* Theme Toggle - Modern Switch */
@@ -377,12 +381,12 @@ input:checked + .theme-toggle-slider:before {
 
 .download-button:hover:not(:disabled) {
   background-color: var(--color-brand-hover);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(var(--color-brand-rgb), 0.35);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 6px 20px rgba(var(--color-brand-rgb), 0.4);
 }
 
 .download-button:active:not(:disabled) {
-  transform: translateY(0);
+  transform: translateY(0) scale(1);
 }
 
 .download-button:disabled {
@@ -424,9 +428,10 @@ input:checked + .theme-toggle-slider:before {
   padding: var(--spacing-lg);
   margin: var(--spacing-lg) 0; /* Tăng từ md lên lg */
   border: 1px solid var(--color-border);
-  transition: all var(--transition-speed);
+  transition: all var(--transition-smooth);
   position: relative;
   overflow: hidden;
+  cursor: pointer;
 }
 
 /* Tăng khoảng cách cho item đầu tiên sau title */
@@ -441,19 +446,49 @@ input:checked + .theme-toggle-slider:before {
   top: 0;
   left: 0;
   right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, var(--color-brand), var(--color-brand-hover));
+  height: 4px;
+  background: linear-gradient(90deg, var(--color-brand), var(--color-brand-hover), var(--color-brand));
+  background-size: 200% 100%;
   opacity: 0;
-  transition: opacity var(--transition-speed);
+  transition: all var(--transition-smooth);
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.schedule-item::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(var(--color-brand-rgb), 0.03) 0%, transparent 100%);
+  opacity: 0;
+  transition: opacity var(--transition-smooth);
+  pointer-events: none;
 }
 
 .schedule-item:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px var(--color-shadow-hover);
+  transform: translateY(-6px) scale(1.01);
+  box-shadow: 0 12px 32px rgba(var(--color-brand-rgb), 0.15), 0 4px 16px var(--color-shadow-hover);
   border-color: var(--color-brand);
+  background-color: var(--color-card);
 }
 
 .schedule-item:hover::before {
+  opacity: 1;
+  height: 4px;
+}
+
+.schedule-item:hover::after {
   opacity: 1;
 }
 
@@ -514,12 +549,12 @@ input:checked + .theme-toggle-slider:before {
 
 .quick-report-button:hover {
   background-color: var(--color-report-hover);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
 }
 
 .quick-report-button:active {
-  transform: translateY(0);
+  transform: translateY(0) scale(1);
 }
 
 /* Job Info */
@@ -615,13 +650,13 @@ input:checked + .theme-toggle-slider:before {
 
 .job-group-link:hover {
   background: linear-gradient(135deg, var(--color-brand-hover) 0%, var(--color-brand-active) 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(var(--color-brand-rgb), 0.4);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 6px 16px rgba(var(--color-brand-rgb), 0.5);
   color: white !important;
 }
 
 .job-group-link:active {
-  transform: translateY(0);
+  transform: translateY(0) scale(1);
 }
 
 .job-group-link-text {
@@ -915,7 +950,7 @@ input:checked + .theme-toggle-slider:before {
 
 .empty-state {
   padding: var(--spacing-xl);
-  text-align: center;
+  text-align: left; /* Bỏ căn giữa */
   color: var(--color-text-secondary);
   width: 100%;
   box-sizing: border-box;

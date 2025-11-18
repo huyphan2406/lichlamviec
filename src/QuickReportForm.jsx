@@ -206,11 +206,11 @@ const QuickReportForm = ({ isVisible, setIsVisible, job, showTempNotification })
     }
   };
 
-  if (!isVisible || !job) return null;
+  if (!isVisible) return null;
 
   return (
     <AnimatePresence mode="wait">
-      {isVisible && (
+      {isVisible && job && (
         <>
           <motion.div
             className="popup-overlay"

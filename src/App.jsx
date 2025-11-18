@@ -41,13 +41,14 @@ const getFormattedToday = () => {
 const jsonFetcher = (url) => fetch(url).then((res) => res.json());
 
 // HÀM KIỂM TRA CÔNG VIỆC ĐANG HOẠT ĐỘNG (60 PHÚT)
-const isJobActive = (job) => {
+// Tối ưu: nhận now như optional parameter để tránh tạo Date mới mỗi lần
+const isJobActive = (job, now = null) => {
     try {
         if (!job || !job['Date livestream'] || !job['Time slot']) {
             return false;
         }
         
-        const now = new Date();
+        const currentTime = now || new Date();
         const [day, month, year] = job['Date livestream'].split('/');
         const [startTimeStr, endTimeStr] = (job['Time slot'] || '00:00 - 00:00').split(' - ');
         
@@ -62,9 +63,13 @@ const isJobActive = (job) => {
             jobEndTime.setDate(jobEndTime.getDate() + 1);
         }
 
-        const isRunning = now.getTime() >= jobStartTime.getTime() && now.getTime() < jobEndTime.getTime();
+        const nowTime = currentTime.getTime();
+        const startTime = jobStartTime.getTime();
+        const endTime = jobEndTime.getTime();
+        
+        const isRunning = nowTime >= startTime && nowTime < endTime;
         const soonThreshold = 60 * 60 * 1000; // 60 phút
-        const timeToStart = jobStartTime.getTime() - now.getTime();
+        const timeToStart = startTime - nowTime;
         const isStartingSoon = timeToStart > 0 && timeToStart <= soonThreshold;
 
         return isRunning || isStartingSoon;
@@ -454,6 +459,7 @@ const EmptyState = ({ dateFilter }) => (
   </motion.div>
 );
 
+// Tối ưu: Custom comparison để tránh re-render không cần thiết
 const JobItem = memo(({ job, isActive, onQuickReport, hostGroups, brandGroups }) => {
   const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } };
   const timeGroup = `${job['Time slot'] || 'N/A'}`;
@@ -549,6 +555,14 @@ const JobItem = memo(({ job, isActive, onQuickReport, hostGroups, brandGroups })
       </div>
     </motion.div>
   );
+}, (prevProps, nextProps) => {
+  // Custom comparison: chỉ re-render nếu job, isActive, hoặc groups thay đổi
+  return (
+    prevProps.job === nextProps.job &&
+    prevProps.isActive === nextProps.isActive &&
+    prevProps.hostGroups === nextProps.hostGroups &&
+    prevProps.brandGroups === nextProps.brandGroups
+  );
 });
 
 // --- COMPONENT APP CHÍNH ---
@@ -557,10 +571,37 @@ function App() {
   const { jobs, isLoading, uniqueDates, uniqueSessions, uniqueStores, error } = useJobData();
   const { hostGroups, brandGroups } = useGroupsData();
   
-  const [dateFilter, setDateFilter] = useState(() => getFormattedToday());
-  const [nameFilter, setNameFilter] = useState(''); 
-  const [sessionFilter, setSessionFilter] = useState('');
-  const [storeFilter, setStoreFilter] = useState('');
+  // Load filters từ localStorage hoặc dùng default
+  const [dateFilter, setDateFilter] = useState(() => {
+    const saved = localStorage.getItem('schedule_dateFilter');
+    return saved || getFormattedToday();
+  });
+  const [nameFilter, setNameFilter] = useState(() => {
+    return localStorage.getItem('schedule_nameFilter') || '';
+  });
+  const [sessionFilter, setSessionFilter] = useState(() => {
+    return localStorage.getItem('schedule_sessionFilter') || '';
+  });
+  const [storeFilter, setStoreFilter] = useState(() => {
+    return localStorage.getItem('schedule_storeFilter') || '';
+  });
+
+  // Lưu filters vào localStorage mỗi khi thay đổi
+  useEffect(() => {
+    localStorage.setItem('schedule_dateFilter', dateFilter);
+  }, [dateFilter]);
+
+  useEffect(() => {
+    localStorage.setItem('schedule_nameFilter', nameFilter);
+  }, [nameFilter]);
+
+  useEffect(() => {
+    localStorage.setItem('schedule_sessionFilter', sessionFilter);
+  }, [sessionFilter]);
+
+  useEffect(() => {
+    localStorage.setItem('schedule_storeFilter', storeFilter);
+  }, [storeFilter]);
 
   const [tempNotification, setTempNotification] = useState(null); 
   const showTempNotification = useCallback((message) => setTempNotification(message), []);
@@ -616,32 +657,42 @@ function App() {
     }, {});
   }, [filteredJobs]);
 
-  // Tối ưu hóa Virtualization: Flatten data
+  // Tối ưu hóa Virtualization: Flatten data (tối ưu isJobActive)
   const flatRowItems = useMemo(() => {
     const items = [];
     const jobGroups = Object.keys(groupedJobs);
+    const now = new Date(); // Cache current time
+    
     jobGroups.forEach(timeGroup => {
         items.push({ id: `header_${timeGroup}`, type: 'HEADER', content: timeGroup });
         groupedJobs[timeGroup].forEach((job, index) => {
-            items.push({ id: `job_${timeGroup}_${index}`, type: 'JOB', content: job, isActive: isJobActive(job) });
+            // Chỉ tính isActive khi cần, tối ưu bằng cách cache now
+            items.push({ 
+              id: `job_${timeGroup}_${index}`, 
+              type: 'JOB', 
+              content: job, 
+              isActive: isJobActive(job, now) // Pass now để tránh tạo Date mới
+            });
         });
     });
     return items;
   }, [groupedJobs]);
 
   const parentRef = useRef(null);
+  const scrollElementRef = useRef(null);
+  
+  // Cache scroll element để tránh tìm lại mỗi lần render
+  useEffect(() => {
+    if (parentRef.current) {
+      scrollElementRef.current = parentRef.current.closest('main') || document.body;
+    }
+  }, [flatRowItems.length]);
   
   const rowVirtualizer = useVirtualizer({
     count: flatRowItems.length,
-    getScrollElement: () => {
-      // Tìm main element từ parentRef
-      if (parentRef.current) {
-        return parentRef.current.closest('main') || document.body;
-      }
-      return null;
-    },
+    getScrollElement: () => scrollElementRef.current,
     estimateSize: (index) => (flatRowItems[index]?.type === 'HEADER' ? 50 : 360),
-    overscan: 5,
+    overscan: 3, // Giảm từ 5 xuống 3 để giảm số lượng items render
   });
 
   const virtualItems = rowVirtualizer.getVirtualItems();
