@@ -404,7 +404,7 @@ const FilterBar = memo(({
             </select>
         </div>
         <div className="form-group filter-session">
-            <label htmlFor="sessionInput">Loại ca</label>
+            <label htmlFor="sessionInput">Loại Ca</label>
             <select id="sessionInput" value={sessionFilter} onChange={(e) => setSessionFilter(e.target.value)}>
                 <option value="">All Sessions</option>
                 {uniqueSessions.map(session => <option key={session} value={session}>{session}</option>)}
@@ -733,8 +733,15 @@ function App() {
                                 marginBottom: item.type === 'HEADER' ? '0' : '0'
                             }}>
                                 {item.type === 'HEADER' ? (
-                                    <h3 className="schedule-group-title">
-                                      {item.content.toLowerCase() === 'ca nối' ? 'Ca nối' : item.content}
+                                    <h3 className={`schedule-group-title ${item.content.toLowerCase() === 'ca nối' ? 'ca-noi-special' : ''}`}>
+                                      {item.content.toLowerCase() === 'ca nối' ? (
+                                        <>
+                                          <FiZap size={18} style={{ marginRight: '8px', display: 'inline-block', verticalAlign: 'middle' }} />
+                                          Ca nối
+                                        </>
+                                      ) : (
+                                        item.content
+                                      )}
                                     </h3>
                                 ) : (
                                     <JobItem 
