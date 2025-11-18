@@ -11,8 +11,11 @@ import {
   FiExternalLink
 } from 'react-icons/fi';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import QuickReportForm from './QuickReportForm.jsx';
-import './App.css'; 
+import { lazy, Suspense } from 'react';
+import './App.css';
+
+// Lazy load QuickReportForm để giảm bundle size
+const QuickReportForm = lazy(() => import('./QuickReportForm.jsx')); 
 
 // --- HÀM HỖ TRỢ ---
 const removeAccents = (str) => {
@@ -113,8 +116,13 @@ function useJobData() {
     API_URL,
     jsonFetcher, 
     {
-      refreshInterval: 60000, 
-      revalidateOnFocus: true
+      refreshInterval: 120000, // Tăng lên 2 phút để giảm requests
+      revalidateOnFocus: false, // Tắt để tránh fetch không cần thiết
+      revalidateOnReconnect: true, // Chỉ revalidate khi reconnect
+      dedupingInterval: 60000, // Dedupe requests trong 1 phút
+      errorRetryCount: 2, // Retry tối đa 2 lần
+      errorRetryInterval: 2000, // Retry sau 2 giây
+      keepPreviousData: true, // Giữ data cũ khi đang fetch mới
     }
   );
 
@@ -137,7 +145,12 @@ function useGroupsData() {
     jsonFetcher,
     {
       refreshInterval: 300000, // Refresh mỗi 5 phút
-      revalidateOnFocus: false
+      revalidateOnFocus: false,
+      revalidateOnReconnect: true,
+      dedupingInterval: 120000, // Dedupe trong 2 phút
+      errorRetryCount: 1, // Retry 1 lần cho groups (ít quan trọng hơn)
+      errorRetryInterval: 3000,
+      keepPreviousData: true,
     }
   );
 
@@ -211,7 +224,7 @@ const findGroupLink = (job, groups, type) => {
 
 // --- COMPONENTS ---
 
-const TemporaryNotification = ({ message, onDismiss }) => {
+const TemporaryNotification = memo(({ message, onDismiss }) => {
   useEffect(() => {
     if (message) {
       const timer = setTimeout(onDismiss, 3000);
@@ -219,98 +232,97 @@ const TemporaryNotification = ({ message, onDismiss }) => {
     }
   }, [message, onDismiss]);
 
-  return (
-    <AnimatePresence>
-      {message && (
-        <motion.div
-          className="temporary-notification"
-          initial={{ y: -50, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: -50, opacity: 0 }}
-        >
-          {message}
-          <button 
-            onClick={onDismiss} 
-            style={{ marginLeft: '10px', background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-          >
-            <FiX size={16} />
-          </button>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
-};
+  if (!message) return null;
 
-const NotificationPopup = ({ isVisible, setIsVisible }) => {
-    const handleDismiss = () => setIsVisible(false);
+  return (
+    <motion.div
+      className="temporary-notification"
+      initial={{ y: -50, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      exit={{ y: -50, opacity: 0 }}
+    >
+      {message}
+      <button 
+        onClick={onDismiss} 
+        style={{ marginLeft: '10px', background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+        aria-label="Đóng thông báo"
+      >
+        <FiX size={16} />
+      </button>
+    </motion.div>
+  );
+});
+
+const NotificationPopup = memo(({ isVisible, setIsVisible }) => {
+    const handleDismiss = useCallback(() => setIsVisible(false), [setIsVisible]);
+
+    if (!isVisible) return null;
 
     return (
         <AnimatePresence>
-            {isVisible && (
-                <>
-                    <motion.div className="popup-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={handleDismiss} />
-                    <motion.div 
-                        className="popup-modal"
-                        initial={{ opacity: 0, x: "-50%", y: "calc(-50% + 50px)" }}
-                        animate={{ opacity: 1, x: "-50%", y: "-50%" }}
-                        exit={{ opacity: 0, x: "-50%", y: "calc(-50% + 50px)" }}
-                        transition={{ type: 'spring', stiffness: 100, damping: 20 }}
-                    >
-                        <div className="popup-header">
-                            <FiZap size={22} className="popup-icon-zap" />
-                            <h3>Thông Báo Quan Trọng</h3>
-                            <button className="popup-dismiss-btn" onClick={handleDismiss} title="Đóng"><FiX size={20} /></button>
-                        </div>
-                        <div className="popup-content">
-                            <p className="popup-main-title"><strong>LỊCH LIVESTREAM NHANH & CHÍNH XÁC!</strong></p>
-                            <p className="popup-content-text">Tra cứu nhanh lịch làm việc của <strong>Standby</strong> và <strong>Host</strong>.</p>
-                            <hr className="popup-divider" />
-                            <p className="popup-content-text popup-highlight-area">
-                                **DÙNG THỬ:** Miễn phí tới ngày <strong className="highlight-date">30/11</strong>.<br/>
-                                Sau ngày 30, bạn cần đăng kí tài khoản để tiếp tục sử dụng.
-                            </p>
-                            <hr className="popup-divider" />
-                            <p className="popup-content-text popup-footer-area">
-                                <strong>Tính năng đang được triển khai:</strong> Join nhanh group brand và host; điền nhanh report; dashboard thống kê jobs (CRM).<br/>
-                                <span className="popup-author-simple"><FiAward size={14} /> Tác giả: Huy Phan</span>
-                            </p>
-                        </div>
-                    </motion.div>
-                </>
-            )}
+            <motion.div className="popup-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={handleDismiss} />
+            <motion.div 
+                className="popup-modal"
+                initial={{ opacity: 0, x: "-50%", y: "calc(-50% + 50px)" }}
+                animate={{ opacity: 1, x: "-50%", y: "-50%" }}
+                exit={{ opacity: 0, x: "-50%", y: "calc(-50% + 50px)" }}
+                transition={{ type: 'spring', stiffness: 100, damping: 20 }}
+            >
+                <div className="popup-header">
+                    <FiZap size={22} className="popup-icon-zap" />
+                    <h3>Thông Báo Quan Trọng</h3>
+                    <button className="popup-dismiss-btn" onClick={handleDismiss} title="Đóng" aria-label="Đóng popup"><FiX size={20} /></button>
+                </div>
+                <div className="popup-content">
+                    <p className="popup-main-title"><strong>LỊCH LIVESTREAM NHANH & CHÍNH XÁC!</strong></p>
+                    <p className="popup-content-text">Tra cứu nhanh lịch làm việc của <strong>Standby</strong> và <strong>Host</strong>.</p>
+                    <hr className="popup-divider" />
+                    <p className="popup-content-text popup-highlight-area">
+                        **DÙNG THỬ:** Miễn phí tới ngày <strong className="highlight-date">30/11</strong>.<br/>
+                        Sau ngày 30, bạn cần đăng kí tài khoản để tiếp tục sử dụng.
+                    </p>
+                    <hr className="popup-divider" />
+                    <p className="popup-content-text popup-footer-area">
+                        <strong>Tính năng đang được triển khai:</strong> Join nhanh group brand và host; điền nhanh report; dashboard thống kê jobs (CRM).<br/>
+                        <span className="popup-author-simple"><FiAward size={14} /> Tác giả: Huy Phan</span>
+                    </p>
+                </div>
+            </motion.div>
         </AnimatePresence>
     );
-};
+});
 
-const handleAuthClick = (showAuthPopup) => showAuthPopup();
-
-const Header = ({ theme, toggleTheme, showAuthPopup }) => ( 
-  <header className="app-header">
-    <h1 className="header-title-centered">Lịch làm việc</h1>
-    <div className="header-controls">
-      {/* Nút Sáng/Tối bên TRÁI */}
-      <label className="theme-toggle" title="Toggle Light/Dark Mode">
-        {theme === 'light' ? <FiMoon size={18} /> : <FiSun size={18} />}
-        <div className="theme-toggle-switch">
-          <input type="checkbox" checked={theme === 'dark'} onChange={toggleTheme} />
-          <span className="theme-toggle-slider"></span>
+const Header = memo(({ theme, toggleTheme, showAuthPopup }) => {
+  const handleAuthClick = useCallback(() => showAuthPopup(), [showAuthPopup]);
+  
+  return (
+    <header className="app-header">
+      <h1 className="header-title-centered">Lịch làm việc</h1>
+      <div className="header-controls">
+        {/* Nút Sáng/Tối bên TRÁI */}
+        <label className="theme-toggle" title="Toggle Light/Dark Mode">
+          {theme === 'light' ? <FiMoon size={18} /> : <FiSun size={18} />}
+          <div className="theme-toggle-switch">
+            <input type="checkbox" checked={theme === 'dark'} onChange={toggleTheme} aria-label="Toggle theme" />
+            <span className="theme-toggle-slider"></span>
+          </div>
+        </label>
+        
+        {/* Khối Đăng nhập/Đăng ký bên PHẢI */}
+        <div className="auth-buttons">
+          <button className="auth-button login" title="Đăng nhập" onClick={handleAuthClick} style={{ flexShrink: 0 }}>
+            <FiLogIn size={16} /><span>Đăng nhập</span>
+          </button>
+          <button className="auth-button register" title="Đăng ký" onClick={handleAuthClick} style={{ flexShrink: 0 }}>
+            <FiUserPlus size={16} /><span>Đăng ký</span>
+          </button>
         </div>
-      </label>
-      
-      {/* Khối Đăng nhập/Đăng ký bên PHẢI */}
-      <div className="auth-buttons">
-        <button className="auth-button login" title="Đăng nhập" onClick={() => handleAuthClick(showAuthPopup)} style={{ flexShrink: 0 }}>
-          <FiLogIn size={16} /><span>Đăng nhập</span>
-        </button>
-        <button className="auth-button register" title="Đăng ký" onClick={() => handleAuthClick(showAuthPopup)} style={{ flexShrink: 0 }}>
-          <FiUserPlus size={16} /><span>Đăng ký</span>
-        </button>
       </div>
-    </div>
-  </header>
-);
+    </header>
+  );
+});
 
-const FilterBar = ({ 
+const FilterBar = memo(({ 
     dateFilter, setDateFilter, 
     setNameFilter, 
     uniqueDates, filteredJobs,
@@ -328,6 +340,7 @@ const FilterBar = ({
   }, [inputValue, setNameFilter]); 
   
   const handleDownloadICS = useCallback(async () => { 
+    // Lazy load ics library chỉ khi cần
     const ics = await import('ics');
     const events = filteredJobs.map(job => {
       try {
@@ -375,6 +388,8 @@ const FilterBar = ({
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    // Cleanup URL để tránh memory leak
+    setTimeout(() => URL.revokeObjectURL(url), 100);
     showTempNotification("Đã xuất lịch thành công!");
   }, [dateFilter, filteredJobs, showTempNotification]);
 
@@ -415,19 +430,19 @@ const FilterBar = ({
       </button>
     </div>
   );
-};
+});
 
-const SkeletonLoader = () => (
+const SkeletonLoader = memo(() => (
   <div className="skeleton-container">
     {[...Array(3)].map((_, i) => (
       <div className="skeleton-item" key={i}><div className="skeleton-line h4"></div><div className="skeleton-line p"></div><div className="skeleton-line p"></div><div className="skeleton-line p"></div></div>
     ))}
   </div>
-);
+));
 
-const EmptyState = ({ dateFilter }) => (
+const EmptyState = memo(({ dateFilter }) => (
   <motion.div className="empty-state" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}>
-    <div style={{ border: '2px solid var(--color-danger)', borderRadius: '16px', padding: '25px', backgroundColor: 'var(--color-card)', width: '100%', boxSizing: 'border-box', boxShadow: '0 8px 25px rgba(220, 53, 69, 0.2)' }}>
+    <div style={{ border: '2px solid var(--color-danger)', borderRadius: '16px', padding: '25px', backgroundColor: 'var(--color-card)', width: '100%', boxSizing: 'border-box', boxShadow: '0 8px 25px rgba(220, 53, 69, 0.2)', textAlign: 'left' }}>
         <h3 style={{ color: 'var(--color-danger)', display: 'flex', alignItems: 'center', gap: '12px', margin: '0 0 20px 0', paddingBottom: '10px', borderBottom: '1px solid var(--color-border)', fontSize: '1.3rem', fontWeight: 700 }}>
             <FiSearch size={24} style={{color: 'var(--color-danger)'}} /> KHÔNG TÌM THẤY LỊCH LÀM VIỆC!
         </h3>
@@ -444,7 +459,7 @@ const EmptyState = ({ dateFilter }) => (
         </p>
     </div>
   </motion.div>
-);
+));
 
 const JobItem = memo(({ job, isActive, onQuickReport, hostGroups, brandGroups }) => {
   const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } };
@@ -565,35 +580,49 @@ function App() {
     setIsQuickReportVisible(true);
   }, []);
 
-  const [currentTime, setCurrentTime] = useState(new Date());
+  // Tối ưu: Chỉ update currentTime khi cần thiết (mỗi phút)
+  const [currentTime, setCurrentTime] = useState(() => new Date());
   useEffect(() => {
-      const intervalId = setInterval(() => setCurrentTime(new Date()), 60000); 
+      const intervalId = setInterval(() => {
+          setCurrentTime(new Date());
+      }, 60000); 
       return () => clearInterval(intervalId);
   }, []);
 
+  // Tối ưu filtering với early returns và cache
   const filteredJobs = useMemo(() => {
-    const dummy = currentTime.toISOString(); 
-    let jobsToFilter = jobs;
-    const normNameFilter = removeAccents(nameFilter.toLowerCase().trim());
+    if (!jobs.length) return [];
     
+    let jobsToFilter = jobs;
+    const normNameFilter = nameFilter ? removeAccents(nameFilter.toLowerCase().trim()) : '';
+    
+    // Early return nếu có filter nhưng không có jobs
     if (normNameFilter) {
       jobsToFilter = jobsToFilter.filter(job => {
         const jobStr = `${job['Talent 1']} ${job['Talent 2']} ${job['Coordinator 1']} ${job['Coordinator 2']} ${job.Store} ${job.Address} ${job['Studio/Room']}`;
         return removeAccents(jobStr.toLowerCase()).includes(normNameFilter);
       });
+      if (!jobsToFilter.length) return [];
     }
     
-    if (dateFilter) jobsToFilter = jobsToFilter.filter(job => (job['Date livestream'] || '').toString() === dateFilter);
+    if (dateFilter) {
+      jobsToFilter = jobsToFilter.filter(job => (job['Date livestream'] || '').toString() === dateFilter);
+      if (!jobsToFilter.length) return [];
+    }
+    
     if (sessionFilter) {
         const normalizedFilter = sessionFilter.toLowerCase();
         jobsToFilter = jobsToFilter.filter(job => (job['Type of session'] || '').trim().toLowerCase() === normalizedFilter);
+        if (!jobsToFilter.length) return [];
     }
+    
     if (storeFilter) {
         const normalizedFilter = storeFilter.toLowerCase();
         jobsToFilter = jobsToFilter.filter(job => (job.Store || '').trim().toLowerCase() === normalizedFilter);
     }
+    
     return jobsToFilter;
-  }, [jobs, dateFilter, nameFilter, sessionFilter, storeFilter, currentTime]);
+  }, [jobs, dateFilter, nameFilter, sessionFilter, storeFilter]);
 
   const groupedJobs = useMemo(() => {
     return filteredJobs.reduce((acc, job) => {
@@ -604,14 +633,27 @@ function App() {
     }, {});
   }, [filteredJobs]);
 
-  // Tối ưu hóa Virtualization: Flatten data
+  // Tối ưu hóa Virtualization: Flatten data và cache isJobActive results
   const flatRowItems = useMemo(() => {
     const items = [];
     const jobGroups = Object.keys(groupedJobs);
+    const now = Date.now(); // Cache current time
+    const activeJobsCache = new Map(); // Cache active status
+    
     jobGroups.forEach(timeGroup => {
         items.push({ id: `header_${timeGroup}`, type: 'HEADER', content: timeGroup });
         groupedJobs[timeGroup].forEach((job, index) => {
-            items.push({ id: `job_${timeGroup}_${index}`, type: 'JOB', content: job, isActive: isJobActive(job) });
+            const jobId = `${timeGroup}_${index}`;
+            // Cache isActive check để tránh tính toán lại
+            if (!activeJobsCache.has(jobId)) {
+                activeJobsCache.set(jobId, isJobActive(job));
+            }
+            items.push({ 
+                id: `job_${jobId}`, 
+                type: 'JOB', 
+                content: job, 
+                isActive: activeJobsCache.get(jobId) 
+            });
         });
     });
     return items;
@@ -628,8 +670,12 @@ function App() {
       }
       return null;
     },
-    estimateSize: (index) => (flatRowItems[index]?.type === 'HEADER' ? 50 : 360),
-    overscan: 5,
+    estimateSize: useCallback((index) => {
+      const item = flatRowItems[index];
+      if (!item) return 50;
+      return item.type === 'HEADER' ? 70 : 380; // Tăng estimate để tránh scroll jump
+    }, [flatRowItems]),
+    overscan: 3, // Giảm overscan để tối ưu rendering
   });
 
   const virtualItems = rowVirtualizer.getVirtualItems();
@@ -638,12 +684,16 @@ function App() {
   return (
     <div className="App">
       <NotificationPopup isVisible={isAuthPopupVisible} setIsVisible={hideAuthPopup} /> 
-      <QuickReportForm 
-        isVisible={isQuickReportVisible} 
-        setIsVisible={setIsQuickReportVisible} 
-        job={quickReportJob}
-        showTempNotification={showTempNotification}
-      />
+      {isQuickReportVisible && (
+        <Suspense fallback={null}>
+          <QuickReportForm 
+            isVisible={isQuickReportVisible} 
+            setIsVisible={setIsQuickReportVisible} 
+            job={quickReportJob}
+            showTempNotification={showTempNotification}
+          />
+        </Suspense>
+      )}
       <Header theme={theme} toggleTheme={toggleTheme} showAuthPopup={showAuthPopup} />
       <TemporaryNotification message={tempNotification} onDismiss={dismissTempNotification} />
 
@@ -686,7 +736,8 @@ function App() {
                             <div key={item.id} style={{
                                 position: 'absolute', top: 0, left: 0, width: '100%',
                                 transform: `translateY(${virtualItem.start}px)`,
-                                paddingBottom: '20px' 
+                                paddingBottom: item.type === 'HEADER' ? '8px' : '24px',
+                                marginBottom: item.type === 'HEADER' ? '0' : '0'
                             }}>
                                 {item.type === 'HEADER' ? (
                                     <h3 className="schedule-group-title">

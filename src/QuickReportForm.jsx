@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   FiX, FiSave, FiClock, FiMapPin, FiUser, FiMonitor, 
@@ -6,7 +6,7 @@ import {
   FiDollarSign, FiHash, FiUpload
 } from 'react-icons/fi';
 
-const QuickReportForm = ({ isVisible, setIsVisible, job, showTempNotification }) => {
+const QuickReportForm = memo(({ isVisible, setIsVisible, job, showTempNotification }) => {
   const [formData, setFormData] = useState({
     email: '',
     keyLivestream: '',
@@ -58,7 +58,7 @@ const QuickReportForm = ({ isVisible, setIsVisible, job, showTempNotification })
     }
   }, [job, isVisible]);
 
-  const handleDismiss = () => {
+  const handleDismiss = useCallback(() => {
     setIsVisible(false);
     setFormData({
       email: '',
@@ -71,18 +71,18 @@ const QuickReportForm = ({ isVisible, setIsVisible, job, showTempNotification })
     setLiveIds(['']);
     setImagePreview(null);
     setIsProcessing(false);
-  };
+  }, [setIsVisible]);
 
-  const handleChange = (e) => {
+  const handleChange = useCallback((e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
-  };
+  }, []);
 
-  // Xử lý upload ảnh
-  const handleImageUpload = async (e) => {
+  // Xử lý upload ảnh với cleanup
+  const handleImageUpload = useCallback(async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -98,51 +98,66 @@ const QuickReportForm = ({ isVisible, setIsVisible, job, showTempNotification })
       return;
     }
 
-    // Hiển thị preview
+    // Hiển thị preview với cleanup
     const reader = new FileReader();
     reader.onload = (e) => {
       setImagePreview(e.target.result);
       setIsProcessing(false);
       showTempNotification?.('Ảnh đã được tải lên. Vui lòng nhập thông tin thủ công từ ảnh.');
     };
+    reader.onerror = () => {
+      setIsProcessing(false);
+      showTempNotification?.('Lỗi khi đọc file ảnh!');
+    };
     reader.readAsDataURL(file);
-  };
+    
+    // Cleanup: revoke URL nếu có preview cũ
+    return () => {
+      if (imagePreview && imagePreview.startsWith('blob:')) {
+        URL.revokeObjectURL(imagePreview);
+      }
+    };
+  }, [showTempNotification, imagePreview]);
 
   // Thêm ID phiên live mới
-  const handleAddLiveId = () => {
-    setLiveIds([...liveIds, '']);
-  };
+  const handleAddLiveId = useCallback(() => {
+    setLiveIds(prev => [...prev, '']);
+  }, []);
 
   // Xóa ID phiên live
-  const handleRemoveLiveId = (index) => {
+  const handleRemoveLiveId = useCallback((index) => {
     if (liveIds.length > 1) {
-      const newIds = liveIds.filter((_, i) => i !== index);
-      setLiveIds(newIds);
-      setFormData(prev => ({
-        ...prev,
-        idLive2: newIds.slice(1).join(', ')
-      }));
+      setLiveIds(prev => {
+        const newIds = prev.filter((_, i) => i !== index);
+        setFormData(prevData => ({
+          ...prevData,
+          idLive2: newIds.slice(1).join(', ')
+        }));
+        return newIds;
+      });
     }
-  };
+  }, [liveIds.length]);
 
   // Cập nhật ID phiên live
-  const handleLiveIdChange = (index, value) => {
-    const newIds = [...liveIds];
-    newIds[index] = value;
-    setLiveIds(newIds);
-    
-    if (index === 0) {
-      setFormData(prev => ({ ...prev, idLive1: value }));
-    } else {
-      setFormData(prev => ({ 
-        ...prev, 
-        idLive2: newIds.slice(1).filter(id => id).join(', ') 
-      }));
-    }
-  };
+  const handleLiveIdChange = useCallback((index, value) => {
+    setLiveIds(prev => {
+      const newIds = [...prev];
+      newIds[index] = value;
+      
+      if (index === 0) {
+        setFormData(prevData => ({ ...prevData, idLive1: value }));
+      } else {
+        setFormData(prevData => ({ 
+          ...prevData, 
+          idLive2: newIds.slice(1).filter(id => id).join(', ') 
+        }));
+      }
+      return newIds;
+    });
+  }, []);
 
   // Submit form đến Google Forms
-  const handleSubmit = async (e) => {
+  const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
     
     if (!formData.email) {
@@ -204,7 +219,7 @@ const QuickReportForm = ({ isVisible, setIsVisible, job, showTempNotification })
       setIsProcessing(false);
       showTempNotification?.('Lỗi khi gửi form. Vui lòng thử lại!');
     }
-  };
+  }, [formData, showTempNotification, handleDismiss]);
 
   if (!isVisible || !job) return null;
 
@@ -458,6 +473,13 @@ const QuickReportForm = ({ isVisible, setIsVisible, job, showTempNotification })
       )}
     </AnimatePresence>
   );
-};
+}, (prevProps, nextProps) => {
+  // Custom comparison để tránh re-render không cần thiết
+  return prevProps.isVisible === nextProps.isVisible && 
+         prevProps.job === nextProps.job &&
+         prevProps.setIsVisible === nextProps.setIsVisible &&
+         prevProps.showTempNotification === nextProps.showTempNotification;
+});
 
+QuickReportForm.displayName = 'QuickReportForm';
 export default QuickReportForm;
