@@ -116,6 +116,9 @@ body {
 main { 
   padding: 0;
   width: 100%;
+  position: relative;
+  z-index: 0;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* --- 3. HEADER (Modern & Clean) --- */
@@ -126,6 +129,8 @@ main {
   padding: var(--spacing-lg) 0;
   margin-bottom: var(--spacing-lg);
   gap: var(--spacing-md);
+  position: relative;
+  z-index: 1;
 }
 
 .app-header h1,
@@ -460,7 +465,7 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
   border-radius: var(--radius-lg);
   box-shadow: 0 2px 8px var(--color-shadow);
   padding: var(--spacing-lg);
-  margin: var(--spacing-md) 0;
+  margin: 24px 0;
   border: 1px solid var(--color-border);
   transition: all var(--transition-speed);
   position: relative;
@@ -1353,6 +1358,8 @@ body[data-theme='dark'] .schedule-item p.session svg {
     margin-bottom: var(--spacing-md);
     width: 100%;
     box-sizing: border-box;
+    position: relative;
+    z-index: 1;
   }
   
   .app-header h1,
@@ -1366,9 +1373,10 @@ body[data-theme='dark'] .schedule-item p.session svg {
   .header-controls {
     flex-direction: row;
     align-items: center;
-    justify-content: space-between;
-    gap: var(--spacing-sm);
+    justify-content: flex-start;
+    gap: var(--spacing-xs);
     width: 100%;
+    flex-wrap: nowrap;
   }
   
   .theme-toggle {
@@ -1381,6 +1389,7 @@ body[data-theme='dark'] .schedule-item p.session svg {
     border: none;
     background: transparent;
     box-shadow: none;
+    margin-right: var(--spacing-xs);
   }
   
   .theme-toggle:hover {
@@ -1388,9 +1397,9 @@ body[data-theme='dark'] .schedule-item p.session svg {
   }
   
   .auth-buttons {
-    flex: 1;
+    flex: 0 0 auto;
     display: flex;
-    justify-content: flex-end;
+    justify-content: flex-start;
     gap: var(--spacing-xs);
     min-width: 0;
     box-shadow: none;
@@ -1398,8 +1407,8 @@ body[data-theme='dark'] .schedule-item p.session svg {
   }
   
   .auth-button {
-    padding: 10px 14px;
-    font-size: 0.8125rem;
+    padding: 8px 12px;
+    font-size: 0.75rem;
     min-height: 44px;
     flex: 0 0 auto;
     justify-content: center;
@@ -1411,6 +1420,14 @@ body[data-theme='dark'] .schedule-item p.session svg {
   
   .auth-button span {
     display: inline;
+    margin-left: 4px;
+  }
+  
+  .auth-button svg {
+    margin: 0;
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
   }
   
   /* Filter Container */
@@ -1499,7 +1516,7 @@ body[data-theme='dark'] .schedule-item p.session svg {
   
   /* Schedule Items - Mobile 768px: Tăng spacing lớn để tránh dính nhau */
   .schedule-item {
-    padding: var(--spacing-lg);
+    padding: var(--spacing-md) var(--spacing-sm);
     margin: 80px 0 !important;
     border-radius: var(--radius-md);
     width: 100%;
@@ -1508,26 +1525,29 @@ body[data-theme='dark'] .schedule-item p.session svg {
   
   .schedule-list {
     padding: var(--spacing-xl) var(--spacing-sm) var(--spacing-xxl);
+    position: relative;
+    z-index: 0;
   }
   
   .schedule-item h4 {
-    font-size: 1.125rem;
+    font-size: 1.0625rem;
     line-height: 1.4;
-    margin-bottom: var(--spacing-lg);
+    margin-bottom: var(--spacing-md);
     min-width: 0;
     word-wrap: break-word;
+    font-weight: 600;
   }
   
   .schedule-item p {
-    font-size: 0.875rem;
-    margin: 18px 0;
-    line-height: 1.6;
+    font-size: 0.8125rem;
+    margin: 12px 0;
+    line-height: 1.5;
     word-wrap: break-word;
   }
   
   .schedule-item p svg {
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
     flex-shrink: 0;
   }
   
@@ -1684,10 +1704,11 @@ body[data-theme='dark'] .schedule-item p.session svg {
   .header-controls {
     flex-direction: row;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-start;
     gap: var(--spacing-xs);
     padding: 0;
     width: 100%;
+    flex-wrap: nowrap;
   }
   
   .theme-toggle {
@@ -1700,6 +1721,7 @@ body[data-theme='dark'] .schedule-item p.session svg {
     border: none;
     background: transparent;
     box-shadow: none;
+    margin-right: var(--spacing-xs);
   }
   
   .theme-toggle:hover {
@@ -1707,16 +1729,16 @@ body[data-theme='dark'] .schedule-item p.session svg {
   }
   
   .auth-buttons {
-    flex: 1;
+    flex: 0 0 auto;
     display: flex;
-    justify-content: flex-end;
+    justify-content: flex-start;
     gap: var(--spacing-xs);
     min-width: 0;
   }
   
   .auth-button {
-    padding: 10px 12px;
-    font-size: 0.75rem;
+    padding: 8px 10px;
+    font-size: 0.7rem;
     min-height: 44px;
     flex: 0 0 auto;
     justify-content: center;
@@ -1727,13 +1749,15 @@ body[data-theme='dark'] .schedule-item p.session svg {
   }
   
   .auth-button span {
-    display: none;
+    display: inline;
+    margin-left: 4px;
   }
   
   .auth-button svg {
     margin: 0;
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
   }
   
   /* Filter Container */
@@ -1824,7 +1848,7 @@ body[data-theme='dark'] .schedule-item p.session svg {
   
   /* Schedule Items - Mobile 480px: Tăng spacing lớn để tránh dính nhau */
   .schedule-item {
-    padding: var(--spacing-lg);
+    padding: var(--spacing-md) var(--spacing-sm);
     margin: 88px 0 !important;
     border-radius: var(--radius-md);
     width: 100%;
@@ -1832,23 +1856,24 @@ body[data-theme='dark'] .schedule-item p.session svg {
   }
   
   .schedule-item h4 {
-    font-size: 1.0625rem;
-    margin-bottom: var(--spacing-lg);
+    font-size: 1rem;
+    margin-bottom: var(--spacing-md);
     line-height: 1.4;
     min-width: 0;
     word-wrap: break-word;
+    font-weight: 600;
   }
   
   .schedule-item p {
-    font-size: 0.8125rem;
-    margin: 18px 0;
-    line-height: 1.6;
+    font-size: 0.75rem;
+    margin: 10px 0;
+    line-height: 1.5;
     word-wrap: break-word;
   }
   
   .schedule-item p svg {
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
     flex-shrink: 0;
   }
   
@@ -2120,21 +2145,30 @@ body[data-theme='dark'] .schedule-item p.session svg {
   
   /* Schedule Items - Mobile 360px: Tăng spacing lớn để tránh dính nhau */
   .schedule-item {
-    padding: var(--spacing-md);
+    padding: var(--spacing-sm) var(--spacing-xs);
     margin: 80px 0 !important;
     width: 100%;
     box-sizing: border-box;
   }
   
   .schedule-item h4 {
-    font-size: 1rem;
-    margin-bottom: var(--spacing-lg);
+    font-size: 0.9375rem;
+    margin-bottom: var(--spacing-sm);
     min-width: 0;
+    font-weight: 600;
+    line-height: 1.3;
   }
   
   .schedule-item p {
-    font-size: 0.75rem;
-    margin: 16px 0;
+    font-size: 0.6875rem;
+    margin: 8px 0;
+    line-height: 1.4;
+  }
+  
+  .schedule-item p svg {
+    width: 12px;
+    height: 12px;
+    flex-shrink: 0;
   }
   
   .schedule-list {
