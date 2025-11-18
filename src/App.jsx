@@ -500,8 +500,10 @@ const JobItem = memo(({ job, isActive, onQuickReport, brandGroup, hostGroup }) =
   const talentDisplay = useMemo(() => combineNames(job['Talent 1'], job['Talent 2']), [job['Talent 1'], job['Talent 2']]);
   const coordDisplay = useMemo(() => combineNames(job['Coordinator 1'], job['Coordinator 2']), [job['Coordinator 1'], job['Coordinator 2']]);
   const locationDisplay = useMemo(() => combineLocation(job), [job.Address, job['Studio/Room']]);
-  const sessionTypeDisplay = useMemo(() => {
-    return job['Type of session'] && job['Type of session'].trim() !== '' ? job['Type of session'] : '—';
+  // Chỉ hiển thị nếu là "Ca nối", nếu không thì không hiển thị
+  const isCaNoi = useMemo(() => {
+    const sessionType = (job['Type of session'] || '').trim().toLowerCase();
+    return sessionType === 'ca nối' || sessionType === 'ca noi';
   }, [job['Type of session']]);
 
   const handleQuickReport = useCallback(() => {
@@ -515,13 +517,15 @@ const JobItem = memo(({ job, isActive, onQuickReport, brandGroup, hostGroup }) =
       <div className="job-header-row">
         <h4 className="job-title-with-button">{job.Store || 'Unnamed Job'}</h4> 
         <button className="quick-report-button" onClick={handleQuickReport} title="Điền Report Nhanh">
-          <FiEdit3 size={16} /> <span className="quick-report-text">Điền Report</span>
+          <FiEdit3 size={16} /> <span className="quick-report-text">Điền Report Nhanh</span>
         </button>
       </div>
       
       <p className="time"><FiClock /> {timeGroup}</p>
       <p className="location"><FiMapPin /> {locationDisplay}</p>
-      <p className="session"><FiMic /> Loại Ca: {sessionTypeDisplay}</p> 
+      {isCaNoi && (
+        <p className="session"><FiZap /> Ca nối</p>
+      )}
       <p className="mc"><FiUser /> {talentDisplay}</p>
       <p className="standby"><FiMonitor /> {coordDisplay}</p>
 
@@ -691,6 +695,18 @@ function App() {
     scrollElementRef.current = document.querySelector('main');
   }, []);
   
+  const measureElement = useCallback((el) => {
+    if (!el) return 0;
+    const rect = el.getBoundingClientRect();
+    const win = typeof window !== 'undefined' ? window : null;
+    if (!win) {
+      return rect.height;
+    }
+    const styles = win.getComputedStyle(el);
+    const marginY = parseFloat(styles.marginTop || '0') + parseFloat(styles.marginBottom || '0');
+    return rect.height + marginY;
+  }, []);
+
   const rowVirtualizer = useVirtualizer({
     count: flatRowItems.length,
     getScrollElement: () => scrollElementRef.current,
@@ -700,6 +716,7 @@ function App() {
       return item.type === 'HEADER' ? 70 : 380;
     },
     overscan: 3,
+    measureElement,
   });
 
   const virtualItems = rowVirtualizer.getVirtualItems();
@@ -757,10 +774,13 @@ function App() {
                         const item = flatRowItems[virtualItem.index];
                         if (!item) return null; 
                         return (
-                            <div key={item.id} style={{
+                            <div
+                              key={item.id}
+                              ref={rowVirtualizer.measureElement}
+                              style={{
                                 position: 'absolute', top: 0, left: 0, width: '100%',
                                 transform: `translateY(${virtualItem.start}px)`,
-                                paddingBottom: item.type === 'HEADER' ? '16px' : '36px'
+                                paddingBottom: item.type === 'HEADER' ? '24px' : '48px'
                             }}>
                                 {item.type === 'HEADER' ? (
                                     <h3 className={`schedule-group-title ${item.content.toLowerCase() === 'ca nối' ? 'ca-noi-special' : ''}`}>
