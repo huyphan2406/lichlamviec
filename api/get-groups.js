@@ -8,10 +8,15 @@ const GROUP_HOST_CSV_URL = 'https://docs.google.com/spreadsheets/d/1sgDT3E2kTsz5
 const GROUP_BRAND_CSV_URL = 'https://docs.google.com/spreadsheets/d/1sgDT3E2kTsz5Ph6XeuXhZZKpdwtFDb4ncoUm6Q7UEYY/export?format=csv&gid=1406781907';
 // Hàm normalize brand name - xử lý viết tắt và format đặc biệt (GIỐNG HỆT FRONTEND)
 // Xử lý các format: "ADIVA- TIKTOK", "ANESSA - TTS", "JUDYDOLLSHP", "MONDELEZ", "ROHTO - TTS (SC +HB)"
+// "[ MUSTELA - SHP/TTS] TEAM LIVESTREAM INHOUSE" -> "mustela shopee tiktok team livestream inhouse"
 const normalizeBrandName = (name) => {
     if (!name) return name;
     
     let normalized = String(name).toLowerCase();
+    
+    // Bước 0: Xử lý dấu ngoặc vuông [ ] (xóa hoàn toàn)
+    // "[ MUSTELA - SHP/TTS] TEAM LIVESTREAM INHOUSE" -> " MUSTELA - SHP/TTS TEAM LIVESTREAM INHOUSE"
+    normalized = normalized.replace(/\[|\]/g, '');
     
     // Bước 1: Xử lý ngoặc đơn TRƯỚC (để xử lý nội dung bên trong)
     // "ROHTO - TTS (SC +HB)" -> "ROHTO - TTS SC +HB"
@@ -44,7 +49,7 @@ const normalizeBrandName = (name) => {
     // Bước 4: Xử lý dấu "&" (SENSODYNE & CENTRUM -> SENSODYNE CENTRUM)
     normalized = normalized.replace(/&/g, ' ');
     
-    // Bước 5: Xử lý dấu "/" (TTS/SHP/LAZ -> TTS SHP LAZ)
+    // Bước 5: Xử lý dấu "/" (TTS/SHP/LAZ -> TTS SHP LAZ) - QUAN TRỌNG cho "SHP/TTS"
     normalized = normalized.replace(/\//g, ' ');
     
     // Bước 6: Xử lý dấu "-" và "|" thành space (xử lý cả "ADIVA- TIKTOK" và "ANESSA - TTS")

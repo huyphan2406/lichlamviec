@@ -166,9 +166,17 @@ function useGroupsData() {
 const normalizeBrandName = (name) => {
   if (!name) return '';
   let normalized = String(name).toLowerCase();
+  
+  // Bước 0: Xử lý dấu ngoặc vuông [ ] (xóa hoàn toàn)
+  normalized = normalized.replace(/\[|\]/g, '');
+  
+  // Bước 1: Xử lý ngoặc đơn TRƯỚC (để xử lý nội dung bên trong)
   normalized = normalized.replace(/\(([^)]+)\)/g, (match, content) => {
     return ' ' + content.replace(/\+/g, ' ').trim();
   });
+  
+  // Bước 2: Xử lý viết tắt platform (phải làm trước khi xóa ký tự đặc biệt)
+  // Xử lý cả word boundary và không có word boundary
   normalized = normalized
     .replace(/\btts\b/g, 'tiktok')
     .replace(/\bshp\b/g, 'shopee')
@@ -178,8 +186,22 @@ const normalizeBrandName = (name) => {
     .replace(/([a-z])shp(?![a-z])/g, '$1shopee')
     .replace(/([a-z])laz(?![a-z])/g, '$1lazada')
     .replace(/([a-z])ecom(?![a-z])/g, '$1ecommerce');
-  normalized = normalized.replace(/\+/g, ' ').replace(/&/g, ' ').replace(/\//g, ' ').replace(/[-|]/g, ' ');
+  
+  // Bước 3: Xử lý dấu "+" (brand1+brand2 -> brand1 brand2)
+  normalized = normalized.replace(/\+/g, ' ');
+  
+  // Bước 4: Xử lý dấu "&" (SENSODYNE & CENTRUM -> SENSODYNE CENTRUM)
+  normalized = normalized.replace(/&/g, ' ');
+  
+  // Bước 5: Xử lý dấu "/" (TTS/SHP/LAZ -> TTS SHP LAZ) - QUAN TRỌNG cho "SHP/TTS"
+  normalized = normalized.replace(/\//g, ' ');
+  
+  // Bước 6: Xử lý dấu "-" và "|" thành space
+  normalized = normalized.replace(/[-|]/g, ' ');
+  
+  // Bước 7: Loại bỏ khoảng trắng thừa và trim
   normalized = normalized.replace(/\s+/g, ' ').trim();
+  
   return normalized;
 };
 
@@ -212,8 +234,22 @@ const findGroupLink = (job, groups, type) => {
     return groups[normalizedStore];
   }
   
-  // Tìm partial match
+  // Tìm partial match - cải thiện logic matching
+  // Lấy phần đầu của store name (trước "TEAM", "INHOUSE", "LIVESTREAM", etc.) để match tốt hơn
+  const storeParts = normalizedStore.split(/\s+(?:team|livestream|inhouse|group|brand)\s+/i);
+  const mainStoreName = storeParts[0] ? storeParts[0].trim() : normalizedStore;
+  
+  // Thử match với main store name trước
   for (const [key, value] of Object.entries(groups)) {
+    // Exact match với main store name
+    if (mainStoreName === key || key === mainStoreName) {
+      return value;
+    }
+    // Partial match - một trong hai chứa nhau (ưu tiên main store name)
+    if (mainStoreName.includes(key) || key.includes(mainStoreName)) {
+      return value;
+    }
+    // Fallback: match với full normalized store
     if (normalizedStore.includes(key) || key.includes(normalizedStore)) {
       return value;
     }
@@ -780,7 +816,7 @@ function App() {
                               style={{
                                 position: 'absolute', top: 0, left: 0, width: '100%',
                                 transform: `translateY(${virtualItem.start}px)`,
-                                paddingBottom: item.type === 'HEADER' ? '24px' : '56px'
+                                paddingBottom: item.type === 'HEADER' ? '32px' : '72px'
                             }}>
                                 {item.type === 'HEADER' ? (
                                     <h3 className={`schedule-group-title ${item.content.toLowerCase() === 'ca nối' ? 'ca-noi-special' : ''}`}>
