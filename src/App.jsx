@@ -624,16 +624,15 @@ const JobItem = memo(({ job, isActive, onQuickReport, brandGroup, hostGroup }) =
         </button>
       </div>
       
-      <div className="job-info-grid">
+      <div className="job-info-list">
         <p className="time"><FiClock /> <span>{timeGroup}</span></p>
         <p className="location"><FiMapPin /> <span>{locationDisplay}</span></p>
         <p className="mc"><FiUser /> <span>{talentDisplay}</span></p>
         <p className="standby"><FiUserCheck /> <span>{coordDisplay}</span></p>
+        {isCaNoi && (
+          <p className="session"><FiZap /> <span>Ca nối</span></p>
+        )}
       </div>
-      
-      {isCaNoi && (
-        <p className="session"><FiZap /> <span>Ca nối</span></p>
-      )}
 
       <div className="job-groups-footer-container">
           <div className="group-brand job-group-item">
