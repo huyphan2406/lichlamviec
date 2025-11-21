@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Responsive - Lịch Làm Việc</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #2563eb;
+            margin-bottom: 10px;
+            font-size: 1.8rem;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1rem;
+        }
+        
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 2px solid #e9ecef;
+        }
+        
+        .test-section h2 {
+            color: #1a1a1a;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+        
+        .checklist {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .checklist li {
+            padding: 12px 0;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            align-items: center;
+            font-size: 1rem;
+        }
+        
+        .checklist li:last-child {
+            border-bottom: none;
+        }
+        
+        .checklist li::before {
+            content: "✓";
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            background: #10b981;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 24px;
+            margin-right: 12px;
+            font-weight: bold;
+        }
+        
+        .breakpoint {
+            display: inline-block;
+            background: #2563eb;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+        
+        .device-info {
+            margin-top: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid #2563eb;
+        }
+        
+        .device-info strong {
+            color: #2563eb;
+        }
+        
+        .screen-size {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #10b981;
+            margin: 10px 0;
+        }
+        
+        .instructions {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 30px;
+        }
+        
+        .instructions h3 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+        
+        .instructions p {
+            color: #856404;
+            line-height: 1.6;
+        }
+        
+        .button {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #2563eb;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            margin-top: 15px;
+            transition: all 0.2s;
+        }
+        
+        .button:hover {
+            background: #1d4ed8;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 1.5rem;
+            }
+            
+            .test-section h2 {
+                font-size: 1.1rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .container {
+                padding: 15px;
+            }
+            
+            h1 {
+                font-size: 1.3rem;
+            }
+            
+            .checklist li {
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>✅ Test Responsive - Lịch Làm Việc</h1>
+        <p class="subtitle">Kiểm tra hiển thị trên mọi kích thước màn hình</p>
+        
+        <div class="device-info">
+            <strong>Kích thước màn hình hiện tại:</strong>
+            <div class="screen-size" id="screenSize">Đang tải...</div>
+            <p id="deviceType">Đang phát hiện thiết bị...</p>
+        </div>
+        
+        <div class="test-section">
+            <h2>📱 Các breakpoints đã tối ưu:</h2>
+            <ul class="checklist">
+                <li><span class="breakpoint">Desktop</span> > 1024px - Layout đầy đủ, spacing rộng</li>
+                <li><span class="breakpoint">Tablet</span> 769px - 1024px - Layout 2 cột cho filters</li>
+                <li><span class="breakpoint">Mobile</span> 481px - 768px - Layout 1 cột, touch targets 48px</li>
+                <li><span class="breakpoint">Small</span> 361px - 480px - Font nhỏ hơn, padding compact</li>
+                <li><span class="breakpoint">XSmall</span> ≤ 360px - Tối ưu tối đa cho màn hình nhỏ</li>
+                <li><span class="breakpoint">Landscape</span> Mobile ngang - Chiều cao giảm cho modals</li>
+            </ul>
+        </div>
+        
+        <div class="test-section">
+            <h2>🎯 Các cải tiến responsive:</h2>
+            <ul class="checklist">
+                <li>Header buttons không bị wrap lộn xộn</li>
+                <li>Schedule items có spacing đủ lớn, không dính nhau</li>
+                <li>Form elements có min-height 48px (chuẩn touch target)</li>
+                <li>Job groups stack vertically trên mobile</li>
+                <li>Modals/popups responsive với width calc()</li>
+                <li>Virtualizer estimates chính xác cho từng breakpoint</li>
+                <li>Không có overflow ngang (overflow-x: hidden)</li>
+                <li>Typography scale phù hợp với màn hình</li>
+            </ul>
+        </div>
+        
+        <div class="test-section">
+            <h2>🧪 Cách test:</h2>
+            <ul class="checklist">
+                <li>Mở DevTools (F12) → Toggle Device Toolbar (Ctrl+Shift+M)</li>
+                <li>Test các preset: iPhone SE, iPhone 12 Pro, iPad, Desktop</li>
+                <li>Kiểm tra orientation: Portrait và Landscape</li>
+                <li>Scroll test: Không bị giật, smooth scrolling</li>
+                <li>Touch test: Các button đủ lớn để tap (48x48px)</li>
+                <li>Text test: Font size đọc được, không quá nhỏ</li>
+            </ul>
+        </div>
+        
+        <div class="instructions">
+            <h3>📋 Hướng dẫn test trên thiết bị thật:</h3>
+            <p>
+                1. Trên điện thoại, mở ứng dụng trong Chrome/Safari<br>
+                2. Kiểm tra header: buttons phải nằm trên 1 hàng, không bị wrap<br>
+                3. Kiểm tra job items: phải có khoảng cách rõ ràng giữa các items<br>
+                4. Tap vào các button: phải dễ nhấn, không bị miss<br>
+                5. Mở popup/modal: phải vừa màn hình, scroll được bên trong<br>
+                6. Test landscape: xoay ngang điện thoại, kiểm tra layout
+            </p>
+            <a href="/" class="button">🚀 Mở App để Test</a>
+        </div>
+    </div>
+    
+    <script>
+        function updateScreenInfo() {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            const screenSize = document.getElementById('screenSize');
+            const deviceType = document.getElementById('deviceType');
+            
+            screenSize.textContent = `${width}px × ${height}px`;
+            
+            let type = '';
+            if (width > 1024) {
+                type = '🖥️ Desktop - Layout đầy đủ';
+            } else if (width > 768) {
+                type = '💻 Tablet - Layout trung bình';
+            } else if (width > 480) {
+                type = '📱 Mobile Large - Layout 1 cột';
+            } else if (width > 360) {
+                type = '📱 Mobile Small - Layout compact';
+            } else {
+                type = '📱 Mobile XSmall - Layout tối ưu tối đa';
+            }
+            
+            if (width <= 768 && width > height) {
+                type += ' (Landscape)';
+            }
+            
+            deviceType.textContent = type;
+        }
+        
+        updateScreenInfo();
+        window.addEventListener('resize', updateScreenInfo);
+    </script>
+</body>
+</html>
+

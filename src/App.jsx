@@ -816,12 +816,23 @@ function App() {
     estimateSize: (index) => {
       const item = flatRowItems[index];
       if (!item) return 50;
-      // Desktop: estimate size nhỏ để spacing ngắn như ban đầu
-      // Mobile: estimate size lớn để đảm bảo đủ không gian, tránh items dính nhau
-      const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
-      return item.type === 'HEADER' 
-        ? (isMobile ? 100 : 70)
-        : (isMobile ? 650 : 380);
+      
+      // Responsive estimate sizes dựa trên breakpoints thực tế
+      const windowWidth = typeof window !== 'undefined' ? window.innerWidth : 768;
+      
+      if (item.type === 'HEADER') {
+        // Header sizes
+        if (windowWidth <= 360) return 80;
+        if (windowWidth <= 480) return 85;
+        if (windowWidth <= 768) return 90;
+        return 70;
+      } else {
+        // Job item sizes - tính cả margin spacing
+        if (windowWidth <= 360) return 420;  // Smaller screens cần item nhỏ hơn
+        if (windowWidth <= 480) return 460;
+        if (windowWidth <= 768) return 500;
+        return 380;  // Desktop
+      }
     },
     overscan: 3,
     measureElement,
@@ -881,19 +892,28 @@ function App() {
                     {virtualItems.map((virtualItem) => {
                         const item = flatRowItems[virtualItem.index];
                         if (!item) return null; 
-                        // Desktop: paddingBottom ngắn như ban đầu
-                        // Mobile: paddingBottom lớn để tránh items dính nhau
-                        const isMobile = window.innerWidth <= 768;
-                        const paddingBottom = item.type === 'HEADER' 
-                          ? (isMobile ? '28px' : '24px')
-                          : (isMobile ? '160px' : '56px');
+                        
+                        // Responsive paddingBottom dựa trên breakpoints
+                        const windowWidth = window.innerWidth;
+                        let paddingBottom = '16px';
+                        
+                        if (item.type === 'HEADER') {
+                          paddingBottom = windowWidth <= 768 ? '16px' : '24px';
+                        } else {
+                          // Job items - padding tự nhiên từ CSS margin
+                          paddingBottom = '0px';
+                        }
                         
                         return (
                             <div
                               key={item.id}
                               ref={rowVirtualizer.measureElement}
+                              data-index={virtualItem.index}
                               style={{
-                                position: 'absolute', top: 0, left: 0, width: '100%',
+                                position: 'absolute', 
+                                top: 0, 
+                                left: 0, 
+                                width: '100%',
                                 transform: `translateY(${virtualItem.start}px)`,
                                 paddingBottom: paddingBottom
                             }}>

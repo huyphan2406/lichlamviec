@@ -1297,12 +1297,15 @@ body[data-theme='dark'] .schedule-item p.session svg {
   body {
     padding: var(--spacing-sm);
     overflow-x: hidden;
+    width: 100%;
   }
   
   .App {
     max-width: 100%;
     padding: 0;
     margin: 0 auto;
+    width: 100%;
+    overflow-x: hidden;
   }
   
   main {
@@ -1314,6 +1317,8 @@ body[data-theme='dark'] .schedule-item p.session svg {
   .filter-container {
     padding: var(--spacing-md);
     margin-bottom: var(--spacing-md);
+    width: 100%;
+    box-sizing: border-box;
   }
   
   .form-group-grid {
@@ -1328,22 +1333,38 @@ body[data-theme='dark'] .schedule-item p.session svg {
   .virtual-list-container {
     width: 100%;
     overflow-x: hidden;
+    box-sizing: border-box;
+  }
+  
+  /* Cải thiện job items spacing */
+  .schedule-item {
+    margin: 32px 0 !important;
+    width: 100%;
+    box-sizing: border-box;
   }
 }
 
 /* Mobile lớn (max-width: 768px) */
 @media (max-width: 768px) {
+  * {
+    box-sizing: border-box;
+  }
+  
   body {
-    padding: var(--spacing-sm);
+    padding: var(--spacing-xs);
     font-size: 0.9375rem;
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
+    width: 100%;
+    margin: 0;
   }
   
   .App {
     max-width: 100%;
+    width: 100%;
     padding: 0;
     margin: 0 auto;
+    overflow-x: hidden;
   }
   
   main {
@@ -1352,9 +1373,9 @@ body[data-theme='dark'] .schedule-item p.session svg {
     overflow-x: hidden;
   }
   
-  /* Header */
+  /* Header - Cải thiện layout */
   .app-header {
-    padding: var(--spacing-md) var(--spacing-sm);
+    padding: var(--spacing-md) 0;
     margin-bottom: var(--spacing-md);
     width: 100%;
     box-sizing: border-box;
@@ -1367,55 +1388,67 @@ body[data-theme='dark'] .schedule-item p.session svg {
     font-size: 1.5rem;
     margin-bottom: var(--spacing-md);
     line-height: 1.3;
-    padding: 0 var(--spacing-xs);
+    padding: 0;
+    text-align: center;
+    word-wrap: break-word;
   }
   
   .header-controls {
+    display: flex;
     flex-direction: row;
     align-items: center;
-    justify-content: flex-start;
-    gap: var(--spacing-xs);
+    justify-content: space-between;
+    gap: var(--spacing-sm);
     width: 100%;
+    padding: 0 var(--spacing-xs);
     flex-wrap: nowrap;
   }
   
   .theme-toggle {
     flex-shrink: 0;
     padding: var(--spacing-xs);
-    min-width: 44px;
-    min-height: 44px;
+    min-width: 48px;
+    min-height: 48px;
+    display: flex;
     justify-content: center;
     align-items: center;
-    border: none;
-    background: transparent;
-    box-shadow: none;
-    margin-right: var(--spacing-xs);
+    border-radius: var(--radius-md);
+    background-color: var(--color-card);
+    border: 1px solid var(--color-border);
+    box-shadow: 0 2px 4px var(--color-shadow);
   }
   
   .theme-toggle:hover {
-    background: transparent;
+    background-color: var(--color-input-bg);
   }
   
   .auth-buttons {
-    flex: 0 0 auto;
+    flex: 0 1 auto;
     display: flex;
-    justify-content: flex-start;
+    justify-content: flex-end;
+    align-items: center;
     gap: var(--spacing-xs);
     min-width: 0;
-    box-shadow: none;
-    background: transparent;
+    overflow: visible;
   }
   
   .auth-button {
-    padding: 8px 12px;
-    font-size: 0.75rem;
-    min-height: 44px;
+    padding: 10px 14px;
+    font-size: 0.8125rem;
+    min-height: 48px;
     flex: 0 0 auto;
     justify-content: center;
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
     background-color: var(--color-card);
     white-space: nowrap;
+    box-shadow: 0 2px 4px var(--color-shadow);
+  }
+  
+  .auth-button.register {
+    background-color: var(--color-brand);
+    color: white;
+    border-color: var(--color-brand);
   }
   
   .auth-button span {
@@ -1433,15 +1466,16 @@ body[data-theme='dark'] .schedule-item p.session svg {
   /* Filter Container */
   .filter-container {
     padding: var(--spacing-md);
-    margin-bottom: var(--spacing-md);
+    margin: 0 var(--spacing-xs) var(--spacing-md);
     border-radius: var(--radius-md);
-    width: 100%;
+    width: calc(100% - var(--spacing-md));
     box-sizing: border-box;
   }
   
   .form-group-grid {
     grid-template-columns: 1fr;
     gap: var(--spacing-md);
+    width: 100%;
   }
   
   .form-group-grid .full-width {
@@ -1450,42 +1484,47 @@ body[data-theme='dark'] .schedule-item p.session svg {
   
   .form-group {
     width: 100%;
-    margin-bottom: var(--spacing-md);
+    margin-bottom: 0;
   }
   
   .form-group label {
     font-size: 0.875rem;
     margin-bottom: var(--spacing-xs);
+    display: block;
   }
   
   .form-group input,
   .form-group select {
-    padding: 12px 14px;
-    font-size: 0.9375rem;
-    min-height: 44px;
+    padding: 14px;
+    font-size: 1rem;
+    min-height: 48px;
     width: 100%;
     box-sizing: border-box;
+    border-radius: var(--radius-md);
   }
   
   .input-with-icon {
     width: 100%;
+    position: relative;
   }
   
   .input-with-icon input {
-    padding-left: 44px;
+    padding-left: 48px;
     width: 100%;
   }
   
   .search-icon {
-    left: 14px;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
   }
   
   .download-button {
     width: 100%;
-    padding: 14px;
-    font-size: 0.9375rem;
+    padding: 16px;
+    font-size: 1rem;
     margin-top: var(--spacing-md);
-    min-height: 44px;
+    min-height: 48px;
     box-sizing: border-box;
   }
   
@@ -1514,63 +1553,93 @@ body[data-theme='dark'] .schedule-item p.session svg {
     margin-bottom: var(--spacing-lg);
   }
   
-  /* Schedule Items - Mobile 768px: Tăng spacing lớn để tránh dính nhau */
-  .schedule-item {
-    padding: var(--spacing-md) var(--spacing-sm);
-    margin: 80px 0 !important;
-    border-radius: var(--radius-md);
-    width: 100%;
+  /* Job Count Summary */
+  .job-count-summary {
+    padding: var(--spacing-md);
+    font-size: 0.9375rem;
+    margin: 0 var(--spacing-xs) var(--spacing-md);
+    width: calc(100% - var(--spacing-md));
     box-sizing: border-box;
   }
   
+  /* Schedule Group Title */
+  .schedule-group-title {
+    font-size: 1rem;
+    padding: var(--spacing-md);
+    margin: var(--spacing-md) var(--spacing-xs) var(--spacing-lg);
+    width: calc(100% - var(--spacing-md));
+    box-sizing: border-box;
+  }
+  
+  .schedule-group-title.ca-noi-special {
+    font-size: 1.0625rem;
+    padding: var(--spacing-md);
+  }
+  
+  /* Schedule List Container */
   .schedule-list {
-    padding: var(--spacing-xl) var(--spacing-sm) var(--spacing-xxl);
+    padding: var(--spacing-md) 0;
+    width: 100%;
+    box-sizing: border-box;
     position: relative;
     z-index: 0;
   }
   
+  /* Schedule Items - QUAN TRỌNG: Spacing lớn để tránh dính nhau */
+  .schedule-item {
+    padding: var(--spacing-lg);
+    margin: 32px var(--spacing-xs) !important;
+    border-radius: var(--radius-md);
+    width: calc(100% - var(--spacing-md));
+    box-sizing: border-box;
+    position: relative;
+  }
+  
   .schedule-item h4 {
-    font-size: 1.0625rem;
+    font-size: 1.125rem;
     line-height: 1.4;
-    margin-bottom: var(--spacing-md);
+    margin: 0 0 var(--spacing-md) 0;
     min-width: 0;
+    width: 100%;
     word-wrap: break-word;
-    font-weight: 600;
+    font-weight: 700;
   }
   
   .schedule-item p {
-    font-size: 0.8125rem;
-    margin: 12px 0;
-    line-height: 1.5;
+    font-size: 0.9375rem;
+    margin: var(--spacing-sm) 0;
+    line-height: 1.6;
     word-wrap: break-word;
+    display: flex;
+    align-items: center;
   }
   
   .schedule-item p svg {
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
     flex-shrink: 0;
+    margin-right: var(--spacing-sm);
   }
   
   .job-header-row {
+    display: flex;
     flex-direction: column;
     align-items: stretch;
-    gap: var(--spacing-sm);
-    margin-bottom: var(--spacing-md);
-    width: 100%;
-  }
-  
-  .schedule-item h4 {
-    min-width: 0;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
     width: 100%;
   }
   
   .quick-report-button {
     width: 100%;
     justify-content: center;
-    padding: 12px;
-    font-size: 0.875rem;
-    min-height: 44px;
+    padding: 14px;
+    font-size: 0.9375rem;
+    min-height: 48px;
     box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
   }
   
   .quick-report-text {
@@ -1579,18 +1648,21 @@ body[data-theme='dark'] .schedule-item p.session svg {
   
   /* Job Groups Footer */
   .job-groups-footer-container {
-    grid-template-columns: 1fr;
-    gap: var(--spacing-sm);
-    margin-top: var(--spacing-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-lg);
+    padding-top: var(--spacing-md);
     width: 100%;
     box-sizing: border-box;
   }
   
   .job-group-item {
+    display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    gap: var(--spacing-xs);
-    padding: var(--spacing-sm);
+    align-items: stretch;
+    gap: var(--spacing-sm);
+    padding: 0;
     font-size: 0.875rem;
     width: 100%;
     box-sizing: border-box;
@@ -1600,20 +1672,35 @@ body[data-theme='dark'] .schedule-item p.session svg {
     width: 18px;
     height: 18px;
     flex-shrink: 0;
+    display: inline-block;
+    vertical-align: middle;
   }
   
   .job-group-label {
-    font-size: 0.8125rem;
-    margin-bottom: var(--spacing-xs);
+    font-size: 0.875rem;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+  }
+  
+  .job-group-value {
+    font-size: 0.875rem;
+    padding: var(--spacing-sm);
+    text-align: center;
   }
   
   .job-group-link {
     width: 100%;
     justify-content: center;
     margin-left: 0 !important;
-    padding: 10px 14px;
-    min-height: 44px;
+    padding: 14px;
+    min-height: 48px;
     box-sizing: border-box;
+    font-size: 0.9375rem;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
   }
   
   .job-group-link-text {
@@ -1621,34 +1708,54 @@ body[data-theme='dark'] .schedule-item p.session svg {
   }
   
   .job-group-link-icon {
-    width: 14px;
-    height: 14px;
+    width: 16px;
+    height: 16px;
     flex-shrink: 0;
   }
   
   /* Popup Modals */
   .popup-modal {
-    width: 95%;
-    max-width: 100%;
+    width: calc(100% - var(--spacing-lg));
+    max-width: 95%;
     max-height: 90vh;
     overflow-y: auto;
     margin: 0;
     box-sizing: border-box;
     left: 50% !important;
+    top: 50% !important;
     transform: translate(-50%, -50%) !important;
+    border-radius: var(--radius-lg);
   }
   
   .popup-header {
-    padding: var(--spacing-md);
+    padding: var(--spacing-lg);
   }
   
   .popup-header h3 {
-    font-size: 1rem;
+    font-size: 1.125rem;
+    line-height: 1.4;
   }
   
   .popup-content {
+    padding: var(--spacing-lg);
+    font-size: 1rem;
+    line-height: 1.7;
+  }
+  
+  /* Report Form Modal */
+  .report-form-modal {
+    width: calc(100% - var(--spacing-lg));
+    max-width: 95%;
+    max-height: 90vh;
+    box-sizing: border-box;
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+  }
+  
+  .report-form-content {
     padding: var(--spacing-md);
-    font-size: 0.9375rem;
+    max-height: calc(90vh - 80px);
   }
   
   /* Virtual List Container */
@@ -1656,6 +1763,7 @@ body[data-theme='dark'] .schedule-item p.session svg {
     width: 100%;
     overflow-x: hidden;
     box-sizing: border-box;
+    padding: 0;
   }
   
   .schedule-list {
@@ -1663,19 +1771,35 @@ body[data-theme='dark'] .schedule-item p.session svg {
     overflow-x: hidden;
     box-sizing: border-box;
   }
+  
+  /* Empty State */
+  .empty-state {
+    padding: var(--spacing-xl);
+    margin: 0 var(--spacing-xs);
+    width: calc(100% - var(--spacing-md));
+    box-sizing: border-box;
+  }
 }
 
 /* Mobile nhỏ (max-width: 480px) */
 @media (max-width: 480px) {
+  * {
+    box-sizing: border-box;
+  }
+  
   body {
-    padding: var(--spacing-xs);
+    padding: 6px;
     font-size: 0.875rem;
     overflow-x: hidden;
+    width: 100%;
+    margin: 0;
   }
   
   .App {
     padding: 0;
     margin: 0 auto;
+    width: 100%;
+    overflow-x: hidden;
   }
   
   main {
@@ -1686,7 +1810,7 @@ body[data-theme='dark'] .schedule-item p.session svg {
   
   /* Header */
   .app-header {
-    padding: var(--spacing-sm) var(--spacing-xs);
+    padding: var(--spacing-md) 0;
     margin-bottom: var(--spacing-sm);
     width: 100%;
     box-sizing: border-box;
@@ -1694,19 +1818,21 @@ body[data-theme='dark'] .schedule-item p.session svg {
   
   .app-header h1,
   .header-title-centered {
-    font-size: 1.25rem;
+    font-size: 1.375rem;
     margin-bottom: var(--spacing-sm);
     line-height: 1.3;
-    padding: 0;
-    white-space: normal;
+    padding: 0 var(--spacing-xs);
+    text-align: center;
+    word-wrap: break-word;
   }
   
   .header-controls {
+    display: flex;
     flex-direction: row;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: space-between;
     gap: var(--spacing-xs);
-    padding: 0;
+    padding: 0 var(--spacing-xs);
     width: 100%;
     flex-wrap: nowrap;
   }
@@ -1716,29 +1842,25 @@ body[data-theme='dark'] .schedule-item p.session svg {
     min-width: 44px;
     min-height: 44px;
     flex-shrink: 0;
+    display: flex;
     justify-content: center;
     align-items: center;
-    border: none;
-    background: transparent;
-    box-shadow: none;
-    margin-right: var(--spacing-xs);
-  }
-  
-  .theme-toggle:hover {
-    background: transparent;
+    border-radius: var(--radius-md);
+    background-color: var(--color-card);
+    border: 1px solid var(--color-border);
   }
   
   .auth-buttons {
-    flex: 0 0 auto;
+    flex: 0 1 auto;
     display: flex;
-    justify-content: flex-start;
-    gap: var(--spacing-xs);
+    justify-content: flex-end;
+    gap: 6px;
     min-width: 0;
   }
   
   .auth-button {
-    padding: 8px 10px;
-    font-size: 0.7rem;
+    padding: 10px 12px;
+    font-size: 0.75rem;
     min-height: 44px;
     flex: 0 0 auto;
     justify-content: center;
@@ -1748,6 +1870,12 @@ body[data-theme='dark'] .schedule-item p.session svg {
     white-space: nowrap;
   }
   
+  .auth-button.register {
+    background-color: var(--color-brand);
+    color: white;
+    border-color: var(--color-brand);
+  }
+  
   .auth-button span {
     display: inline;
     margin-left: 4px;
@@ -1755,35 +1883,36 @@ body[data-theme='dark'] .schedule-item p.session svg {
   
   .auth-button svg {
     margin: 0;
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
     flex-shrink: 0;
   }
   
   /* Filter Container */
   .filter-container {
-    padding: var(--spacing-sm);
-    margin-bottom: var(--spacing-sm);
+    padding: var(--spacing-md);
+    margin: 0 6px var(--spacing-sm);
     border-radius: var(--radius-md);
-    width: 100%;
+    width: calc(100% - 12px);
     box-sizing: border-box;
   }
   
   .form-group {
-    margin-bottom: var(--spacing-md);
+    margin-bottom: 0;
     width: 100%;
   }
   
   .form-group label {
-    font-size: 0.8125rem;
+    font-size: 0.875rem;
     margin-bottom: var(--spacing-xs);
+    display: block;
   }
   
   .form-group input,
   .form-group select {
-    padding: 12px;
-    font-size: 0.875rem;
-    min-height: 44px;
+    padding: 14px;
+    font-size: 1rem;
+    min-height: 48px;
     border-radius: var(--radius-md);
     width: 100%;
     box-sizing: border-box;
@@ -1791,52 +1920,52 @@ body[data-theme='dark'] .schedule-item p.session svg {
   
   .input-with-icon {
     width: 100%;
+    position: relative;
   }
   
   .input-with-icon input {
-    padding-left: 40px;
+    padding-left: 46px;
     width: 100%;
   }
   
   .search-icon {
-    left: 12px;
+    left: 14px;
     width: 18px;
     height: 18px;
+    top: 50%;
+    transform: translateY(-50%);
   }
   
   .download-button {
-    padding: 14px;
-    font-size: 0.875rem;
+    padding: 16px;
+    font-size: 1rem;
     width: 100%;
-    min-height: 44px;
-    margin-top: var(--spacing-sm);
+    min-height: 48px;
+    margin-top: var(--spacing-md);
     box-sizing: border-box;
   }
   
   /* Job Count Summary */
   .job-count-summary {
-    padding: var(--spacing-sm) var(--spacing-md);
-    font-size: 0.8125rem;
-    margin-bottom: var(--spacing-sm);
-    border-radius: var(--radius-md);
-    width: 100%;
+    padding: var(--spacing-md);
+    font-size: 0.875rem;
+    margin: 0 6px var(--spacing-sm);
+    width: calc(100% - 12px);
     box-sizing: border-box;
   }
   
   /* Schedule Group Title */
   .schedule-group-title {
-    font-size: 0.875rem;
-    padding: var(--spacing-sm) var(--spacing-md);
-    margin-bottom: var(--spacing-md);
-    margin-top: var(--spacing-sm);
-    width: 100%;
+    font-size: 0.9375rem;
+    padding: var(--spacing-md);
+    margin: var(--spacing-md) 6px var(--spacing-md);
+    width: calc(100% - 12px);
     box-sizing: border-box;
   }
   
   .schedule-group-title.ca-noi-special {
-    font-size: 0.9375rem;
-    padding: var(--spacing-sm) var(--spacing-md);
-    margin-bottom: var(--spacing-md);
+    font-size: 1rem;
+    padding: var(--spacing-md);
   }
   
   .schedule-group-title.ca-noi-special svg {
@@ -1846,51 +1975,67 @@ body[data-theme='dark'] .schedule-item p.session svg {
     flex-shrink: 0;
   }
   
-  /* Schedule Items - Mobile 480px: Tăng spacing lớn để tránh dính nhau */
-  .schedule-item {
-    padding: var(--spacing-md) var(--spacing-sm);
-    margin: 88px 0 !important;
-    border-radius: var(--radius-md);
+  /* Schedule List Container */
+  .schedule-list {
+    padding: var(--spacing-md) 0;
     width: 100%;
     box-sizing: border-box;
   }
   
+  /* Schedule Items - QUAN TRỌNG: Spacing lớn để tránh dính nhau */
+  .schedule-item {
+    padding: var(--spacing-lg);
+    margin: 28px 6px !important;
+    border-radius: var(--radius-md);
+    width: calc(100% - 12px);
+    box-sizing: border-box;
+    position: relative;
+  }
+  
   .schedule-item h4 {
-    font-size: 1rem;
-    margin-bottom: var(--spacing-md);
+    font-size: 1.0625rem;
+    margin: 0 0 var(--spacing-md) 0;
     line-height: 1.4;
     min-width: 0;
+    width: 100%;
     word-wrap: break-word;
-    font-weight: 600;
+    font-weight: 700;
   }
   
   .schedule-item p {
-    font-size: 0.75rem;
-    margin: 10px 0;
-    line-height: 1.5;
+    font-size: 0.875rem;
+    margin: var(--spacing-sm) 0;
+    line-height: 1.6;
     word-wrap: break-word;
+    display: flex;
+    align-items: center;
   }
   
   .schedule-item p svg {
-    width: 14px;
-    height: 14px;
+    width: 16px;
+    height: 16px;
     flex-shrink: 0;
+    margin-right: var(--spacing-sm);
   }
   
   .job-header-row {
+    display: flex;
     flex-direction: column;
-    gap: var(--spacing-xs);
-    margin-bottom: var(--spacing-sm);
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
     width: 100%;
   }
   
   .quick-report-button {
     width: 100%;
-    padding: 12px;
-    font-size: 0.8125rem;
-    min-height: 44px;
+    padding: 14px;
+    font-size: 0.875rem;
+    min-height: 48px;
     justify-content: center;
     box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
   }
   
   .quick-report-button svg {
@@ -1905,18 +2050,21 @@ body[data-theme='dark'] .schedule-item p.session svg {
   
   /* Job Groups Footer */
   .job-groups-footer-container {
+    display: flex;
     flex-direction: column;
-    gap: var(--spacing-xs);
-    margin-top: var(--spacing-sm);
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-lg);
+    padding-top: var(--spacing-md);
     width: 100%;
     box-sizing: border-box;
   }
   
   .job-group-item {
+    display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    gap: var(--spacing-xs);
-    padding: var(--spacing-xs);
+    align-items: stretch;
+    gap: var(--spacing-sm);
+    padding: 0;
     font-size: 0.8125rem;
     width: 100%;
     box-sizing: border-box;
@@ -1926,21 +2074,35 @@ body[data-theme='dark'] .schedule-item p.session svg {
     width: 16px;
     height: 16px;
     flex-shrink: 0;
+    display: inline-block;
+    vertical-align: middle;
   }
   
   .job-group-label {
-    font-size: 0.75rem;
-    margin-bottom: var(--spacing-xs);
+    font-size: 0.8125rem;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+  }
+  
+  .job-group-value {
+    font-size: 0.8125rem;
+    padding: var(--spacing-sm);
+    text-align: center;
   }
   
   .job-group-link {
     width: 100%;
-    padding: 10px 12px;
-    font-size: 0.75rem;
-    min-height: 44px;
+    padding: 14px;
+    font-size: 0.875rem;
+    min-height: 48px;
     justify-content: center;
     margin-left: 0 !important;
     box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
   }
   
   .job-group-link-text {
@@ -1948,49 +2110,53 @@ body[data-theme='dark'] .schedule-item p.session svg {
   }
   
   .job-group-link-icon {
-    width: 12px;
-    height: 12px;
+    width: 14px;
+    height: 14px;
     flex-shrink: 0;
   }
   
   /* Popup Modals */
   .popup-modal {
-    width: 98%;
-    max-width: 100%;
-    max-height: 95vh;
+    width: calc(100% - 16px);
+    max-width: 98%;
+    max-height: 92vh;
     padding: 0;
     margin: 0;
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-md);
     box-sizing: border-box;
     left: 50% !important;
+    top: 50% !important;
     transform: translate(-50%, -50%) !important;
   }
   
   .popup-header {
-    padding: var(--spacing-sm) var(--spacing-md);
+    padding: var(--spacing-md);
   }
   
   .popup-header h3 {
-    font-size: 0.9375rem;
+    font-size: 1rem;
+    line-height: 1.4;
   }
   
   .popup-content {
     padding: var(--spacing-md);
-    font-size: 0.875rem;
+    font-size: 0.9375rem;
+    line-height: 1.7;
   }
   
   .report-form-modal {
-    width: 98%;
-    max-width: 100%;
-    max-height: 95vh;
+    width: calc(100% - 16px);
+    max-width: 98%;
+    max-height: 92vh;
     box-sizing: border-box;
     left: 50% !important;
+    top: 50% !important;
     transform: translate(-50%, -50%) !important;
   }
   
   .report-form-content {
     padding: var(--spacing-md);
-    max-height: calc(95vh - 60px);
+    max-height: calc(92vh - 70px);
     overflow-y: auto;
   }
   
@@ -2001,29 +2167,29 @@ body[data-theme='dark'] .schedule-item p.session svg {
   }
   
   .form-section-title {
-    font-size: 0.9375rem;
+    font-size: 1rem;
     margin-bottom: var(--spacing-sm);
   }
   
   .form-readonly-info {
-    padding: var(--spacing-xs) var(--spacing-sm);
+    padding: var(--spacing-sm);
     font-size: 0.875rem;
     width: 100%;
     box-sizing: border-box;
   }
   
   .image-upload-button {
-    padding: 12px;
-    font-size: 0.875rem;
-    min-height: 44px;
+    padding: 14px;
+    font-size: 0.9375rem;
+    min-height: 48px;
     width: 100%;
     box-sizing: border-box;
   }
   
   .form-actions {
     flex-direction: column;
-    gap: var(--spacing-sm);
-    margin-top: var(--spacing-md);
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-lg);
     padding-top: var(--spacing-md);
     width: 100%;
   }
@@ -2031,9 +2197,9 @@ body[data-theme='dark'] .schedule-item p.session svg {
   .form-button {
     width: 100%;
     min-width: auto;
-    padding: 14px;
-    font-size: 0.875rem;
-    min-height: 44px;
+    padding: 16px;
+    font-size: 1rem;
+    min-height: 48px;
     box-sizing: border-box;
   }
   
@@ -2045,58 +2211,99 @@ body[data-theme='dark'] .schedule-item p.session svg {
   
   .add-button,
   .remove-button {
-    min-height: 44px;
-    min-width: 44px;
+    min-height: 48px;
+    min-width: 48px;
+  }
+  
+  /* Empty State */
+  .empty-state {
+    padding: var(--spacing-lg);
+    margin: 0 6px;
+    width: calc(100% - 12px);
+    box-sizing: border-box;
   }
 }
 
 /* Mobile rất nhỏ (max-width: 360px) */
 @media (max-width: 360px) {
+  * {
+    box-sizing: border-box;
+  }
+  
   body {
-    padding: var(--spacing-xs);
+    padding: 4px;
     font-size: 0.8125rem;
+    overflow-x: hidden;
+    width: 100%;
+    margin: 0;
+  }
+  
+  .App {
+    padding: 0;
+    margin: 0 auto;
+    width: 100%;
     overflow-x: hidden;
   }
   
+  main {
+    padding: 0;
+    width: 100%;
+    overflow-x: hidden;
+  }
+  
+  /* Header */
   .app-header {
-    padding: var(--spacing-xs);
+    padding: var(--spacing-sm) 0;
     width: 100%;
     box-sizing: border-box;
+    margin-bottom: var(--spacing-xs);
   }
   
   .app-header h1,
   .header-title-centered {
-    font-size: 1.1rem;
-    margin-bottom: var(--spacing-xs);
-    padding: 0;
+    font-size: 1.25rem;
+    margin-bottom: var(--spacing-sm);
+    padding: 0 4px;
+    line-height: 1.3;
+    text-align: center;
+    word-wrap: break-word;
   }
   
   .header-controls {
+    display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-    gap: var(--spacing-xs);
-    padding: 0;
+    gap: 6px;
+    padding: 0 4px;
     width: 100%;
+    flex-wrap: nowrap;
   }
   
   .theme-toggle {
-    min-width: 40px;
-    min-height: 40px;
-    padding: var(--spacing-xs);
+    min-width: 44px;
+    min-height: 44px;
+    padding: 6px;
+    flex-shrink: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: var(--radius-md);
+    background-color: var(--color-card);
+    border: 1px solid var(--color-border);
   }
   
   .auth-buttons {
-    flex: 1;
+    flex: 0 1 auto;
     display: flex;
     justify-content: flex-end;
-    gap: var(--spacing-xs);
+    gap: 4px;
   }
   
   .auth-button {
     padding: 8px 10px;
     font-size: 0.6875rem;
-    min-height: 40px;
+    min-height: 44px;
     flex: 0 0 auto;
     white-space: nowrap;
     border: 1px solid var(--color-border);
@@ -2104,136 +2311,253 @@ body[data-theme='dark'] .schedule-item p.session svg {
     background-color: var(--color-card);
   }
   
+  .auth-button.register {
+    background-color: var(--color-brand);
+    color: white;
+    border-color: var(--color-brand);
+  }
+  
+  .auth-button svg {
+    width: 14px;
+    height: 14px;
+  }
+  
+  /* Filter Container */
   .filter-container {
-    padding: var(--spacing-xs);
-    margin-bottom: var(--spacing-xs);
-    width: 100%;
+    padding: var(--spacing-md);
+    margin: 0 4px var(--spacing-xs);
+    width: calc(100% - 8px);
     box-sizing: border-box;
   }
   
   .form-group label {
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
   }
   
   .form-group input,
   .form-group select {
-    padding: 10px 12px;
-    font-size: 0.8125rem;
-    min-height: 44px;
+    padding: 12px;
+    font-size: 1rem;
+    min-height: 48px;
     width: 100%;
     box-sizing: border-box;
   }
   
   .download-button {
-    padding: 12px;
-    font-size: 0.8125rem;
+    padding: 14px;
+    font-size: 0.9375rem;
+    min-height: 48px;
     width: 100%;
     box-sizing: border-box;
   }
   
-  .schedule-group-title {
+  /* Job Count Summary */
+  .job-count-summary {
+    padding: var(--spacing-sm) var(--spacing-md);
     font-size: 0.8125rem;
-    padding: var(--spacing-xs) var(--spacing-sm);
-    margin-bottom: var(--spacing-sm);
-    width: 100%;
+    margin: 0 4px var(--spacing-xs);
+    width: calc(100% - 8px);
+    box-sizing: border-box;
+  }
+  
+  /* Schedule Group Title */
+  .schedule-group-title {
+    font-size: 0.875rem;
+    padding: var(--spacing-sm) var(--spacing-md);
+    margin: var(--spacing-sm) 4px var(--spacing-md);
+    width: calc(100% - 8px);
     box-sizing: border-box;
   }
   
   .schedule-group-title.ca-noi-special {
-    font-size: 0.875rem;
+    font-size: 0.9375rem;
   }
   
-  /* Schedule Items - Mobile 360px: Tăng spacing lớn để tránh dính nhau */
-  .schedule-item {
-    padding: var(--spacing-sm) var(--spacing-xs);
-    margin: 80px 0 !important;
+  /* Schedule List Container */
+  .schedule-list {
+    padding: var(--spacing-md) 0;
     width: 100%;
     box-sizing: border-box;
   }
   
+  /* Schedule Items - QUAN TRỌNG: Spacing để tránh dính nhau */
+  .schedule-item {
+    padding: var(--spacing-md);
+    margin: 24px 4px !important;
+    width: calc(100% - 8px);
+    box-sizing: border-box;
+    position: relative;
+  }
+  
   .schedule-item h4 {
-    font-size: 0.9375rem;
-    margin-bottom: var(--spacing-sm);
+    font-size: 1rem;
+    margin: 0 0 var(--spacing-md) 0;
     min-width: 0;
-    font-weight: 600;
-    line-height: 1.3;
+    width: 100%;
+    font-weight: 700;
+    line-height: 1.4;
+    word-wrap: break-word;
   }
   
   .schedule-item p {
-    font-size: 0.6875rem;
-    margin: 8px 0;
-    line-height: 1.4;
-  }
-  
-  .schedule-item p svg {
-    width: 12px;
-    height: 12px;
-    flex-shrink: 0;
-  }
-  
-  .schedule-list {
-    padding: var(--spacing-lg) var(--spacing-xs) var(--spacing-xl);
+    font-size: 0.8125rem;
+    margin: var(--spacing-sm) 0;
+    line-height: 1.5;
+    display: flex;
+    align-items: center;
   }
   
   .schedule-item p svg {
     width: 14px;
     height: 14px;
+    flex-shrink: 0;
+    margin-right: 6px;
+  }
+  
+  .job-header-row {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+    width: 100%;
+  }
+  
+  .quick-report-button {
+    width: 100%;
+    padding: 14px;
+    font-size: 0.8125rem;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    box-sizing: border-box;
+  }
+  
+  /* Job Groups Footer */
+  .job-groups-footer-container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-md);
+    padding-top: var(--spacing-sm);
+    width: 100%;
+    box-sizing: border-box;
   }
   
   .job-group-item {
     font-size: 0.75rem;
-    padding: var(--spacing-xs);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 0;
     width: 100%;
     box-sizing: border-box;
+  }
+  
+  .job-group-label {
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 4px;
   }
   
   .job-group-link {
-    padding: 8px 10px;
-    font-size: 0.6875rem;
+    padding: 12px;
+    font-size: 0.8125rem;
+    min-height: 48px;
     width: 100%;
     box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
   }
   
+  /* Popup Modals */
   .popup-modal {
-    width: 100%;
-    max-height: 100vh;
+    width: calc(100% - 8px);
+    max-width: 100%;
+    max-height: 95vh;
     border-radius: var(--radius-md);
     box-sizing: border-box;
     left: 50% !important;
+    top: 50% !important;
     transform: translate(-50%, -50%) !important;
   }
   
   .popup-header {
-    padding: var(--spacing-xs) var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
   }
   
   .popup-header h3 {
+    font-size: 0.9375rem;
+    line-height: 1.4;
+  }
+  
+  .popup-content {
+    padding: var(--spacing-md);
     font-size: 0.875rem;
   }
   
   .report-form-modal {
-    width: 100%;
+    width: calc(100% - 8px);
+    max-width: 100%;
     box-sizing: border-box;
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
   }
   
   .report-form-content {
-    padding: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
   }
   
   .form-section-title {
-    font-size: 0.875rem;
+    font-size: 0.9375rem;
+  }
+  
+  .form-button {
+    padding: 14px;
+    font-size: 0.9375rem;
+    min-height: 48px;
+  }
+  
+  /* Empty State */
+  .empty-state {
+    padding: var(--spacing-md);
+    margin: 0 4px;
+    width: calc(100% - 8px);
+    box-sizing: border-box;
   }
 }
 
 /* Landscape orientation cho mobile */
 @media (max-width: 768px) and (orientation: landscape) {
+  * {
+    box-sizing: border-box;
+  }
+  
   body {
-    padding: var(--spacing-xs);
+    padding: 6px;
+    overflow-x: hidden;
+    width: 100%;
+  }
+  
+  .App {
+    padding: 0;
+    width: 100%;
+    overflow-x: hidden;
+  }
+  
+  main {
+    padding: 0;
+    width: 100%;
     overflow-x: hidden;
   }
   
   .app-header {
-    padding: var(--spacing-sm) var(--spacing-xs);
+    padding: var(--spacing-sm) 0;
     margin-bottom: var(--spacing-sm);
     width: 100%;
     box-sizing: border-box;
@@ -2241,48 +2565,63 @@ body[data-theme='dark'] .schedule-item p.session svg {
   
   .app-header h1,
   .header-title-centered {
-    font-size: 1.3rem;
-    margin-bottom: var(--spacing-xs);
+    font-size: 1.375rem;
+    margin-bottom: var(--spacing-sm);
+    line-height: 1.3;
+    padding: 0 6px;
   }
   
   .header-controls {
     gap: var(--spacing-xs);
     width: 100%;
+    padding: 0 6px;
   }
   
   .filter-container {
-    padding: var(--spacing-sm);
-    margin-bottom: var(--spacing-sm);
+    padding: var(--spacing-md);
+    margin: 0 6px var(--spacing-sm);
+    width: calc(100% - 12px);
+    box-sizing: border-box;
+  }
+  
+  /* Schedule List Container */
+  .schedule-list {
+    padding: var(--spacing-sm) 0;
     width: 100%;
     box-sizing: border-box;
   }
   
-  /* Schedule Items - Mobile Landscape: Tăng spacing để tránh dính nhau */
+  /* Schedule Items - Mobile Landscape: Spacing để tránh dính nhau */
   .schedule-item {
-    padding: var(--spacing-md);
-    margin: 72px 0 !important;
-    width: 100%;
+    padding: var(--spacing-md) var(--spacing-lg);
+    margin: 24px 6px !important;
+    width: calc(100% - 12px);
     box-sizing: border-box;
+    position: relative;
   }
   
   .popup-modal {
-    max-height: 85vh;
-    width: 95%;
+    max-height: 88vh;
+    width: calc(100% - 24px);
+    max-width: 92%;
     box-sizing: border-box;
     left: 50% !important;
+    top: 50% !important;
     transform: translate(-50%, -50%) !important;
   }
   
   .report-form-modal {
-    max-height: 85vh;
-    width: 95%;
+    max-height: 88vh;
+    width: calc(100% - 24px);
+    max-width: 92%;
     box-sizing: border-box;
     left: 50% !important;
+    top: 50% !important;
     transform: translate(-50%, -50%) !important;
   }
   
   .report-form-content {
-    max-height: calc(85vh - 60px);
+    max-height: calc(88vh - 70px);
     overflow-y: auto;
   }
 }
