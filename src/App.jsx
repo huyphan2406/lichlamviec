@@ -619,17 +619,20 @@ const JobItem = memo(({ job, isActive, onQuickReport, brandGroup, hostGroup }) =
     <motion.div className={`schedule-item ${isActive ? 'job-active' : ''}`} variants={itemVariants}>
       <div className="job-header-row">
         <h4 className="job-title-with-button">{job.Store || 'Unnamed Job'}</h4> 
-        <button className="quick-report-button" onClick={handleQuickReport} title="Điền Report Nhanh">
-          <FiEdit3 size={16} /> <span className="quick-report-text">Điền Report Nhanh</span>
+        <button className="quick-report-button" onClick={handleQuickReport} title="Điền Report Nhanh" aria-label="Điền Report Nhanh">
+          <FiEdit3 size={16} /> <span className="quick-report-text">Điền Report</span>
         </button>
       </div>
       
-      <p className="time"><FiClock /> {timeGroup}</p>
-      <p className="location"><FiMapPin /> {locationDisplay}</p>
-      <p className="mc"><FiUser /> {talentDisplay}</p>
-      <p className="standby"><FiUserCheck /> {coordDisplay}</p>
+      <div className="job-info-grid">
+        <p className="time"><FiClock /> <span>{timeGroup}</span></p>
+        <p className="location"><FiMapPin /> <span>{locationDisplay}</span></p>
+        <p className="mc"><FiUser /> <span>{talentDisplay}</span></p>
+        <p className="standby"><FiUserCheck /> <span>{coordDisplay}</span></p>
+      </div>
+      
       {isCaNoi && (
-        <p className="session"><FiZap /> Ca nối</p>
+        <p className="session"><FiZap /> <span>Ca nối</span></p>
       )}
 
       <div className="job-groups-footer-container">
