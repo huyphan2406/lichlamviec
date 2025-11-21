@@ -150,50 +150,52 @@ main {
 .header-controls {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   gap: var(--spacing-md);
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   width: 100%;
+  max-width: 400px;
 }
 
 /* Auth Buttons - Modern Design */
 .auth-buttons {
   display: flex;
   align-items: center;
-  gap: 0;
-  border-radius: var(--radius-md);
-  overflow: hidden;
-  box-shadow: 0 2px 8px var(--color-shadow);
-  background: var(--color-card);
+  gap: var(--spacing-xs);
+  flex: 1;
+  justify-content: flex-end;
 }
 
 .auth-button {
   padding: 10px 16px;
   font-size: 0.875rem;
   font-weight: 600;
-  border: none;
+  border: 1px solid var(--color-border);
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 6px;
   transition: all var(--transition-speed);
   white-space: nowrap;
+  border-radius: var(--radius-md);
+  box-shadow: 0 2px 4px var(--color-shadow);
 }
 
 .auth-button.login {
   background-color: var(--color-card);
-  color: var(--color-text-secondary);
-  border-right: 1px solid var(--color-border);
+  color: var(--color-text-primary);
 }
 
 .auth-button.login:hover {
   background-color: var(--color-input-bg);
-  color: var(--color-text-primary);
+  border-color: var(--color-brand);
+  color: var(--color-brand);
 }
 
 .auth-button.register {
   background-color: var(--color-brand);
   color: white;
+  border-color: var(--color-brand);
 }
 
 .auth-button.register:hover {
@@ -210,13 +212,18 @@ main {
   cursor: pointer;
   color: var(--color-text-secondary);
   padding: var(--spacing-sm);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   transition: all var(--transition-speed);
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+  box-shadow: 0 2px 4px var(--color-shadow);
+  flex-shrink: 0;
 }
 
 .theme-toggle:hover {
-  background-color: var(--color-border);
+  background-color: var(--color-input-bg);
   color: var(--color-text-primary);
+  border-color: var(--color-brand);
 }
 
 .theme-toggle-switch {
@@ -464,8 +471,8 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
   background-color: var(--color-card);
   border-radius: var(--radius-lg);
   box-shadow: 0 2px 8px var(--color-shadow);
-  padding: var(--spacing-lg);
-  margin: 24px 0;
+  padding: var(--spacing-md) var(--spacing-lg);
+  margin: 20px 0;
   border: 1px solid var(--color-border);
   transition: all var(--transition-speed);
   position: relative;
@@ -510,34 +517,34 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
   }
 }
 
-/* Job Header */
+/* Job Header - Desktop: Title bên trái, Report button bên phải cùng hàng */
 .job-header-row {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: var(--spacing-md);
-  gap: var(--spacing-md);
-  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+  flex-wrap: nowrap;
 }
 
 .schedule-item h4 {
   margin: 0;
-  font-size: 1.25rem;
+  font-size: 1.125rem;
   color: var(--color-text-primary);
   font-weight: 700;
-  padding-right: var(--spacing-sm);
   flex: 1;
-  min-width: 200px;
+  min-width: 0;
   line-height: 1.4;
+  word-wrap: break-word;
 }
 
-/* Quick Report Button */
+/* Quick Report Button - Nhỏ gọn hơn */
 .quick-report-button {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 10px 16px;
-  font-size: 0.875rem;
+  padding: 8px 14px;
+  font-size: 0.8125rem;
   font-weight: 600;
   background-color: var(--color-report-primary);
   color: white;
@@ -547,6 +554,7 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
   transition: all var(--transition-speed);
   box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .quick-report-button:hover {
@@ -559,22 +567,22 @@ body[data-theme='dark'] .schedule-group-title.ca-noi-special {
   transform: translateY(0);
 }
 
-/* Job Info */
+/* Job Info - Nhỏ gọn hơn */
 .schedule-item p {
-  margin: 10px 0;
+  margin: 8px 0;
   display: flex;
   align-items: center;
   color: var(--color-text-secondary);
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
   font-weight: 500;
-  line-height: 1.6;
+  line-height: 1.5;
 }
 
 .schedule-item p svg {
   margin-right: var(--spacing-sm);
-  font-size: 1.1em;
+  font-size: 1em;
   flex-shrink: 0;
-  width: 20px;
+  width: 18px;
 }
 
 /* Time icon - Slate blue */
@@ -623,70 +631,74 @@ body[data-theme='dark'] .schedule-item p.session svg {
   color: #fbbf24;
 }
 
-/* --- 6. GROUP LINKS (Modern Link Design) --- */
+/* --- 6. GROUP LINKS (Modern Link Design) - 2 NÚT CÙNG 1 HÀNG --- */
 .job-groups-footer-container {
   margin-top: var(--spacing-md);
   padding-top: var(--spacing-md);
   border-top: 2px solid var(--color-border);
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--spacing-md);
-  align-items: flex-start;
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
 .job-group-item {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: var(--spacing-sm);
-  font-size: 0.875rem;
+  gap: 4px;
+  font-size: 0.75rem;
   color: var(--color-text-primary);
-  line-height: 1.5;
 }
 
 .job-group-icon {
-  margin-right: var(--spacing-xs);
   color: var(--color-brand);
   flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  display: none; /* Ẩn icon để gọn hơn trên desktop */
 }
 
 .job-group-label {
-  margin-right: var(--spacing-xs);
-  color: var(--color-text-primary);
-  font-weight: 600;
+  color: var(--color-text-secondary);
+  font-weight: 500;
   white-space: nowrap;
-  flex-shrink: 0;
+  font-size: 0.75rem;
+  display: none; /* Ẩn label trên desktop, chỉ hiện button */
 }
 
 .job-group-value {
   color: var(--color-text-secondary);
   font-weight: 400;
   font-style: italic;
+  font-size: 0.75rem;
+  padding: 6px 10px;
+  background-color: var(--color-input-bg);
+  border-radius: var(--radius-sm);
 }
 
-/* Group Link - Premium Button Style */
+/* Group Link - Premium Button Style - Nhỏ gọn */
 .job-group-link {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
+  gap: 4px;
+  padding: 6px 12px;
   background: linear-gradient(135deg, var(--color-brand) 0%, var(--color-brand-hover) 100%);
   color: white !important;
   text-decoration: none;
   border-radius: var(--radius-md);
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   font-weight: 600;
   transition: all var(--transition-speed);
-  box-shadow: 0 2px 8px rgba(var(--color-brand-rgb), 0.3);
+  box-shadow: 0 2px 6px rgba(var(--color-brand-rgb), 0.25);
   white-space: nowrap;
   flex-shrink: 0;
-  margin-left: auto;
 }
 
 .job-group-link:hover {
   background: linear-gradient(135deg, var(--color-brand-hover) 0%, var(--color-brand-active) 100%);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(var(--color-brand-rgb), 0.4);
+  box-shadow: 0 4px 10px rgba(var(--color-brand-rgb), 0.35);
   color: white !important;
 }
 
@@ -701,52 +713,33 @@ body[data-theme='dark'] .schedule-item p.session svg {
 .job-group-link-icon {
   flex-shrink: 0;
   opacity: 0.9;
+  width: 12px;
+  height: 12px;
 }
 
-.group-brand {
-  justify-self: start;
-}
-
-.group-host {
-  justify-self: end;
-}
-
-.group-host .job-group-item {
-  justify-content: flex-end;
-}
-
-.group-host .job-group-link {
-  margin-left: var(--spacing-sm);
-}
-
+/* Mobile < 640px: Group buttons vẫn cùng hàng nhưng full width */
 @media (max-width: 640px) {
   .job-groups-footer-container {
-    grid-template-columns: 1fr;
-    gap: var(--spacing-sm);
+    gap: var(--spacing-xs);
+    flex-wrap: wrap;
   }
   
-  .group-brand,
-  .group-host {
-    justify-self: stretch;
-  }
-  
-  .group-host .job-group-item {
-    justify-content: flex-start;
-  }
-  
-  .group-host .job-group-link {
-    margin-left: 0;
-    width: 100%;
+  .job-group-item {
+    flex: 1;
+    min-width: calc(50% - 4px);
     justify-content: center;
   }
   
-  .quick-report-text {
-    display: none;
+  .job-group-link {
+    width: 100%;
+    justify-content: center;
+    font-size: 0.75rem;
+    padding: 8px 10px;
   }
   
-  .quick-report-button::after {
-    content: "Report";
-    margin-left: 4px;
+  .job-group-value {
+    width: 100%;
+    text-align: center;
   }
 }
 
@@ -1373,7 +1366,7 @@ body[data-theme='dark'] .schedule-item p.session svg {
     overflow-x: hidden;
   }
   
-  /* Header - Cải thiện layout */
+  /* Header - Cải thiện layout cho mobile */
   .app-header {
     padding: var(--spacing-md) 0;
     margin-bottom: var(--spacing-md);
@@ -1388,7 +1381,7 @@ body[data-theme='dark'] .schedule-item p.session svg {
     font-size: 1.5rem;
     margin-bottom: var(--spacing-md);
     line-height: 1.3;
-    padding: 0;
+    padding: 0 var(--spacing-xs);
     text-align: center;
     word-wrap: break-word;
   }
@@ -1400,6 +1393,7 @@ body[data-theme='dark'] .schedule-item p.session svg {
     justify-content: space-between;
     gap: var(--spacing-sm);
     width: 100%;
+    max-width: 100%;
     padding: 0 var(--spacing-xs);
     flex-wrap: nowrap;
   }
@@ -1407,8 +1401,8 @@ body[data-theme='dark'] .schedule-item p.session svg {
   .theme-toggle {
     flex-shrink: 0;
     padding: var(--spacing-xs);
-    min-width: 48px;
-    min-height: 48px;
+    min-width: 44px;
+    min-height: 44px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -1422,20 +1416,23 @@ body[data-theme='dark'] .schedule-item p.session svg {
     background-color: var(--color-input-bg);
   }
   
+  .theme-toggle-switch {
+    display: none; /* Ẩn switch trên mobile để gọn hơn */
+  }
+  
   .auth-buttons {
     flex: 0 1 auto;
     display: flex;
     justify-content: flex-end;
     align-items: center;
-    gap: var(--spacing-xs);
+    gap: 6px;
     min-width: 0;
-    overflow: visible;
   }
   
   .auth-button {
-    padding: 10px 14px;
-    font-size: 0.8125rem;
-    min-height: 48px;
+    padding: 8px 12px;
+    font-size: 0.75rem;
+    min-height: 44px;
     flex: 0 0 auto;
     justify-content: center;
     border: 1px solid var(--color-border);
@@ -1458,8 +1455,8 @@ body[data-theme='dark'] .schedule-item p.session svg {
   
   .auth-button svg {
     margin: 0;
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
     flex-shrink: 0;
   }
   
@@ -1585,10 +1582,10 @@ body[data-theme='dark'] .schedule-item p.session svg {
     z-index: 0;
   }
   
-  /* Schedule Items - QUAN TRỌNG: Spacing lớn để tránh dính nhau */
+  /* Schedule Items - Nhỏ gọn hơn cho mobile */
   .schedule-item {
-    padding: var(--spacing-lg);
-    margin: 32px var(--spacing-xs) !important;
+    padding: var(--spacing-md);
+    margin: 20px var(--spacing-xs) !important;
     border-radius: var(--radius-md);
     width: calc(100% - var(--spacing-md));
     box-sizing: border-box;
@@ -1596,120 +1593,121 @@ body[data-theme='dark'] .schedule-item p.session svg {
   }
   
   .schedule-item h4 {
-    font-size: 1.125rem;
+    font-size: 1rem;
     line-height: 1.4;
-    margin: 0 0 var(--spacing-md) 0;
+    margin: 0;
     min-width: 0;
-    width: 100%;
+    flex: 1;
     word-wrap: break-word;
     font-weight: 700;
   }
   
   .schedule-item p {
-    font-size: 0.9375rem;
-    margin: var(--spacing-sm) 0;
-    line-height: 1.6;
+    font-size: 0.875rem;
+    margin: 6px 0;
+    line-height: 1.5;
     word-wrap: break-word;
     display: flex;
     align-items: center;
   }
   
   .schedule-item p svg {
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
     flex-shrink: 0;
     margin-right: var(--spacing-sm);
   }
   
+  /* Mobile: Title và Report button cùng hàng */
   .job-header-row {
     display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: var(--spacing-md);
-    margin-bottom: var(--spacing-lg);
+    flex-direction: row;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
     width: 100%;
+    flex-wrap: nowrap;
   }
   
   .quick-report-button {
-    width: 100%;
-    justify-content: center;
-    padding: 14px;
-    font-size: 0.9375rem;
-    min-height: 48px;
+    padding: 6px 10px;
+    font-size: 0.6875rem;
+    min-height: 32px;
     box-sizing: border-box;
     display: flex;
     align-items: center;
-    gap: var(--spacing-sm);
+    gap: 4px;
+    flex-shrink: 0;
   }
   
   .quick-report-text {
-    display: inline;
+    display: none; /* Ẩn text trên mobile, chỉ hiện icon + "Report" */
   }
   
-  /* Job Groups Footer */
+  .quick-report-button::after {
+    content: "Report";
+  }
+  
+  /* Job Groups Footer - 2 nút cùng hàng trên mobile */
   .job-groups-footer-container {
     display: flex;
-    flex-direction: column;
-    gap: var(--spacing-md);
-    margin-top: var(--spacing-lg);
+    flex-direction: row;
+    gap: var(--spacing-xs);
+    margin-top: var(--spacing-md);
     padding-top: var(--spacing-md);
     width: 100%;
     box-sizing: border-box;
+    flex-wrap: nowrap;
   }
   
   .job-group-item {
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    gap: var(--spacing-sm);
+    gap: 0;
     padding: 0;
-    font-size: 0.875rem;
-    width: 100%;
+    font-size: 0.75rem;
+    flex: 1;
     box-sizing: border-box;
   }
   
   .job-group-icon {
-    width: 18px;
-    height: 18px;
-    flex-shrink: 0;
-    display: inline-block;
-    vertical-align: middle;
+    display: none; /* Ẩn icon trên mobile */
   }
   
   .job-group-label {
-    font-size: 0.875rem;
-    margin: 0;
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-xs);
+    display: none; /* Ẩn label trên mobile */
   }
   
   .job-group-value {
-    font-size: 0.875rem;
-    padding: var(--spacing-sm);
+    font-size: 0.6875rem;
+    padding: 6px 8px;
     text-align: center;
+    width: 100%;
+    box-sizing: border-box;
   }
   
   .job-group-link {
     width: 100%;
     justify-content: center;
     margin-left: 0 !important;
-    padding: 14px;
-    min-height: 48px;
+    padding: 10px 8px;
+    min-height: 40px;
     box-sizing: border-box;
-    font-size: 0.9375rem;
+    font-size: 0.6875rem;
     display: flex;
     align-items: center;
-    gap: var(--spacing-sm);
+    gap: 4px;
   }
   
   .job-group-link-text {
     display: inline;
+    font-size: 0.6875rem;
   }
   
   .job-group-link-icon {
-    width: 16px;
-    height: 16px;
+    width: 12px;
+    height: 12px;
     flex-shrink: 0;
   }
   
@@ -1982,10 +1980,10 @@ body[data-theme='dark'] .schedule-item p.session svg {
     box-sizing: border-box;
   }
   
-  /* Schedule Items - QUAN TRỌNG: Spacing lớn để tránh dính nhau */
+  /* Schedule Items - Nhỏ gọn cho mobile 480px */
   .schedule-item {
-    padding: var(--spacing-lg);
-    margin: 28px 6px !important;
+    padding: var(--spacing-md);
+    margin: 18px 6px !important;
     border-radius: var(--radius-md);
     width: calc(100% - 12px);
     box-sizing: border-box;
@@ -1993,125 +1991,127 @@ body[data-theme='dark'] .schedule-item p.session svg {
   }
   
   .schedule-item h4 {
-    font-size: 1.0625rem;
-    margin: 0 0 var(--spacing-md) 0;
+    font-size: 0.9375rem;
+    margin: 0;
     line-height: 1.4;
     min-width: 0;
-    width: 100%;
+    flex: 1;
     word-wrap: break-word;
     font-weight: 700;
   }
   
   .schedule-item p {
-    font-size: 0.875rem;
-    margin: var(--spacing-sm) 0;
-    line-height: 1.6;
+    font-size: 0.8125rem;
+    margin: 6px 0;
+    line-height: 1.5;
     word-wrap: break-word;
     display: flex;
     align-items: center;
   }
   
   .schedule-item p svg {
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
     flex-shrink: 0;
-    margin-right: var(--spacing-sm);
+    margin-right: 6px;
   }
   
   .job-header-row {
     display: flex;
-    flex-direction: column;
-    gap: var(--spacing-md);
-    margin-bottom: var(--spacing-lg);
+    flex-direction: row;
+    gap: var(--spacing-xs);
+    margin-bottom: var(--spacing-md);
     width: 100%;
+    flex-wrap: nowrap;
+    align-items: flex-start;
   }
   
   .quick-report-button {
-    width: 100%;
-    padding: 14px;
-    font-size: 0.875rem;
-    min-height: 48px;
+    padding: 6px 8px;
+    font-size: 0.625rem;
+    min-height: 28px;
     justify-content: center;
     box-sizing: border-box;
     display: flex;
     align-items: center;
-    gap: var(--spacing-sm);
+    gap: 3px;
+    flex-shrink: 0;
   }
   
   .quick-report-button svg {
-    width: 16px;
-    height: 16px;
+    width: 12px;
+    height: 12px;
     flex-shrink: 0;
   }
   
   .quick-report-text {
-    display: inline;
+    display: none;
   }
   
-  /* Job Groups Footer */
+  .quick-report-button::after {
+    content: "Report";
+    font-size: 0.625rem;
+  }
+  
+  /* Job Groups Footer - 2 nút cùng hàng cho mobile 480px */
   .job-groups-footer-container {
     display: flex;
-    flex-direction: column;
-    gap: var(--spacing-md);
-    margin-top: var(--spacing-lg);
+    flex-direction: row;
+    gap: 6px;
+    margin-top: var(--spacing-md);
     padding-top: var(--spacing-md);
     width: 100%;
     box-sizing: border-box;
+    flex-wrap: nowrap;
   }
   
   .job-group-item {
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    gap: var(--spacing-sm);
+    gap: 0;
     padding: 0;
-    font-size: 0.8125rem;
-    width: 100%;
+    flex: 1;
     box-sizing: border-box;
   }
   
   .job-group-icon {
-    width: 16px;
-    height: 16px;
-    flex-shrink: 0;
-    display: inline-block;
-    vertical-align: middle;
+    display: none;
   }
   
   .job-group-label {
-    font-size: 0.8125rem;
-    margin: 0;
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-xs);
+    display: none;
   }
   
   .job-group-value {
-    font-size: 0.8125rem;
-    padding: var(--spacing-sm);
+    font-size: 0.625rem;
+    padding: 6px;
     text-align: center;
+    width: 100%;
+    box-sizing: border-box;
   }
   
   .job-group-link {
     width: 100%;
-    padding: 14px;
-    font-size: 0.875rem;
-    min-height: 48px;
+    padding: 8px 6px;
+    font-size: 0.625rem;
+    min-height: 36px;
     justify-content: center;
     margin-left: 0 !important;
     box-sizing: border-box;
     display: flex;
     align-items: center;
-    gap: var(--spacing-sm);
+    gap: 3px;
   }
   
   .job-group-link-text {
     display: inline;
+    font-size: 0.625rem;
   }
   
   .job-group-link-icon {
-    width: 14px;
-    height: 14px;
+    width: 10px;
+    height: 10px;
     flex-shrink: 0;
   }
   
@@ -2380,98 +2380,133 @@ body[data-theme='dark'] .schedule-item p.session svg {
     box-sizing: border-box;
   }
   
-  /* Schedule Items - QUAN TRỌNG: Spacing để tránh dính nhau */
+  /* Schedule Items - Nhỏ gọn cho mobile 360px */
   .schedule-item {
-    padding: var(--spacing-md);
-    margin: 24px 4px !important;
+    padding: var(--spacing-sm) var(--spacing-md);
+    margin: 16px 4px !important;
     width: calc(100% - 8px);
     box-sizing: border-box;
     position: relative;
   }
   
   .schedule-item h4 {
-    font-size: 1rem;
-    margin: 0 0 var(--spacing-md) 0;
+    font-size: 0.875rem;
+    margin: 0;
     min-width: 0;
-    width: 100%;
+    flex: 1;
     font-weight: 700;
     line-height: 1.4;
     word-wrap: break-word;
   }
   
   .schedule-item p {
-    font-size: 0.8125rem;
-    margin: var(--spacing-sm) 0;
+    font-size: 0.75rem;
+    margin: 5px 0;
     line-height: 1.5;
     display: flex;
     align-items: center;
   }
   
   .schedule-item p svg {
-    width: 14px;
-    height: 14px;
+    width: 13px;
+    height: 13px;
     flex-shrink: 0;
-    margin-right: 6px;
+    margin-right: 5px;
   }
   
   .job-header-row {
     display: flex;
-    flex-direction: column;
-    gap: var(--spacing-sm);
-    margin-bottom: var(--spacing-md);
+    flex-direction: row;
+    gap: 6px;
+    margin-bottom: var(--spacing-sm);
     width: 100%;
+    flex-wrap: nowrap;
+    align-items: flex-start;
   }
   
   .quick-report-button {
-    width: 100%;
-    padding: 14px;
-    font-size: 0.8125rem;
-    min-height: 48px;
+    padding: 5px 7px;
+    font-size: 0.5625rem;
+    min-height: 26px;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
+    gap: 2px;
     box-sizing: border-box;
+    flex-shrink: 0;
   }
   
-  /* Job Groups Footer */
+  .quick-report-button svg {
+    width: 11px;
+    height: 11px;
+  }
+  
+  .quick-report-text {
+    display: none;
+  }
+  
+  .quick-report-button::after {
+    content: "Report";
+    font-size: 0.5625rem;
+  }
+  
+  /* Job Groups Footer - 2 nút cùng hàng cho mobile 360px */
   .job-groups-footer-container {
     display: flex;
-    flex-direction: column;
-    gap: var(--spacing-sm);
-    margin-top: var(--spacing-md);
+    flex-direction: row;
+    gap: 5px;
+    margin-top: var(--spacing-sm);
     padding-top: var(--spacing-sm);
     width: 100%;
     box-sizing: border-box;
+    flex-wrap: nowrap;
   }
   
   .job-group-item {
-    font-size: 0.75rem;
+    font-size: 0.65rem;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 0;
     padding: 0;
+    flex: 1;
+    box-sizing: border-box;
+  }
+  
+  .job-group-icon {
+    display: none;
+  }
+  
+  .job-group-label {
+    display: none;
+  }
+  
+  .job-group-value {
+    font-size: 0.5625rem;
+    padding: 5px;
+    text-align: center;
     width: 100%;
     box-sizing: border-box;
   }
   
-  .job-group-label {
-    font-size: 0.75rem;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-  
   .job-group-link {
-    padding: 12px;
-    font-size: 0.8125rem;
-    min-height: 48px;
+    padding: 7px 5px;
+    font-size: 0.5625rem;
+    min-height: 32px;
     width: 100%;
     box-sizing: border-box;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
+    gap: 2px;
+  }
+  
+  .job-group-link-text {
+    font-size: 0.5625rem;
+  }
+  
+  .job-group-link-icon {
+    width: 9px;
+    height: 9px;
   }
   
   /* Popup Modals */

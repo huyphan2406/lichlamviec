@@ -817,21 +817,21 @@ function App() {
       const item = flatRowItems[index];
       if (!item) return 50;
       
-      // Responsive estimate sizes dựa trên breakpoints thực tế
+      // Responsive estimate sizes dựa trên breakpoints thực tế (đã nhỏ gọn hơn)
       const windowWidth = typeof window !== 'undefined' ? window.innerWidth : 768;
       
       if (item.type === 'HEADER') {
-        // Header sizes
-        if (windowWidth <= 360) return 80;
-        if (windowWidth <= 480) return 85;
-        if (windowWidth <= 768) return 90;
-        return 70;
+        // Header sizes - nhỏ gọn
+        if (windowWidth <= 360) return 70;
+        if (windowWidth <= 480) return 75;
+        if (windowWidth <= 768) return 80;
+        return 65;
       } else {
-        // Job item sizes - tính cả margin spacing
-        if (windowWidth <= 360) return 420;  // Smaller screens cần item nhỏ hơn
-        if (windowWidth <= 480) return 460;
-        if (windowWidth <= 768) return 500;
-        return 380;  // Desktop
+        // Job item sizes - nhỏ gọn hơn nhiều
+        if (windowWidth <= 360) return 320;  // Rất compact
+        if (windowWidth <= 480) return 350;  // Compact
+        if (windowWidth <= 768) return 380;  // Mobile
+        return 300;  // Desktop - nhỏ gọn
       }
     },
     overscan: 3,
