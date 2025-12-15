@@ -1,5 +1,5 @@
 import React from "react";
-import { Building2, FilePenLine, MapPin, MessageCircle, Monitor, User } from "lucide-react";
+import { FilePenLine, MapPin, MessageCircle, Monitor, User } from "lucide-react";
 import type { GroupLink, Job } from "@/features/schedule/types";
 import { combineLocation, combineNames } from "@/features/schedule/utils";
 
@@ -15,13 +15,12 @@ type Props = {
 export function JobCard({ job, isActive, brandGroup, hostGroup, onQuickReport, onApplySearch }: Props) {
   const title = (job.Store || "Unnamed Job").toUpperCase();
   const location = combineLocation(job);
-  const staff = combineNames(job["Talent 1"], job["Talent 2"]);
+  const staff = (job.staff_name || combineNames(job["Talent 1"], job["Talent 2"])).toString();
   const standby = combineNames(job["Coordinator 1"], job["Coordinator 2"]);
   const sessionType = (job["Type of session"] || "").trim().toLowerCase();
   const isCaNoi = sessionType === "ca nối" || sessionType === "ca noi";
   const hostZaloLink = (job.host_zalo_link || "").toString().trim();
   const brandZaloLink = (job.brand_zalo_link || "").toString().trim();
-  const brandName = brandGroup?.originalName || title;
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 h-full transition-all duration-200 hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
@@ -33,6 +32,20 @@ export function JobCard({ job, isActive, brandGroup, hostGroup, onQuickReport, o
               <p className="text-base font-extrabold leading-snug text-slate-900 dark:text-slate-50">
                 <span className="block whitespace-normal break-words">{title}</span>
               </p>
+              {/* Brand Zalo button next to title */}
+              {brandZaloLink && (
+                <a
+                  href={brandZaloLink}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="ml-2 inline-flex p-1 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100"
+                  title="Join Brand Zalo Group"
+                  aria-label="Join Brand Zalo Group"
+                >
+                  <MessageCircle size={16} />
+                </a>
+              )}
               {isCaNoi ? (
                 <span className="mt-0.5 inline-flex h-6 items-center rounded-md border border-slate-600 px-2 text-[11px] font-extrabold uppercase tracking-wide text-slate-700 dark:border-slate-400 dark:text-slate-200">
                   CA NỐI
@@ -52,23 +65,16 @@ export function JobCard({ job, isActive, brandGroup, hostGroup, onQuickReport, o
         </div>
 
         {/* Details stack (same white background) */}
-        <div className="flex flex-col gap-3 border-t border-slate-100 pt-3 dark:border-slate-800">
+        <div className="flex flex-col gap-2 border-t border-slate-100 pt-3 dark:border-slate-800">
           <div className="flex items-start gap-2">
-            <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
+            <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
             <p className="whitespace-normal break-words text-sm text-slate-600 dark:text-slate-300">{location}</p>
           </div>
 
           {/* Host */}
           <div className="flex items-center gap-2">
-            <User className="w-4 h-4 text-slate-400" />
-            <span
-              className="text-sm font-medium text-slate-700 hover:text-blue-600 cursor-pointer transition-colors"
-              onClick={() => {
-                const q = staff === "..." ? "" : staff;
-                if (q) onApplySearch?.(q);
-              }}
-              title="Lọc theo nhân sự"
-            >
+            <User className="w-4 h-4 text-blue-500" />
+            <span className="text-sm font-medium text-slate-700 dark:text-slate-200" title="Nhân sự">
               {staff}
             </span>
 
@@ -77,48 +83,19 @@ export function JobCard({ job, isActive, brandGroup, hostGroup, onQuickReport, o
               <a
                 href={hostZaloLink}
                 target="_blank"
-                rel="noopener noreferrer"
+                rel="noreferrer"
                 onClick={(e) => e.stopPropagation()}
-                className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all ml-1"
+                className="ml-2 inline-flex p-1 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100"
                 title="Join Host Zalo Group"
               >
-                <MessageCircle className="w-3.5 h-3.5" />
-              </a>
-            )}
-          </div>
-
-          {/* Brand */}
-          <div className="flex items-center gap-2">
-            <Building2 className="w-4 h-4 text-slate-400" />
-            <span
-              className="text-sm font-medium text-slate-700 hover:text-blue-600 cursor-pointer transition-colors"
-              onClick={() => {
-                const q = brandGroup?.originalName || brandName;
-                if (q) onApplySearch?.(q);
-              }}
-              title="Lọc theo brand"
-            >
-              {brandName}
-            </span>
-
-            {/* FORCE RENDER ZALO BUTTON FOR BRAND */}
-            {brandZaloLink && (
-              <a
-                href={brandZaloLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all ml-1"
-                title="Join Brand Zalo Group"
-              >
-                <MessageCircle className="w-3.5 h-3.5" />
+                <MessageCircle size={16} />
               </a>
             )}
           </div>
 
           {/* Status/Standby */}
           <div className="flex items-start gap-2">
-            <Monitor className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
+            <Monitor className="mt-0.5 h-4 w-4 shrink-0 text-purple-500" />
             <button
               type="button"
               className="text-left text-sm text-slate-600 hover:text-slate-900 hover:underline dark:text-slate-300 dark:hover:text-white"

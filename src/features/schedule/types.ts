@@ -11,6 +11,8 @@ export type Job = Record<string, string | undefined> & {
   "Coordinator 2"?: string;
   host_zalo_link?: string;
   brand_zalo_link?: string;
+  staff_name?: string;
+  brand_name?: string;
 };
 
 export type ScheduleResponse = {
