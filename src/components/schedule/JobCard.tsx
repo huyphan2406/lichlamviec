@@ -19,7 +19,7 @@ export function JobCard({ job, isActive, brandGroup, hostGroup, onQuickReport }:
   const standby = combineNames(job["Coordinator 1"], job["Coordinator 2"]);
 
   return (
-    <div className="h-full rounded-2xl border border-slate-100 bg-white p-4 shadow-sm transition-shadow hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
+    <div className="h-full rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition-shadow hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
       {/* Header row */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2">
@@ -74,17 +74,17 @@ export function JobCard({ job, isActive, brandGroup, hostGroup, onQuickReport }:
       </div>
 
       {/* Details grid */}
-      <div className="mt-3 grid gap-2 rounded-xl bg-slate-50 p-3 dark:bg-slate-800/40">
-        <div className="flex flex-wrap gap-3">
-          <div className="flex min-w-[220px] flex-1 items-start gap-2">
+      <div className="mt-4 rounded-xl bg-slate-50 p-4 dark:bg-slate-800/40">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="flex min-w-0 items-start gap-2">
             <MapPin className="h-4 w-4 shrink-0 text-rose-500" />
             <p className="whitespace-normal break-words text-sm text-slate-700 dark:text-slate-200">{location}</p>
           </div>
-          <div className="flex min-w-[220px] flex-1 items-start gap-2">
+          <div className="flex min-w-0 items-start gap-2">
             <Key className="h-4 w-4 shrink-0 text-slate-500 dark:text-slate-300" />
             <p className="whitespace-normal break-words text-sm text-slate-700 dark:text-slate-200">{staff}</p>
           </div>
-          <div className="flex min-w-[220px] flex-1 items-start gap-2">
+          <div className="flex min-w-0 items-start gap-2 sm:col-span-2">
             <Monitor className="h-4 w-4 shrink-0 text-sky-500" />
             <p className="whitespace-normal break-words text-sm text-slate-700 dark:text-slate-200">{standby}</p>
           </div>
@@ -95,7 +95,7 @@ export function JobCard({ job, isActive, brandGroup, hostGroup, onQuickReport }:
             href={hostGroup.link}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-300 dark:hover:text-slate-100"
+            className="mt-3 inline-flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-300 dark:hover:text-slate-100"
             title={hostGroup.originalName}
           >
             <MessageCircle className="h-4 w-4 text-sky-500" />

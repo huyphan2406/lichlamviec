@@ -152,7 +152,7 @@ export function SchedulePage() {
   }, []);
 
   return (
-    <div className="-mx-3 -my-3 bg-slate-50 px-3 py-3 sm:-mx-4 sm:-my-4 sm:px-4 sm:py-4 dark:bg-slate-950">
+    <div className="-mx-3 -my-3 bg-slate-100 px-3 py-4 sm:-mx-4 sm:-my-4 sm:px-4 sm:py-6 dark:bg-slate-950">
       <QuickReportDialog open={reportOpen} onOpenChange={setReportOpen} job={reportJob} />
       <div className="grid gap-3">
         <ScheduleToolbar
@@ -183,7 +183,7 @@ export function SchedulePage() {
         ) : null}
 
         {/* Native CSS Grid (no virtualization to avoid overlap with dynamic heights) */}
-        <div className="grid grid-cols-1 gap-4 pb-20 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 pb-20 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {jobItems.map((item, index) => {
             const job = item.job;
             const stableKey = `${job["Date livestream"] || "na"}|${job["Time slot"] || "na"}|${job.Store || "na"}|${index}`;
