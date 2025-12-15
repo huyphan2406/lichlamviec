@@ -25,6 +25,17 @@ export function removeVietnameseTones(str: string): string {
   return removeAccents(String(str).toLowerCase().trim());
 }
 
+/**
+ * Clean staff name: remove leading numbers and underscore, keep only letters and spaces
+ * Example: "123_An Lữ" -> "An Lữ"
+ */
+export function cleanStaffName(name: string): string {
+  if (!name) return "";
+  return String(name)
+    .replace(/^\d+_/, "") // Remove leading numbers and underscore
+    .trim();
+}
+
 export function combineNames(name1?: string, name2?: string) {
   const n1 = name1 || "";
   const n2 = name2 && name2 !== "nan" ? name2 : "";
