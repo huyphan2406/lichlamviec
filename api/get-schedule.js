@@ -11,18 +11,7 @@ const parseDate = (dateStr, timeStr) => {
     const startTime = (timeStr || '00:00').split(' - ')[0];
     const [hour, minute] = startTime.split(':');
     return new Date(year, month - 1, day, hour, minute);
-  } catch (e) { return new Date(0); }
-};
-
-const getUniqueItems = (list) => {
-    const itemMap = new Map();
-    list.forEach(item => {
-        const lowerCase = item.toLowerCase();
-        if (!itemMap.has(lowerCase)) {
-            itemMap.set(lowerCase, item);
-        }
-    });
-    return Array.from(itemMap.values());
+  } catch { return new Date(0); }
 };
 
 // 🌟🌟🌟 HÀM FETCH DỮ LIỆU (TỐI ƯU TỐC ĐỘ) 🌟🌟🌟

@@ -68,9 +68,11 @@ export function CodeLoginPage() {
 
         toast.success("Đăng nhập thành công");
         navigate(from, { replace: true });
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("Firebase error:", err);
-        if (err?.code === "permission-denied") {
+        const code =
+          err && typeof err === "object" && "code" in err ? (err as { code?: unknown }).code : undefined;
+        if (code === "permission-denied") {
           setError("Lỗi quyền truy cập Database. Kiểm tra Firestore Security Rules.");
         } else {
           setError("Có lỗi hệ thống xảy ra, không thể xác thực mã.");
