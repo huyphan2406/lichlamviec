@@ -1,5 +1,5 @@
 import React from "react";
-import { DoorOpen, FilePenLine, MapPin, MessageCircle, Monitor, User } from "lucide-react";
+import { DoorOpen, MapPin, MessageCircle, Monitor, User } from "lucide-react";
 import type { GroupLink, Job } from "@/features/schedule/types";
 import { combineNames } from "@/features/schedule/utils";
 
@@ -41,13 +41,28 @@ export function JobCard({ job, isActive, brandGroup, hostGroup, onQuickReport, o
   const sessionType = (job["Type of session"] || "").trim().toLowerCase();
   const isCaNoi = sessionType === "ca nối" || sessionType === "ca noi";
   
-  // Get brand name for header display
-  const brandName = (job.brand_name || brandGroup?.originalName || "").trim();
+  // Get brand name for header display - chỉ lấy originalName gốc từ brandGroup
+  const brandName = brandGroup?.originalName?.trim() || "";
   
   // Kiểm tra xem title có trùng với brandName không để tránh duplicate
-  const titleNormalized = title.toLowerCase().trim();
-  const brandNameNormalized = brandName.toLowerCase().trim();
-  const isTitleSameAsBrand = brandName && titleNormalized === brandNameNormalized;
+  // So sánh đơn giản: normalize và so sánh
+  const normalizeForCompare = (str: string) => {
+    if (!str) return '';
+    return str
+      .toLowerCase()
+      .trim()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "") // Bỏ dấu
+      .replace(/đ/g, "d")
+      .replace(/Đ/g, "D")
+      .replace(/[^a-z0-9]/g, '') // Chỉ giữ chữ và số
+      .replace(/\s+/g, ''); // Xóa tất cả khoảng trắng
+  };
+  
+  const titleNormalized = normalizeForCompare(title);
+  const brandNameNormalized = brandName ? normalizeForCompare(brandName) : '';
+  // Chỉ hiển thị brand name nếu khác với title (không duplicate)
+  const shouldShowBrandName = brandName && brandNameNormalized !== titleNormalized && brandNameNormalized.length > 0;
   
   // Get Zalo links with fallback logic
   const hostZaloLink = (job.host_zalo_link || hostGroup?.link || "").toString().trim();
@@ -82,9 +97,13 @@ export function JobCard({ job, isActive, brandGroup, hostGroup, onQuickReport, o
             <p className="text-base font-extrabold leading-tight text-slate-900 dark:text-slate-50">
               <span className="block whitespace-normal break-words">{title}</span>
             </p>
-            {/* Brand name (in đậm) - chỉ hiển thị nếu có và không trùng với title */}
-            {brandName && !isTitleSameAsBrand && (
-              <span className="ml-2 text-base font-extrabold text-slate-900 dark:text-slate-50">
+            {/* Brand name gốc (in đậm) - click để mở report */}
+            {shouldShowBrandName && (
+              <span 
+                onClick={() => onQuickReport(job)}
+                className="ml-2 text-base font-extrabold text-slate-900 dark:text-slate-50 cursor-pointer hover:underline transition-all"
+                title="Click để điền report"
+              >
                 {brandName}
               </span>
             )}
@@ -96,15 +115,6 @@ export function JobCard({ job, isActive, brandGroup, hostGroup, onQuickReport, o
             ) : null}
           </div>
         </div>
-
-        <button
-          type="button"
-          onClick={() => onQuickReport(job)}
-          className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-800 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800"
-        >
-          <FilePenLine className="h-4 w-4 text-slate-500 dark:text-slate-300" />
-          Điền report
-        </button>
       </div>
 
       {/* Details stack - căn chỉnh đều */}
@@ -146,9 +156,9 @@ export function JobCard({ job, isActive, brandGroup, hostGroup, onQuickReport, o
         </div>
       </div>
 
-      {/* Status section - ACTIVE (nếu có) + Zalo buttons luôn hiển thị */}
+      {/* Status section - ACTIVE hoặc INACTIVE + Zalo buttons luôn hiển thị */}
       <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-        {/* ACTIVE badge - chỉ hiển thị khi isActive === true */}
+        {/* ACTIVE hoặc INACTIVE badge */}
         {isActive ? (
           <span className="inline-flex items-center gap-1.5 rounded-full bg-green-500 px-3 py-1 text-xs font-semibold text-white shadow-sm">
             <span className="relative flex h-2 w-2">
@@ -158,7 +168,12 @@ export function JobCard({ job, isActive, brandGroup, hostGroup, onQuickReport, o
             ACTIVE
           </span>
         ) : (
-          <div></div>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-400 px-3 py-1 text-xs font-semibold text-white shadow-sm">
+            <span className="relative flex h-2 w-2">
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-gray-300"></span>
+            </span>
+            INACTIVE
+          </span>
         )}
         {/* 2 Zalo buttons - luôn luôn hiển thị */}
         <div className="flex items-center gap-2">
