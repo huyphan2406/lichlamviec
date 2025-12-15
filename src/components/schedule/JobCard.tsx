@@ -79,20 +79,15 @@ export function JobCard({ job, isActive, brandGroup, hostGroup, onQuickReport, o
           <span className="flex-1 text-sm font-medium text-slate-700 dark:text-slate-200" title="Nhân sự">
             {staff}
           </span>
-          {/* Join Host Zalo Group Button - sử dụng data từ get-groups.js */}
-          {(hostZaloLink || hostGroup?.link) && (
+          {/* Join Host Zalo Group Button - lấy link từ get-groups.js */}
+          {hostGroup?.link && (
             <a
-              href={hostZaloLink || hostGroup?.link || "#"}
+              href={hostGroup.link}
               target="_blank"
               rel="noopener noreferrer"
-              onClick={(e) => {
-                e.stopPropagation();
-                if (!hostZaloLink && !hostGroup?.link) {
-                  e.preventDefault();
-                }
-              }}
-              className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-500 text-white hover:bg-blue-600 transition-colors shrink-0"
-              title={`Join Host Zalo Group${hostGroup?.originalName ? `: ${hostGroup.originalName}` : ""}`}
+              onClick={(e) => e.stopPropagation()}
+              className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-500 text-white hover:bg-blue-600 transition-colors shrink-0 shadow-sm hover:shadow"
+              title={`Join Host Zalo Group${hostGroup.originalName ? `: ${hostGroup.originalName}` : ""}`}
               aria-label="Join Host Zalo Group"
             >
               <MessageCircle className="w-3.5 h-3.5" />
