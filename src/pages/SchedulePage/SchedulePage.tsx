@@ -1,6 +1,4 @@
 import React, { useCallback, useMemo, useState } from "react";
-import { toast } from "sonner";
-import type { EventAttributes } from "ics";
 import type { DateRange } from "react-day-picker";
 import { useGroupsData, useScheduleData } from "@/features/schedule/api";
 import type { GroupLink, Job, ScheduleFilters } from "@/features/schedule/types";
@@ -47,25 +45,8 @@ export function SchedulePage() {
       // ignore
     }
 
-    // Optional persistence for date range (robust): if user ever clears we store "ALL".
-    try {
-      const raw = localStorage.getItem("last_date_range");
-      if (raw === "ALL") {
-        return { dateFrom: null, dateTo: null, session: "", query };
-      }
-      if (raw) {
-        const parsed = JSON.parse(raw) as { from?: string; to?: string };
-        const from = parsed.from ? new Date(parsed.from) : null;
-        const to = parsed.to ? new Date(parsed.to) : null;
-        if (from && !Number.isNaN(from.getTime())) {
-          return { dateFrom: from, dateTo: to && !Number.isNaN(to.getTime()) ? to : from, session: "", query };
-        }
-      }
-    } catch {
-      // ignore
-    }
-
-    // Default: TODAY
+    // Always default to TODAY on page refresh/load
+    // Don't load date range from localStorage - always start fresh with today
     return { dateFrom: start, dateTo: end, session: "", query };
   };
 
@@ -131,71 +112,6 @@ export function SchedulePage() {
   const grouped = useMemo(() => {
     return groupJobsByTime(jobItems, (it) => it.job["Time slot"]);
   }, [jobItems]);
-
-  const onExportICS = useCallback(async () => {
-    try {
-      const ics = (await import("ics")) as unknown as {
-        createEvents: (events: EventAttributes[]) => { error: unknown; value?: string };
-      };
-
-      const events: EventAttributes[] = [];
-      for (const job of filteredJobs) {
-        const date = job["Date livestream"];
-        const slot = job["Time slot"];
-        if (!date || !slot) continue;
-
-        const [day, month, year] = date.split("/").map(Number);
-        const [startTimeStr, endTimeStr] = slot.split(" - ");
-        const [startHour, startMinute] = startTimeStr.split(":").map(Number);
-        const [endHour, endMinute] = (endTimeStr || startTimeStr).split(":").map(Number);
-
-        const startDate = new Date(0, 0, 0, startHour, startMinute);
-        const endDate = new Date(0, 0, 0, endHour, endMinute);
-        let diffMs = endDate.getTime() - startDate.getTime();
-        if (diffMs <= 0) diffMs = 60 * 60 * 1000;
-        const durationHours = Math.floor(diffMs / (1000 * 60 * 60));
-        const durationMinutes = (diffMs / (1000 * 60)) % 60;
-
-        events.push({
-          title: job.Store || "Unnamed Job",
-          start: [year, month, day, startHour, startMinute] as [number, number, number, number, number],
-          duration: { hours: durationHours, minutes: durationMinutes },
-          location: combineLocation(job),
-          description: `MC: ${combineNames(job["Talent 1"], job["Talent 2"])}\nCoordinator: ${combineNames(
-            job["Coordinator 1"],
-            job["Coordinator 2"],
-          )}`,
-        });
-      }
-
-      if (!events.length) {
-        toast.error("Không có sự kiện hợp lệ để xuất lịch.");
-        return;
-      }
-
-      const { error, value } = ics.createEvents(events);
-      if (error || !value) {
-        toast.error("Lỗi khi tạo file ICS.");
-        return;
-      }
-
-      const blob = new Blob([value], { type: "text/calendar;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      const fromLabel = filters.dateFrom ? filters.dateFrom.toLocaleDateString("vi-VN").replaceAll("/", "-") : "";
-      const toLabel = filters.dateTo ? filters.dateTo.toLocaleDateString("vi-VN").replaceAll("/", "-") : "";
-      const label = fromLabel || toLabel ? `${fromLabel || "all"}_${toLabel || fromLabel || "all"}` : "all";
-      link.setAttribute("download", `Schedule_${label}.ics`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      setTimeout(() => URL.revokeObjectURL(url), 150);
-      toast.success("Đã xuất lịch thành công!");
-    } catch {
-      toast.error("Không thể xuất lịch.");
-    }
-  }, [filteredJobs, filters.dateFrom, filters.dateTo]);
   const [reportOpen, setReportOpen] = useState(false);
   const [reportJob, setReportJob] = useState<Job | null>(null);
   const handleQuickReport = useCallback((job: Job) => {
@@ -212,46 +128,54 @@ export function SchedulePage() {
     setFilters((p) => ({ ...p, query: q }));
   }, []);
 
+  // Memoize callbacks to prevent re-renders
+  const handleQueryChange = useCallback((value: string) => {
+    try {
+      localStorage.setItem("last_search_query", value);
+    } catch {
+      // ignore
+    }
+    setFilters((p) => ({ ...p, query: value }));
+  }, []);
+
+  const handleSessionChange = useCallback((value: string) => {
+    setFilters((p) => ({ ...p, session: value }));
+  }, []);
+
+  const handleDateRangeChange = useCallback((range: DateRange | undefined) => {
+    const from = range?.from ?? null;
+    const to = range?.to ?? null;
+    try {
+      if (!from && !to) {
+        localStorage.setItem("last_date_range", "ALL");
+      } else {
+        localStorage.setItem(
+          "last_date_range",
+          JSON.stringify({
+            from: from ? from.toISOString() : undefined,
+            to: to ? to.toISOString() : undefined,
+          }),
+        );
+      }
+    } catch {
+      // ignore
+    }
+    setFilters((p) => ({ ...p, dateFrom: from, dateTo: to || from }));
+  }, []);
+
   return (
     <div className="-mx-3 -my-3 bg-slate-50 px-3 py-4 sm:-mx-4 sm:-my-4 sm:px-4 sm:py-6 dark:bg-slate-950">
       <QuickReportDialog open={reportOpen} onOpenChange={setReportOpen} job={reportJob} />
       <div className="grid gap-3">
         <ScheduleToolbar
           query={filters.query}
-          onQueryChange={(value) => {
-            try {
-              localStorage.setItem("last_search_query", value);
-            } catch {
-              // ignore
-            }
-            setFilters((p) => ({ ...p, query: value }));
-          }}
+          onQueryChange={handleQueryChange}
           uniqueStaffNames={uniqueStaffNames}
           session={filters.session}
-          onSessionChange={(value) => setFilters((p) => ({ ...p, session: value }))}
+          onSessionChange={handleSessionChange}
           sessionOptions={sessions}
           dateRange={dateRange}
-          onDateRangeChange={(range) => {
-            const from = range?.from ?? null;
-            const to = range?.to ?? null;
-            try {
-              if (!from && !to) {
-                localStorage.setItem("last_date_range", "ALL");
-              } else {
-                localStorage.setItem(
-                  "last_date_range",
-                  JSON.stringify({
-                    from: from ? from.toISOString() : undefined,
-                    to: to ? to.toISOString() : undefined,
-                  }),
-                );
-              }
-            } catch {
-              // ignore
-            }
-            setFilters((p) => ({ ...p, dateFrom: from, dateTo: to || from }));
-          }}
-          onExportIcs={onExportICS}
+          onDateRangeChange={handleDateRangeChange}
           availableDates={schedule.data?.dates || []}
         />
 

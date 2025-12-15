@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo, useCallback } from "react";
 import { DoorOpen, MapPin, MessageCircle, Monitor, User } from "lucide-react";
 import type { GroupLink, Job } from "@/features/schedule/types";
 import { combineNames } from "@/features/schedule/utils";
@@ -12,49 +12,85 @@ type Props = {
   onApplySearch?: (query: string) => void;
 };
 
-export function JobCard({ job, isActive, brandGroup, hostGroup, onQuickReport, onApplySearch }: Props) {
-  const title = (job.Store || "Unnamed Job").toUpperCase();
-  
-  // Tách Location và Room thành 2 phần riêng
-  const addressName = (job.Address || "").trim();
-  const roomName = (job["Studio/Room"] || "").trim();
-  
-  // Nếu không có room riêng, thử split từ address nếu có format "H2 - G03A"
-  let locationName = addressName;
-  let finalRoomName = roomName;
-  
-  if (!finalRoomName && locationName.includes(" - ")) {
-    const parts = locationName.split(" - ").map((p) => p.trim());
-    if (parts.length >= 2) {
-      locationName = parts[0];
-      finalRoomName = parts.slice(1).join(" - ");
+function JobCardComponent({ job, isActive, brandGroup, hostGroup, onQuickReport, onApplySearch }: Props) {
+  // Memoize computed values to prevent recalculation on every render
+  const { title, locationName, finalRoomName, staff, standby, isCaNoi, displayName, hasHostLink, hasBrandLink, hostZaloLink, brandZaloLink } = useMemo(() => {
+    const titleValue = (job.Store || "Unnamed Job").toUpperCase();
+    
+    // Tách Location và Room thành 2 phần riêng
+    const addressName = (job.Address || "").trim();
+    const roomName = (job["Studio/Room"] || "").trim();
+    
+    // Nếu không có room riêng, thử split từ address nếu có format "H2 - G03A"
+    let locationNameValue = addressName;
+    let finalRoomNameValue = roomName;
+    
+    if (!finalRoomNameValue && locationNameValue.includes(" - ")) {
+      const parts = locationNameValue.split(" - ").map((p) => p.trim());
+      if (parts.length >= 2) {
+        locationNameValue = parts[0];
+        finalRoomNameValue = parts.slice(1).join(" - ");
+      }
     }
-  }
+    
+    // Fallback nếu không có gì
+    if (!locationNameValue && !finalRoomNameValue) {
+      locationNameValue = "No location";
+    }
+    
+    const staffValue = (job.staff_name || combineNames(job["Talent 1"], job["Talent 2"])).toString();
+    const standbyValue = combineNames(job["Coordinator 1"], job["Coordinator 2"]);
+    const sessionType = (job["Type of session"] || "").trim().toLowerCase();
+    const isCaNoiValue = sessionType === "ca nối" || sessionType === "ca noi";
+    
+    // Chỉ lấy brand name gốc từ brandGroup - giữ nguyên 100% từ CSV, không trim
+    const brandName = brandGroup?.originalName || "";
+    
+    // Chỉ hiển thị brand name gốc, không hiển thị title nếu có brand name
+    // Nếu không có brand name thì mới hiển thị title
+    const displayNameValue = brandName || titleValue;
+    
+    // Get Zalo links with fallback logic
+    const hostZaloLinkValue = (job.host_zalo_link || hostGroup?.link || "").toString().trim();
+    const brandZaloLinkValue = (job.brand_zalo_link || brandGroup?.link || "").toString().trim();
+    
+    // Check links separately for Host and Brand
+    const hasHostLinkValue = !!hostZaloLinkValue && hostZaloLinkValue.length > 0 && hostZaloLinkValue !== "#";
+    const hasBrandLinkValue = !!brandZaloLinkValue && brandZaloLinkValue.length > 0 && brandZaloLinkValue !== "#";
+    
+    return {
+      title: titleValue,
+      locationName: locationNameValue,
+      finalRoomName: finalRoomNameValue,
+      staff: staffValue,
+      standby: standbyValue,
+      isCaNoi: isCaNoiValue,
+      displayName: displayNameValue,
+      hasHostLink: hasHostLinkValue,
+      hasBrandLink: hasBrandLinkValue,
+      hostZaloLink: hostZaloLinkValue,
+      brandZaloLink: brandZaloLinkValue,
+    };
+  }, [job, brandGroup, hostGroup]);
   
-  // Fallback nếu không có gì
-  if (!locationName && !finalRoomName) {
-    locationName = "No location";
-  }
+  // Memoize click handlers to prevent re-creation
+  const handleBrandClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (hasBrandLink && brandZaloLink) {
+      window.open(brandZaloLink, '_blank');
+    }
+  }, [hasBrandLink, brandZaloLink]);
   
-  const staff = (job.staff_name || combineNames(job["Talent 1"], job["Talent 2"])).toString();
-  const standby = combineNames(job["Coordinator 1"], job["Coordinator 2"]);
-  const sessionType = (job["Type of session"] || "").trim().toLowerCase();
-  const isCaNoi = sessionType === "ca nối" || sessionType === "ca noi";
+  const handleHostClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (hasHostLink && hostZaloLink) {
+      window.open(hostZaloLink, '_blank');
+    }
+  }, [hasHostLink, hostZaloLink]);
   
-  // Chỉ lấy brand name gốc từ brandGroup - giữ nguyên 100% từ CSV, không trim
-  const brandName = brandGroup?.originalName || "";
-  
-  // Chỉ hiển thị brand name gốc, không hiển thị title nếu có brand name
-  // Nếu không có brand name thì mới hiển thị title
-  const displayName = brandName || title;
-  
-  // Get Zalo links with fallback logic
-  const hostZaloLink = (job.host_zalo_link || hostGroup?.link || "").toString().trim();
-  const brandZaloLink = (job.brand_zalo_link || brandGroup?.link || "").toString().trim();
-  
-  // Check links separately for Host and Brand
-  const hasHostLink = !!hostZaloLink && hostZaloLink.length > 0 && hostZaloLink !== "#";
-  const hasBrandLink = !!brandZaloLink && brandZaloLink.length > 0 && brandZaloLink !== "#";
+  const handleReportClick = useCallback(() => {
+    onQuickReport(job);
+  }, [job, onQuickReport]);
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 h-full flex flex-col transition-all duration-200 hover:shadow-md hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700">
@@ -65,7 +101,7 @@ export function JobCard({ job, isActive, brandGroup, hostGroup, onQuickReport, o
             {/* Chỉ hiển thị 1 tên gốc duy nhất - ưu tiên brand name từ file gốc */}
             <p 
               className="text-base font-extrabold leading-tight text-slate-900 dark:text-slate-50 cursor-pointer hover:underline transition-all"
-              onClick={() => onQuickReport(job)}
+              onClick={handleReportClick}
               title="Click để điền report"
             >
               <span className="block whitespace-normal break-words">{displayName}</span>
@@ -143,12 +179,7 @@ export function JobCard({ job, isActive, brandGroup, hostGroup, onQuickReport, o
           {/* Brand Group Button */}
           <button
             type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              if (hasBrandLink && brandZaloLink) {
-                window.open(brandZaloLink, '_blank');
-              }
-            }}
+            onClick={handleBrandClick}
             disabled={!hasBrandLink}
             className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all shrink-0 ${
               hasBrandLink
@@ -168,12 +199,7 @@ export function JobCard({ job, isActive, brandGroup, hostGroup, onQuickReport, o
           {/* Host Group Button */}
           <button
             type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              if (hasHostLink && hostZaloLink) {
-                window.open(hostZaloLink, '_blank');
-              }
-            }}
+            onClick={handleHostClick}
             disabled={!hasHostLink}
             className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all shrink-0 ${
               hasHostLink
@@ -195,3 +221,16 @@ export function JobCard({ job, isActive, brandGroup, hostGroup, onQuickReport, o
     </div>
   );
 }
+
+// Memoize component to prevent unnecessary re-renders
+export const JobCard = React.memo(JobCardComponent, (prevProps, nextProps) => {
+  // Custom comparison function for better performance
+  return (
+    prevProps.job === nextProps.job &&
+    prevProps.isActive === nextProps.isActive &&
+    prevProps.brandGroup === nextProps.brandGroup &&
+    prevProps.hostGroup === nextProps.hostGroup &&
+    prevProps.onQuickReport === nextProps.onQuickReport &&
+    prevProps.onApplySearch === nextProps.onApplySearch
+  );
+});

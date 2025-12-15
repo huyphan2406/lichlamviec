@@ -1,8 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { format, parse, isValid } from "date-fns";
-import { Download, Search, X } from "lucide-react";
+import { Search, X } from "lucide-react";
 import type { DateRange } from "react-day-picker";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { removeVietnameseTones, cleanStaffName } from "@/features/schedule/utils";
@@ -16,7 +15,6 @@ type Props = {
   sessionOptions: string[];
   dateRange: DateRange | undefined;
   onDateRangeChange: (range: DateRange | undefined) => void;
-  onExportIcs: () => void;
   availableDates?: string[]; // Dates from schedule data in format "dd/MM/yyyy"
 };
 
@@ -54,7 +52,6 @@ export function ScheduleToolbar({
   sessionOptions,
   dateRange,
   onDateRangeChange,
-  onExportIcs,
   availableDates = [],
 }: Props) {
   const [draft, setDraft] = useState(query);
@@ -62,8 +59,11 @@ export function ScheduleToolbar({
   const inputRef = React.useRef<HTMLInputElement | null>(null);
   useEffect(() => setDraft(query), [query]);
 
+  // Increase debounce delay for mobile to reduce lag
   useEffect(() => {
-    const t = window.setTimeout(() => onQueryChange(draft), 300);
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const delay = isMobile ? 500 : 300;
+    const t = window.setTimeout(() => onQueryChange(draft), delay);
     return () => window.clearTimeout(t);
   }, [draft, onQueryChange]);
 
@@ -76,35 +76,30 @@ export function ScheduleToolbar({
     return removeVietnameseTones(cleaned);
   }, [draft]);
   
+  // Optimize suggestions calculation - limit to first 50 names for performance
   const staffSuggestions = useMemo(() => {
-    if (!normalizedQuery) return [];
+    if (!normalizedQuery || normalizedQuery.length < 1) return [];
     
-    // Create map of cleaned name -> original name for display
-    const nameMap = new Map<string, string>();
-    for (const originalName of safeStaffNames) {
+    // Limit search to first 50 names for better performance on mobile
+    const searchLimit = 50;
+    const limitedNames = safeStaffNames.slice(0, searchLimit);
+    
+    // Create map of cleaned name -> original name for display (optimized)
+    const nameMap = new Map<string, { display: string; original: string }>();
+    for (const originalName of limitedNames) {
       const cleaned = cleanStaffName(originalName);
       const normalized = removeVietnameseTones(cleaned);
-      // Store both cleaned (for display) and original (for search)
-      if (!nameMap.has(normalized) || cleaned.length < nameMap.get(normalized)!.length) {
-        nameMap.set(normalized, cleaned);
+      if (normalized.includes(normalizedQuery)) {
+        // Only store if it matches query
+        const existing = nameMap.get(normalized);
+        if (!existing || cleaned.length < existing.display.length) {
+          nameMap.set(normalized, { display: cleaned, original: originalName });
+        }
       }
     }
     
-    // Find matches
-    const matches: Array<{ display: string; original: string }> = [];
-    for (const [normalized, display] of nameMap.entries()) {
-      if (normalized.includes(normalizedQuery)) {
-        // Find original name that matches this cleaned version
-        const original = safeStaffNames.find(name => {
-          const cleaned = cleanStaffName(name);
-          return removeVietnameseTones(cleaned) === normalized;
-        });
-        if (original) {
-          matches.push({ display, original });
-        }
-      }
-      if (matches.length >= 8) break;
-    }
+    // Convert to array and sort
+    const matches = Array.from(nameMap.values());
     
     // Sort by relevance (exact match first, then by length)
     matches.sort((a, b) => {
@@ -130,7 +125,12 @@ export function ScheduleToolbar({
           placeholder="Tìm theo tên, cửa hàng, địa điểm..."
           className="h-10 rounded-xl border-slate-200 bg-slate-50 pl-10 pr-11 text-sm shadow-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-700 dark:bg-slate-800"
           onFocus={() => setFocused(true)}
-          onBlur={() => window.setTimeout(() => setFocused(false), 120)}
+          onBlur={() => {
+            // Increase delay for mobile to allow tap events to register
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+            const delay = isMobile ? 200 : 120;
+            window.setTimeout(() => setFocused(false), delay);
+          }}
         />
         {draft ? (
           <button
@@ -158,6 +158,7 @@ export function ScheduleToolbar({
                   type="button"
                   className="flex w-full items-start px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800 transition-colors"
                   onMouseDown={(e) => e.preventDefault()}
+                  onTouchStart={(e) => e.preventDefault()}
                   onClick={() => {
                     // Use cleaned name for search (without numbers_)
                     setDraft(item.display);
@@ -224,10 +225,6 @@ export function ScheduleToolbar({
             ))}
           </SelectContent>
         </Select>
-
-        <Button variant="secondary" size="icon" className="h-10 w-10 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800" onClick={onExportIcs} aria-label="Xuất .ics">
-          <Download className="h-4 w-4" />
-        </Button>
       </div>
     </div>
   );
