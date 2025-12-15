@@ -100,6 +100,11 @@ export function JobCard({ job, isActive, brandGroup, hostGroup, onQuickReport, o
               <MessageCircle className="w-3.5 h-3.5" />
               <span>{hasBrandLink ? 'Brand' : 'No Link'}</span>
             </button>
+            {isCaNoi ? (
+              <span className="inline-flex h-5 items-center rounded-md border border-slate-600 px-2 text-[10px] font-extrabold uppercase tracking-wide text-slate-700 dark:border-slate-400 dark:text-slate-200 shrink-0">
+                CA NỐI
+              </span>
+            ) : null}
             {/* Host Group Button */}
             <button
               type="button"
@@ -125,11 +130,6 @@ export function JobCard({ job, isActive, brandGroup, hostGroup, onQuickReport, o
               <MessageCircle className="w-3.5 h-3.5" />
               <span>{hasHostLink ? 'Host' : 'No Link'}</span>
             </button>
-            {isCaNoi ? (
-              <span className="inline-flex h-5 items-center rounded-md border border-slate-600 px-2 text-[10px] font-extrabold uppercase tracking-wide text-slate-700 dark:border-slate-400 dark:text-slate-200 shrink-0">
-                CA NỐI
-              </span>
-            ) : null}
           </div>
         </div>
 
