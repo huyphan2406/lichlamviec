@@ -9,6 +9,8 @@ export type Job = Record<string, string | undefined> & {
   "Talent 2"?: string;
   "Coordinator 1"?: string;
   "Coordinator 2"?: string;
+  host_zalo_link?: string;
+  brand_zalo_link?: string;
 };
 
 export type ScheduleResponse = {
