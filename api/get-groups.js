@@ -152,20 +152,38 @@ function createGroupsMap(rawData, type = 'unknown') {
         return '';
     };
 
-    // Xử lý dữ liệu (bỏ debug logs để tăng tốc)
+    // Xử lý dữ liệu - đảm bảo link được trim và validate
     for (const row of rawData) {
         const hostName = findMatchingKey(row, normalizedNameKeys);
         const zaloLink = findMatchingKey(row, normalizedLinkKeys);
         
-        if (hostName && zaloLink) {
+        // Trim và validate link
+        const cleanLink = zaloLink ? String(zaloLink).trim() : '';
+        const cleanName = hostName ? String(hostName).trim() : '';
+        
+        // Chỉ thêm vào map nếu có cả tên và link hợp lệ
+        if (cleanName && cleanLink && cleanLink.length > 0) {
             const normalizedName = type.toUpperCase() === 'BRAND' 
-                ? normalizeName(normalizeBrandName(hostName))
-                : normalizeName(hostName);
+                ? normalizeName(normalizeBrandName(cleanName))
+                : normalizeName(cleanName);
+            
+            // Đảm bảo link bắt đầu bằng http:// hoặc https://
+            const validLink = cleanLink.startsWith('http://') || cleanLink.startsWith('https://') 
+                ? cleanLink 
+                : `https://${cleanLink}`;
+            
             groupsMap.set(normalizedName, {
-                originalName: hostName,
-                link: zaloLink
+                originalName: cleanName,
+                link: validLink
             });
         }
+    }
+    
+    // Debug log để kiểm tra số lượng groups được tìm thấy
+    if (groupsMap.size > 0) {
+        console.log(`✅ Tìm thấy ${groupsMap.size} ${type} groups`);
+    } else {
+        console.warn(`⚠️ Không tìm thấy ${type} groups nào. Số dòng CSV: ${rawData.length}`);
     }
     
     return groupsMap;
@@ -206,6 +224,9 @@ export default async function handler(request, response) {
         response.setHeader('Content-Type', 'application/json; charset=utf-8');
         
         // 5. Trả về dữ liệu JSON với cả Host và Brand
+        // Debug: Log số lượng groups
+        console.log(`📊 API Response: Host=${hostGroupsMap.size}, Brand=${brandGroupsMap.size}`);
+        
         response.status(200).json({
             hostGroups: hostGroupsObject,
             brandGroups: brandGroupsObject,

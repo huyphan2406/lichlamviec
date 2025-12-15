@@ -1,7 +1,7 @@
 import React from "react";
-import { FilePenLine, MapPin, MessageCircle, Monitor, User } from "lucide-react";
+import { DoorOpen, FilePenLine, MapPin, MessageCircle, Monitor, User } from "lucide-react";
 import type { GroupLink, Job } from "@/features/schedule/types";
-import { combineLocation, combineNames } from "@/features/schedule/utils";
+import { combineNames } from "@/features/schedule/utils";
 
 type Props = {
   job: Job;
@@ -14,7 +14,28 @@ type Props = {
 
 export function JobCard({ job, isActive, brandGroup, hostGroup, onQuickReport, onApplySearch }: Props) {
   const title = (job.Store || "Unnamed Job").toUpperCase();
-  const location = combineLocation(job);
+  
+  // Tách Location và Room thành 2 phần riêng
+  const addressName = (job.Address || "").trim();
+  const roomName = (job["Studio/Room"] || "").trim();
+  
+  // Nếu không có room riêng, thử split từ address nếu có format "H2 - G03A"
+  let locationName = addressName;
+  let finalRoomName = roomName;
+  
+  if (!finalRoomName && locationName.includes(" - ")) {
+    const parts = locationName.split(" - ").map((p) => p.trim());
+    if (parts.length >= 2) {
+      locationName = parts[0];
+      finalRoomName = parts.slice(1).join(" - ");
+    }
+  }
+  
+  // Fallback nếu không có gì
+  if (!locationName && !finalRoomName) {
+    locationName = "No location";
+  }
+  
   const staff = (job.staff_name || combineNames(job["Talent 1"], job["Talent 2"])).toString();
   const standby = combineNames(job["Coordinator 1"], job["Coordinator 2"]);
   const sessionType = (job["Type of session"] || "").trim().toLowerCase();
@@ -65,13 +86,25 @@ export function JobCard({ job, isActive, brandGroup, hostGroup, onQuickReport, o
 
       {/* Details stack - căn chỉnh đều */}
       <div className="flex flex-col gap-3 border-t border-slate-100 pt-3 flex-1">
-        {/* Location */}
-        <div className="flex items-center gap-2.5">
-          <MapPin className="h-4 w-4 shrink-0 text-red-500" />
-          <p className="flex-1 whitespace-normal break-words text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-            {location}
-          </p>
-        </div>
+        {/* Location - Dòng 1 */}
+        {locationName && (
+          <div className="flex items-center gap-2.5">
+            <MapPin className="h-4 w-4 shrink-0 text-red-500" />
+            <p className="flex-1 whitespace-normal break-words text-sm font-medium text-slate-700 dark:text-slate-200 leading-relaxed">
+              {locationName}
+            </p>
+          </div>
+        )}
+        
+        {/* Room - Dòng 2 (ở dưới Location) */}
+        {finalRoomName && (
+          <div className="flex items-center gap-2.5 ml-1">
+            <DoorOpen className="h-4 w-4 shrink-0 text-indigo-500" />
+            <p className="flex-1 whitespace-normal break-words text-sm text-slate-600 dark:text-slate-300">
+              {finalRoomName}
+            </p>
+          </div>
+        )}
 
         {/* Host */}
         <div className="flex items-center gap-2.5">
