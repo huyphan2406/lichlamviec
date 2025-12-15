@@ -272,12 +272,12 @@ export function SchedulePage() {
         {/* Time-blocked grouped layout */}
         <div className="pb-20">
           {grouped.map((group) => (
-            <section key={group.timeSlot} className="mt-8 first:mt-2">
-              <div className="sticky top-12 z-10 -mx-3 bg-slate-50/95 px-3 py-2 backdrop-blur sm:top-14 sm:-mx-4 sm:px-4 dark:bg-slate-950/85">
-                <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">{group.timeSlot}</h2>
+            <section key={group.timeSlot} className="mt-8 first:mt-4">
+              <div className="sticky top-12 z-10 -mx-3 bg-slate-50/95 px-3 py-3 backdrop-blur-sm sm:top-14 sm:-mx-4 sm:px-4 dark:bg-slate-950/95">
+                <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 sm:text-xl">{group.timeSlot}</h2>
               </div>
 
-              <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">
+              <div className="mt-4 grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-2 lg:grid-cols-3">
                 {group.items.map((item, index) => {
                   const job = item.job;
                   const stableKey = `${group.timeSlot}|${job["Date livestream"] || "na"}|${job.Store || "na"}|${index}`;

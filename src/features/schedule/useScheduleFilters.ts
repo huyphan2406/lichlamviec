@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { isValid, parse } from "date-fns";
 import type { Job, ScheduleFilters } from "./types";
-import { removeAccents } from "./utils";
+import { removeVietnameseTones } from "./utils";
 
 function parseDDMMYYYY(dateStr: string) {
   const parsed = parse(dateStr, "dd/MM/yyyy", new Date());
@@ -18,43 +18,87 @@ export function useScheduleFilters(jobs: Job[], filters: ScheduleFilters, option
 
     let list = jobs;
 
-    const normQuery = filters.query ? removeAccents(filters.query.toLowerCase().trim()) : "";
-    if (normQuery) {
-      const cache = new WeakMap<Job, string>();
+    // Step A: Prepare the Query
+    const normalizedQuery = filters.query ? removeVietnameseTones(filters.query) : "";
+    
+    if (normalizedQuery) {
+      // Cache normalized search documents for performance
+      const searchDocCache = new WeakMap<Job, string>();
+      
+      // Step B: Filter with robust search
       list = list.filter((job) => {
-        let haystack = cache.get(job);
-        if (!haystack) {
-          // Tách riêng các field tên nhân sự để search chính xác hơn
+        // Get or create search document for this job
+        let searchDoc = searchDocCache.get(job);
+        if (!searchDoc) {
+          // Construct search document from ALL relevant fields
+          const searchableFields: string[] = [];
+          
+          // 1. Store/Title
+          const store = (job.Store || "").toString().trim();
+          if (store && store !== "nan") searchableFields.push(store);
+          
+          // 2. Brand name
+          const brandName = (job.brand_name || "").toString().trim();
+          if (brandName && brandName !== "nan") searchableFields.push(brandName);
+          
+          // 3. Staff names (Host/KOL) - normalize to remove numbers and special chars
           const staffFields = [
             job["Talent 1"],
             job["Talent 2"],
             job["Coordinator 1"],
             job["Coordinator 2"],
             job.staff_name,
-          ].filter(Boolean).map(v => String(v).trim()).filter(v => v && v !== "nan");
+          ]
+            .filter(Boolean)
+            .map((v) => String(v).trim())
+            .filter((v) => v && v !== "nan");
           
-          // Normalize tên nhân sự: chỉ giữ chữ cái và khoảng trắng, loại bỏ ký tự đặc biệt
-          const normalizedStaffNames = staffFields.map(name => {
-            return removeAccents(name.toLowerCase())
-              .replace(/[^a-z\s]/g, '') // Chỉ giữ chữ cái và khoảng trắng
-              .replace(/\s+/g, ' ') // Chuẩn hóa khoảng trắng
+          // Normalize staff names: remove leading numbers_underscore, keep only letters and spaces
+          const normalizedStaffNames = staffFields.map((name) => {
+            return removeVietnameseTones(name)
+              .replace(/^\d+_/, "") // Remove leading numbers and underscore (e.g., "123_An Lữ" → "An Lữ")
+              .replace(/[^a-z0-9\s]/g, "") // Keep only letters, numbers, and spaces
+              .replace(/\s+/g, " ") // Normalize whitespace
               .trim();
           });
+          searchableFields.push(...normalizedStaffNames.filter(Boolean));
           
-          // Các field khác (Store, Address, etc.) - normalize đầy đủ
-          const otherFields = Object.entries(job)
-            .filter(([key]) => !["Talent 1", "Talent 2", "Coordinator 1", "Coordinator 2", "staff_name"].includes(key))
-            .map(([, v]) => (v ?? "").toString())
-            .join(" ");
+          // 4. Location (Address)
+          const address = (job.Address || "").toString().trim();
+          if (address && address !== "nan") searchableFields.push(address);
           
-          const extra = options?.getExtraSearchText?.(job) ?? "";
+          // 5. Room
+          const room = (job["Studio/Room"] || "").toString().trim();
+          if (room && room !== "nan") searchableFields.push(room);
           
-          // Kết hợp: tên nhân sự đã normalize + các field khác + extra
-          haystack = `${normalizedStaffNames.join(" ")} ${removeAccents(otherFields.toLowerCase())} ${removeAccents(extra.toLowerCase())}`;
-          cache.set(job, haystack);
+          // 6. Type of session
+          const sessionType = (job["Type of session"] || "").toString().trim();
+          if (sessionType && sessionType !== "nan") searchableFields.push(sessionType);
+          
+          // 7. Date livestream (as string for search)
+          const dateLivestream = (job["Date livestream"] || "").toString().trim();
+          if (dateLivestream && dateLivestream !== "nan") searchableFields.push(dateLivestream);
+          
+          // 8. Time slot
+          const timeSlot = (job["Time slot"] || "").toString().trim();
+          if (timeSlot && timeSlot !== "nan") searchableFields.push(timeSlot);
+          
+          // 9. Extra search text (e.g., group names from getExtraSearchText)
+          const extra = options?.getExtraSearchText?.(job) || "";
+          if (extra) searchableFields.push(extra);
+          
+          // Combine all fields and normalize the entire document
+          const fullSearchString = searchableFields.join(" ");
+          searchDoc = removeVietnameseTones(fullSearchString);
+          
+          // Cache for performance
+          searchDocCache.set(job, searchDoc);
         }
-        return haystack.includes(normQuery);
+        
+        // Step C: Check if normalized query is included in normalized document
+        return searchDoc.includes(normalizedQuery);
       });
+      
       if (!list.length) return [];
     }
 

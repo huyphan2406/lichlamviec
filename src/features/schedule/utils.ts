@@ -16,6 +16,15 @@ export function removeAccents(str: string) {
     .replace(/Đ/g, "D");
 }
 
+/**
+ * Remove Vietnamese tones and normalize for search
+ * Example: "Quang Khánh" -> "quang khanh"
+ */
+export function removeVietnameseTones(str: string): string {
+  if (!str) return "";
+  return removeAccents(String(str).toLowerCase().trim());
+}
+
 export function combineNames(name1?: string, name2?: string) {
   const n1 = name1 || "";
   const n2 = name2 && name2 !== "nan" ? name2 : "";

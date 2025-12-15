@@ -70,16 +70,16 @@ export function ScheduleToolbar({
   }, [draft, safeStaffNames]);
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-slate-100 bg-white p-2 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
       {/* Search (left / grow) */}
-      <div className="relative flex h-9 flex-1 items-center">
-        <Search className="pointer-events-none absolute left-3 h-4 w-4 text-slate-400" />
+      <div className="relative flex h-10 flex-1 min-w-0 items-center">
+        <Search className="pointer-events-none absolute left-3.5 h-4 w-4 text-slate-400" />
         <Input
           ref={inputRef}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           placeholder="Tìm theo tên, cửa hàng, địa điểm..."
-          className="h-9 rounded-xl border-slate-200 bg-slate-50 pl-9 pr-10 text-sm shadow-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)] dark:border-slate-700 dark:bg-slate-800"
+          className="h-10 rounded-xl border-slate-200 bg-slate-50 pl-10 pr-11 text-sm shadow-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-700 dark:bg-slate-800"
           onFocus={() => setFocused(true)}
           onBlur={() => window.setTimeout(() => setFocused(false), 120)}
         />
@@ -90,7 +90,7 @@ export function ScheduleToolbar({
               setDraft("");
               onQueryChange("");
             }}
-            className="absolute right-2 inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"
+            className="absolute right-2.5 inline-flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 transition-colors"
             aria-label="Xóa tìm kiếm"
             title="Xóa"
           >
@@ -130,12 +130,12 @@ export function ScheduleToolbar({
       </div>
 
       {/* Right controls */}
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2.5">
         <Popover>
           <PopoverTrigger asChild>
             <Button
               variant="secondary"
-              className="h-9 gap-2 rounded-xl border-slate-200 bg-white px-3 text-sm dark:border-slate-700 dark:bg-slate-900"
+              className="h-10 gap-2 rounded-xl border-slate-200 bg-white px-3.5 text-sm dark:border-slate-700 dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800"
             >
               <Calendar className="h-4 w-4 text-slate-500" />
               <span className="text-sm">{fmtRange(dateRange)}</span>
@@ -226,7 +226,7 @@ export function ScheduleToolbar({
         </Popover>
 
         <Select value={session || ALL} onValueChange={(v) => onSessionChange(v === ALL ? "" : v)}>
-          <SelectTrigger className="h-9 w-[150px] rounded-xl border-slate-200 bg-white text-sm shadow-none dark:border-slate-700 dark:bg-slate-900">
+          <SelectTrigger className="h-10 w-[150px] rounded-xl border-slate-200 bg-white text-sm shadow-none dark:border-slate-700 dark:bg-slate-900">
             <SelectValue placeholder="Tất cả ca" />
           </SelectTrigger>
           <SelectContent>
@@ -239,7 +239,7 @@ export function ScheduleToolbar({
           </SelectContent>
         </Select>
 
-        <Button variant="secondary" size="icon" className="h-9 w-9 rounded-xl" onClick={onExportIcs} aria-label="Xuất .ics">
+        <Button variant="secondary" size="icon" className="h-10 w-10 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800" onClick={onExportIcs} aria-label="Xuất .ics">
           <Download className="h-4 w-4" />
         </Button>
       </div>

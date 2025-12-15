@@ -52,29 +52,13 @@ export function JobCard({ job, isActive, brandGroup, hostGroup, onQuickReport, o
   const hostZaloLink = (job.host_zalo_link || hostGroup?.link || "").toString().trim();
   const brandZaloLink = (job.brand_zalo_link || brandGroup?.link || "").toString().trim();
   
-  // DEBUG MODE: Check links separately for Host and Brand
+  // Check links separately for Host and Brand
   const hasHostLink = !!hostZaloLink && hostZaloLink.length > 0 && hostZaloLink !== "#";
   const hasBrandLink = !!brandZaloLink && brandZaloLink.length > 0 && brandZaloLink !== "#";
-  
-  // DEBUG: Detailed console logs
-  console.log(`[JobCard Debug] Job: ${title}`, {
-    hasHostGroup: !!hostGroup,
-    hostGroupLink: hostGroup?.link,
-    hostGroupName: hostGroup?.originalName,
-    hasBrandGroup: !!brandGroup,
-    brandGroupLink: brandGroup?.link,
-    brandGroupName: brandGroup?.originalName,
-    jobHostZaloLink: job.host_zalo_link,
-    jobBrandZaloLink: job.brand_zalo_link,
-    finalHostLink: hostZaloLink,
-    finalBrandLink: brandZaloLink,
-    hasHostLink,
-    hasBrandLink,
-  });
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 h-full flex flex-col transition-all duration-200 hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
-      {/* Header: title + badge + report */}
+    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 h-full flex flex-col transition-all duration-200 hover:shadow-md hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700">
+      {/* Header: title + badge */}
       <div className="flex items-start justify-between gap-3 mb-4">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
@@ -82,13 +66,13 @@ export function JobCard({ job, isActive, brandGroup, hostGroup, onQuickReport, o
             <p 
               className="text-base font-extrabold leading-tight text-slate-900 dark:text-slate-50 cursor-pointer hover:underline transition-all"
               onClick={() => onQuickReport(job)}
-              title={brandName ? "Click để điền report" : ""}
+              title="Click để điền report"
             >
               <span className="block whitespace-normal break-words">{displayName}</span>
             </p>
             {/* CA NỐI badge - bên phải Brand name */}
             {isCaNoi ? (
-              <span className="inline-flex h-5 items-center rounded-md border border-slate-600 px-2 text-[10px] font-extrabold uppercase tracking-wide text-slate-700 dark:border-slate-400 dark:text-slate-200 shrink-0">
+              <span className="inline-flex h-5 items-center rounded-md border border-slate-300 bg-slate-50 px-2 text-[10px] font-extrabold uppercase tracking-wide text-slate-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 shrink-0">
                 CA NỐI
               </span>
             ) : null}
@@ -97,11 +81,11 @@ export function JobCard({ job, isActive, brandGroup, hostGroup, onQuickReport, o
       </div>
 
       {/* Details stack - căn chỉnh đều */}
-      <div className="flex flex-col gap-3 border-t border-slate-100 pt-3 flex-1">
+      <div className="flex flex-col gap-3.5 border-t border-slate-100 dark:border-slate-800 pt-4 flex-1">
         {/* Location - Dòng 1 */}
         {locationName && (
-          <div className="flex items-center gap-2.5">
-            <MapPin className="h-4 w-4 shrink-0 text-red-500" />
+          <div className="flex items-start gap-2.5">
+            <MapPin className="h-4 w-4 shrink-0 text-red-500 mt-0.5" />
             <p className="flex-1 whitespace-normal break-words text-sm font-normal text-slate-700 dark:text-slate-200 leading-relaxed">
               {locationName}
             </p>
@@ -110,33 +94,33 @@ export function JobCard({ job, isActive, brandGroup, hostGroup, onQuickReport, o
         
         {/* Room - Dòng 2 (ở dưới Location) */}
         {finalRoomName && (
-          <div className="flex items-center gap-2.5 ml-1">
-            <DoorOpen className="h-4 w-4 shrink-0 text-indigo-500" />
-            <p className="flex-1 whitespace-normal break-words text-sm text-slate-600 dark:text-slate-300">
+          <div className="flex items-start gap-2.5">
+            <DoorOpen className="h-4 w-4 shrink-0 text-indigo-500 mt-0.5" />
+            <p className="flex-1 whitespace-normal break-words text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
               {finalRoomName}
             </p>
           </div>
         )}
 
         {/* Host */}
-        <div className="flex items-center gap-2.5">
-          <User className="h-4 w-4 shrink-0 text-blue-500" />
-          <span className="flex-1 text-sm font-normal text-slate-700 dark:text-slate-200" title="Nhân sự">
+        <div className="flex items-start gap-2.5">
+          <User className="h-4 w-4 shrink-0 text-blue-500 mt-0.5" />
+          <span className="flex-1 text-sm font-normal text-slate-700 dark:text-slate-200 leading-relaxed" title="Nhân sự">
             {staff}
           </span>
         </div>
 
         {/* Status/Standby */}
-        <div className="flex items-center gap-2.5">
-          <Monitor className="h-4 w-4 shrink-0 text-purple-500" />
-          <span className="flex-1 text-sm text-slate-600 dark:text-slate-300" title="Standby/Coordinator">
+        <div className="flex items-start gap-2.5">
+          <Monitor className="h-4 w-4 shrink-0 text-purple-500 mt-0.5" />
+          <span className="flex-1 text-sm text-slate-600 dark:text-slate-300 leading-relaxed" title="Standby/Coordinator">
             {standby}
           </span>
         </div>
       </div>
 
       {/* Status section - ACTIVE hoặc INACTIVE + Zalo buttons luôn hiển thị */}
-      <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+      <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
         {/* ACTIVE hoặc INACTIVE badge */}
         {isActive ? (
           <span className="inline-flex items-center gap-1.5 rounded-full bg-green-500 px-3 py-1 text-xs font-semibold text-white shadow-sm">
@@ -155,7 +139,7 @@ export function JobCard({ job, isActive, brandGroup, hostGroup, onQuickReport, o
           </span>
         )}
         {/* 2 Zalo buttons - luôn luôn hiển thị */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 flex-shrink-0">
           {/* Brand Group Button */}
           <button
             type="button"
@@ -166,10 +150,10 @@ export function JobCard({ job, isActive, brandGroup, hostGroup, onQuickReport, o
               }
             }}
             disabled={!hasBrandLink}
-            className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium transition-colors shrink-0 ${
+            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all shrink-0 ${
               hasBrandLink
-                ? 'bg-blue-500 text-white hover:bg-blue-600 cursor-pointer shadow-sm'
-                : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                ? 'bg-blue-500 text-white hover:bg-blue-600 cursor-pointer shadow-sm hover:shadow-md'
+                : 'bg-gray-200 text-gray-500 cursor-not-allowed dark:bg-gray-700 dark:text-gray-400'
             }`}
             title={
               hasBrandLink
@@ -191,10 +175,10 @@ export function JobCard({ job, isActive, brandGroup, hostGroup, onQuickReport, o
               }
             }}
             disabled={!hasHostLink}
-            className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium transition-colors shrink-0 ${
+            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all shrink-0 ${
               hasHostLink
-                ? 'bg-blue-500 text-white hover:bg-blue-600 cursor-pointer shadow-sm'
-                : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                ? 'bg-blue-500 text-white hover:bg-blue-600 cursor-pointer shadow-sm hover:shadow-md'
+                : 'bg-gray-200 text-gray-500 cursor-not-allowed dark:bg-gray-700 dark:text-gray-400'
             }`}
             title={
               hasHostLink
