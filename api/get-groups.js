@@ -106,46 +106,68 @@ async function fetchGroupsData(csvUrl) {
 }
 
 // Hàm tìm cột name và link một cách linh hoạt
-function findColumns(row) {
+function findColumns(row, type = 'unknown') {
     const columns = Object.keys(row);
     let nameColumn = null;
     let linkColumn = null;
     
-    // Danh sách các pattern có thể cho name column
-    const namePatterns = [
-        /^(group\s*)?brand$/i,
-        /^(ten|tên)\s*(host|brand|group)?$/i,
-        /^(host|brand|mc|talent)\s*name$/i,
-        /^name$/i,
-        /^(ten|tên)$/i,
-        /^(group|nhóm)\s*name$/i
-    ];
+    // Ưu tiên tìm chính xác tên cột theo format thực tế
+    // Host: "Tên Host" và "Link group Zalo"
+    // Brand: "STORE" và "LINK GROUP ZALO"
     
-    // Danh sách các pattern có thể cho link column
-    const linkPatterns = [
-        /^link$/i,
-        /^link\s*(zalo|group|nhóm)?$/i,
-        /^(zalo|group)\s*link$/i,
-        /^url$/i,
-        /^link\s*dep\s*lao$/i,
-        /^zalo$/i
-    ];
+    // Tìm name column - ưu tiên match chính xác
+    const exactNameMatches = {
+        'HOST': ['Tên Host', 'Ten Host', 'tên host', 'ten host'],
+        'BRAND': ['STORE', 'Store', 'store']
+    };
     
-    // Tìm name column
-    for (const col of columns) {
-        const normalizedCol = normalizeName(col);
-        for (const pattern of namePatterns) {
-            if (pattern.test(normalizedCol) || pattern.test(col)) {
+    // Tìm link column - ưu tiên match chính xác
+    const exactLinkMatches = {
+        'HOST': ['Link group Zalo', 'Link Group Zalo', 'link group zalo'],
+        'BRAND': ['LINK GROUP ZALO', 'Link Group Zalo', 'link group zalo']
+    };
+    
+    const typeUpper = type.toUpperCase();
+    
+    // Tìm name column - ưu tiên exact match
+    if (exactNameMatches[typeUpper]) {
+        for (const col of columns) {
+            if (exactNameMatches[typeUpper].includes(col)) {
                 nameColumn = col;
                 break;
             }
         }
-        if (nameColumn) break;
     }
     
-    // Nếu không tìm thấy bằng pattern, thử tìm bằng normalized match
+    // Nếu không tìm thấy exact match, dùng pattern
     if (!nameColumn) {
-        const nameKeywords = ['name', 'ten', 'tên', 'brand', 'host', 'group'];
+        const namePatterns = [
+            /^(tên|ten)\s*host$/i,  // "Tên Host"
+            /^store$/i,              // "STORE"
+            /^(group\s*)?brand$/i,
+            /^(host|brand|mc|talent)\s*name$/i,
+            /^name$/i,
+            /^(ten|tên)$/i,
+            /^(group|nhóm)\s*name$/i
+        ];
+        
+        for (const col of columns) {
+            const normalizedCol = normalizeName(col);
+            for (const pattern of namePatterns) {
+                if (pattern.test(normalizedCol) || pattern.test(col)) {
+                    nameColumn = col;
+                    break;
+                }
+            }
+            if (nameColumn) break;
+        }
+    }
+    
+    // Nếu vẫn không tìm thấy, dùng keyword match
+    if (!nameColumn) {
+        const nameKeywords = typeUpper === 'HOST' 
+            ? ['ten', 'tên', 'host', 'name']
+            : ['store', 'brand', 'name'];
         for (const col of columns) {
             const normalizedCol = normalizeName(col);
             if (nameKeywords.some(keyword => normalizedCol.includes(keyword))) {
@@ -155,19 +177,41 @@ function findColumns(row) {
         }
     }
     
-    // Tìm link column
-    for (const col of columns) {
-        const normalizedCol = normalizeName(col);
-        for (const pattern of linkPatterns) {
-            if (pattern.test(normalizedCol) || pattern.test(col)) {
+    // Tìm link column - ưu tiên exact match
+    if (exactLinkMatches[typeUpper]) {
+        for (const col of columns) {
+            if (exactLinkMatches[typeUpper].includes(col)) {
                 linkColumn = col;
                 break;
             }
         }
-        if (linkColumn) break;
     }
     
-    // Nếu không tìm thấy bằng pattern, thử tìm bằng normalized match
+    // Nếu không tìm thấy exact match, dùng pattern
+    if (!linkColumn) {
+        const linkPatterns = [
+            /^link\s*group\s*zalo$/i,  // "Link group Zalo" hoặc "LINK GROUP ZALO"
+            /^link$/i,
+            /^link\s*(zalo|group|nhóm)?$/i,
+            /^(zalo|group)\s*link$/i,
+            /^url$/i,
+            /^link\s*dep\s*lao$/i,
+            /^zalo$/i
+        ];
+        
+        for (const col of columns) {
+            const normalizedCol = normalizeName(col);
+            for (const pattern of linkPatterns) {
+                if (pattern.test(normalizedCol) || pattern.test(col)) {
+                    linkColumn = col;
+                    break;
+                }
+            }
+            if (linkColumn) break;
+        }
+    }
+    
+    // Nếu vẫn không tìm thấy, dùng keyword match
     if (!linkColumn) {
         const linkKeywords = ['link', 'url', 'zalo'];
         for (const col of columns) {
@@ -235,7 +279,7 @@ function createGroupsMap(rawData, type = 'unknown') {
     
     // Tìm cột name và link từ row đầu tiên
     const firstRow = rawData[0];
-    const { nameColumn, linkColumn, allColumns } = findColumns(firstRow);
+    const { nameColumn, linkColumn, allColumns } = findColumns(firstRow, type);
     
     console.log(`📋 [${type}] Tên cột trong CSV:`, allColumns);
     console.log(`🔍 [${type}] Tìm thấy cột NAME: "${nameColumn}", LINK: "${linkColumn}"`);

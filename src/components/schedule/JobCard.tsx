@@ -141,8 +141,9 @@ export function JobCard({ job, isActive, brandGroup, hostGroup, onQuickReport, o
         </div>
       </div>
 
-      {/* Status section - ACTIVE hoặc INACTIVE + Zalo buttons bên phải */}
+      {/* Status section - ACTIVE (nếu có) + Zalo buttons luôn hiển thị */}
       <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+        {/* ACTIVE badge - chỉ hiển thị khi isActive === true */}
         {isActive ? (
           <span className="inline-flex items-center gap-1.5 rounded-full bg-green-500 px-3 py-1 text-xs font-semibold text-white shadow-sm">
             <span className="relative flex h-2 w-2">
@@ -152,14 +153,9 @@ export function JobCard({ job, isActive, brandGroup, hostGroup, onQuickReport, o
             ACTIVE
           </span>
         ) : (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-400 px-3 py-1 text-xs font-semibold text-white shadow-sm">
-            <span className="relative flex h-2 w-2">
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-gray-300"></span>
-            </span>
-            INACTIVE
-          </span>
+          <div></div>
         )}
-        {/* DEBUG MODE: 2 Zalo buttons bên phải status - căn bên phải */}
+        {/* 2 Zalo buttons - luôn luôn hiển thị */}
         <div className="flex items-center gap-2">
           {/* Brand Group Button */}
           <button
