@@ -46,6 +46,11 @@ function FiltersForm({
   sessions: string[];
   stores: string[];
 }) {
+  const ALL = "__ALL__";
+  const safeDates = useMemo(() => dates.filter((d) => d && d !== "nan"), [dates]);
+  const safeSessions = useMemo(() => sessions.filter((s) => s && s !== "nan"), [sessions]);
+  const safeStores = useMemo(() => stores.filter((s) => s && s !== "nan"), [stores]);
+
   return (
     <div className="grid gap-3">
       <div className="grid gap-1.5">
@@ -66,13 +71,16 @@ function FiltersForm({
       <div className="grid gap-3 sm:grid-cols-3">
         <div className="grid gap-1.5">
           <Label>Ngày</Label>
-          <Select value={filters.date} onValueChange={(v) => setFilters((p) => ({ ...p, date: v }))}>
+          <Select
+            value={filters.date || ALL}
+            onValueChange={(v) => setFilters((p) => ({ ...p, date: v === ALL ? "" : v }))}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Tất cả" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Tất cả</SelectItem>
-              {dates.map((d) => (
+              <SelectItem value={ALL}>Tất cả</SelectItem>
+              {safeDates.map((d) => (
                 <SelectItem key={d} value={d}>
                   {d}
                 </SelectItem>
@@ -83,13 +91,16 @@ function FiltersForm({
 
         <div className="grid gap-1.5">
           <Label>Loại ca</Label>
-          <Select value={filters.session} onValueChange={(v) => setFilters((p) => ({ ...p, session: v }))}>
+          <Select
+            value={filters.session || ALL}
+            onValueChange={(v) => setFilters((p) => ({ ...p, session: v === ALL ? "" : v }))}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Tất cả" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Tất cả</SelectItem>
-              {sessions.map((s) => (
+              <SelectItem value={ALL}>Tất cả</SelectItem>
+              {safeSessions.map((s) => (
                 <SelectItem key={s} value={s}>
                   {s}
                 </SelectItem>
@@ -100,13 +111,16 @@ function FiltersForm({
 
         <div className="grid gap-1.5">
           <Label>Store</Label>
-          <Select value={filters.store} onValueChange={(v) => setFilters((p) => ({ ...p, store: v }))}>
+          <Select
+            value={filters.store || ALL}
+            onValueChange={(v) => setFilters((p) => ({ ...p, store: v === ALL ? "" : v }))}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Tất cả" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Tất cả</SelectItem>
-              {stores.map((s) => (
+              <SelectItem value={ALL}>Tất cả</SelectItem>
+              {safeStores.map((s) => (
                 <SelectItem key={s} value={s}>
                   {s}
                 </SelectItem>
