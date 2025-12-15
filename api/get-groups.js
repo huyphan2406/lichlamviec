@@ -302,29 +302,52 @@ function createGroupsMap(rawData, type = 'unknown') {
             continue;
         }
         
-        const cleanName = String(rawName).trim();
+        // Giữ nguyên tên gốc từ CSV - không trim, không normalize
+        const originalName = String(rawName);
         const validLink = normalizeLink(rawLink);
         
-        if (!cleanName || !validLink) {
+        // Chỉ kiểm tra có giá trị, không trim
+        if (!originalName || !validLink) {
             skippedCount++;
             continue;
         }
         
-        // Normalize name để dùng làm key
+        // Normalize name để dùng làm key (chỉ để match, không ảnh hưởng originalName)
         const normalizedName = type.toUpperCase() === 'BRAND' 
-            ? normalizeName(normalizeBrandName(cleanName))
-            : normalizeName(cleanName);
+            ? normalizeName(normalizeBrandName(originalName.trim()))
+            : normalizeName(originalName.trim());
         
         if (!normalizedName) {
             skippedCount++;
             continue;
         }
         
-        // Lưu vào map
-        groupsMap.set(normalizedName, {
-            originalName: cleanName,
-            link: validLink
-        });
+        // Lưu vào map - originalName giữ nguyên 100% từ CSV
+        // Nếu key đã tồn tại, chỉ update nếu tên mới ngắn hơn/đơn giản hơn (ưu tiên tên gốc đơn giản)
+        const existing = groupsMap.get(normalizedName);
+        if (existing) {
+            // Ưu tiên tên ngắn hơn và đơn giản hơn (không có &, +, /)
+            const existingLength = existing.originalName.length;
+            const newLength = originalName.length;
+            const existingHasSpecial = existing.originalName.includes('&') || existing.originalName.includes('+') || existing.originalName.includes('/');
+            const newHasSpecial = originalName.includes('&') || originalName.includes('+') || originalName.includes('/');
+            
+            // Nếu entry mới ngắn hơn HOẶC (cùng độ dài nhưng entry mới không có ký tự đặc biệt mà entry cũ có)
+            if (newLength < existingLength || (newLength === existingLength && !newHasSpecial && existingHasSpecial)) {
+                // Entry mới tốt hơn, thay thế
+                groupsMap.set(normalizedName, {
+                    originalName: originalName, // Giữ nguyên, không trim
+                    link: validLink
+                });
+            }
+            // Nếu không, giữ nguyên entry cũ (tên ngắn hơn/đơn giản hơn)
+        } else {
+            // Key chưa tồn tại, thêm mới
+            groupsMap.set(normalizedName, {
+                originalName: originalName, // Giữ nguyên, không trim
+                link: validLink
+            });
+        }
         processedCount++;
     }
     

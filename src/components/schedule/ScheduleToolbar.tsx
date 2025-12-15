@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { format } from "date-fns";
+import { format, parse, isValid } from "date-fns";
 import { Calendar, Download, Search, X } from "lucide-react";
 import type { DateRange } from "react-day-picker";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ type Props = {
   dateRange: DateRange | undefined;
   onDateRangeChange: (range: DateRange | undefined) => void;
   onExportIcs: () => void;
+  availableDates?: string[]; // Dates from schedule data in format "dd/MM/yyyy"
 };
 
 const ALL = "__ALL__";
@@ -40,6 +41,7 @@ export function ScheduleToolbar({
   dateRange,
   onDateRangeChange,
   onExportIcs,
+  availableDates = [],
 }: Props) {
   const [draft, setDraft] = useState(query);
   const [focused, setFocused] = useState(false);
@@ -139,22 +141,86 @@ export function ScheduleToolbar({
               <span className="text-sm">{fmtRange(dateRange)}</span>
             </Button>
           </PopoverTrigger>
-          <PopoverContent align="end" className="p-2">
-            <CalendarView
-              mode="range"
-              selected={dateRange}
-              onSelect={onDateRangeChange}
-              numberOfMonths={2}
-            />
-            <div className="mt-2 flex justify-end gap-2">
-              <Button
+          <PopoverContent align="end" className="w-auto p-2">
+            <div className="space-y-1">
+              <div className="px-2 py-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">Chọn nhanh</div>
+              <button
                 type="button"
-                variant="secondary"
-                size="sm"
-                onClick={() => onDateRangeChange(undefined)}
+                onClick={() => {
+                  const today = new Date();
+                  const start = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0);
+                  const end = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
+                  onDateRangeChange({ from: start, to: end });
+                }}
+                className="flex w-full items-center rounded-md px-2 py-1.5 text-left text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
               >
-                Xóa
-              </Button>
+                Hôm nay
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const today = new Date();
+                  const start = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0);
+                  const end = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 6, 23, 59, 59, 999);
+                  onDateRangeChange({ from: start, to: end });
+                }}
+                className="flex w-full items-center rounded-md px-2 py-1.5 text-left text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+              >
+                Tuần này
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const today = new Date();
+                  const start = new Date(today.getFullYear(), today.getMonth(), 1, 0, 0, 0, 0);
+                  const end = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59, 999);
+                  onDateRangeChange({ from: start, to: end });
+                }}
+                className="flex w-full items-center rounded-md px-2 py-1.5 text-left text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+              >
+                Tháng này
+              </button>
+              <button
+                type="button"
+                onClick={() => onDateRangeChange(undefined)}
+                className="flex w-full items-center rounded-md px-2 py-1.5 text-left text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+              >
+                Tất cả
+              </button>
+              {availableDates.length > 0 && (
+                <>
+                  <div className="border-t border-slate-200 pt-1 dark:border-slate-700">
+                    <div className="px-2 py-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">Ngày có lịch</div>
+                    <div className="max-h-48 overflow-auto">
+                      {availableDates.map((dateStr) => {
+                        const parsed = parse(dateStr, "dd/MM/yyyy", new Date());
+                        if (!isValid(parsed)) return null;
+                        const date = new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate(), 0, 0, 0, 0);
+                        const end = new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate(), 23, 59, 59, 999);
+                        return (
+                          <button
+                            key={dateStr}
+                            type="button"
+                            onClick={() => onDateRangeChange({ from: date, to: end })}
+                            className="flex w-full items-center rounded-md px-2 py-1.5 text-left text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+                          >
+                            {dateStr}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </>
+              )}
+              <div className="border-t border-slate-200 pt-1 dark:border-slate-700">
+                <div className="px-2 py-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">Chọn tùy chỉnh</div>
+                <CalendarView
+                  mode="range"
+                  selected={dateRange}
+                  onSelect={onDateRangeChange}
+                  numberOfMonths={2}
+                />
+              </div>
             </div>
           </PopoverContent>
         </Popover>

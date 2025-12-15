@@ -24,9 +24,33 @@ export function useScheduleFilters(jobs: Job[], filters: ScheduleFilters, option
       list = list.filter((job) => {
         let haystack = cache.get(job);
         if (!haystack) {
-          const base = Object.values(job).map((v) => (v ?? "").toString()).join(" ");
+          // Tách riêng các field tên nhân sự để search chính xác hơn
+          const staffFields = [
+            job["Talent 1"],
+            job["Talent 2"],
+            job["Coordinator 1"],
+            job["Coordinator 2"],
+            job.staff_name,
+          ].filter(Boolean).map(v => String(v).trim()).filter(v => v && v !== "nan");
+          
+          // Normalize tên nhân sự: chỉ giữ chữ cái và khoảng trắng, loại bỏ ký tự đặc biệt
+          const normalizedStaffNames = staffFields.map(name => {
+            return removeAccents(name.toLowerCase())
+              .replace(/[^a-z\s]/g, '') // Chỉ giữ chữ cái và khoảng trắng
+              .replace(/\s+/g, ' ') // Chuẩn hóa khoảng trắng
+              .trim();
+          });
+          
+          // Các field khác (Store, Address, etc.) - normalize đầy đủ
+          const otherFields = Object.entries(job)
+            .filter(([key]) => !["Talent 1", "Talent 2", "Coordinator 1", "Coordinator 2", "staff_name"].includes(key))
+            .map(([, v]) => (v ?? "").toString())
+            .join(" ");
+          
           const extra = options?.getExtraSearchText?.(job) ?? "";
-          haystack = removeAccents(`${base} ${extra}`.toLowerCase());
+          
+          // Kết hợp: tên nhân sự đã normalize + các field khác + extra
+          haystack = `${normalizedStaffNames.join(" ")} ${removeAccents(otherFields.toLowerCase())} ${removeAccents(extra.toLowerCase())}`;
           cache.set(job, haystack);
         }
         return haystack.includes(normQuery);

@@ -41,8 +41,8 @@ export function JobCard({ job, isActive, brandGroup, hostGroup, onQuickReport, o
   const sessionType = (job["Type of session"] || "").trim().toLowerCase();
   const isCaNoi = sessionType === "ca nối" || sessionType === "ca noi";
   
-  // Chỉ lấy brand name gốc từ brandGroup - đây là tên duy nhất hiển thị
-  const brandName = brandGroup?.originalName?.trim() || "";
+  // Chỉ lấy brand name gốc từ brandGroup - giữ nguyên 100% từ CSV, không trim
+  const brandName = brandGroup?.originalName || "";
   
   // Chỉ hiển thị brand name gốc, không hiển thị title nếu có brand name
   // Nếu không có brand name thì mới hiển thị title

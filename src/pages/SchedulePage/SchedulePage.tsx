@@ -252,6 +252,7 @@ export function SchedulePage() {
             setFilters((p) => ({ ...p, dateFrom: from, dateTo: to || from }));
           }}
           onExportIcs={onExportICS}
+          availableDates={schedule.data?.dates || []}
         />
 
         <div className="px-1 text-sm text-[var(--color-text-secondary)]">
