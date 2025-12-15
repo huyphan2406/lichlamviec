@@ -135,29 +135,39 @@ export function QuickReportDialog({ open, onOpenChange, job }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl">
-        <DialogHeader>
-          <DialogTitle className="truncate">{title}</DialogTitle>
-          <DialogDescription className="line-clamp-2">{subtitle}</DialogDescription>
+      <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+        <DialogHeader className="space-y-2">
+          <DialogTitle className="truncate text-base sm:text-lg">{title}</DialogTitle>
+          <DialogDescription className="line-clamp-2 text-xs sm:text-sm">{subtitle}</DialogDescription>
         </DialogHeader>
 
         {job ? (
-          <div className="text-sm text-[var(--color-text-secondary)]">
+          <div className="text-xs sm:text-sm text-[var(--color-text-secondary)]">
             <p className="truncate">{people}</p>
           </div>
         ) : null}
 
         <Separator />
 
-        <form className="grid gap-4" onSubmit={onSubmit}>
+        <form className="grid gap-3 sm:gap-4" onSubmit={onSubmit}>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="grid gap-1.5">
-              <Label>Email *</Label>
-              <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="your.email@example.com" type="email" />
+              <Label className="text-xs sm:text-sm">Email *</Label>
+              <Input 
+                value={email} 
+                onChange={(e) => setEmail(e.target.value)} 
+                placeholder="your.email@example.com" 
+                type="email"
+                className="h-9 sm:h-10 text-sm"
+              />
             </div>
             <div className="grid gap-1.5">
-              <Label>Key livestream</Label>
-              <Input value={keyLivestream} readOnly />
+              <Label className="text-xs sm:text-sm">Key livestream</Label>
+              <Input 
+                value={keyLivestream} 
+                readOnly 
+                className="h-9 sm:h-10 text-sm"
+              />
             </div>
           </div>
 
@@ -165,22 +175,27 @@ export function QuickReportDialog({ open, onOpenChange, job }: Props) {
             {liveIds.map((id, idx) => (
               <div key={idx} className="grid gap-1.5">
                 <div className="flex items-center justify-between gap-2">
-                  <Label>ID phiên live {idx === 0 ? "1 *" : idx + 1}</Label>
+                  <Label className="text-xs sm:text-sm">ID phiên live {idx === 0 ? "1 *" : idx + 1}</Label>
                   {idx > 0 ? (
                     <button
                       type="button"
                       onClick={() => removeLiveId(idx)}
-                      className="text-xs text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                      className="text-xs text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] px-1"
                     >
                       Xóa
                     </button>
                   ) : null}
                 </div>
-                <Input value={id} onChange={(e) => updateLiveId(idx, e.target.value)} placeholder={`Nhập ID phiên live ${idx + 1}`} />
+                <Input 
+                  value={id} 
+                  onChange={(e) => updateLiveId(idx, e.target.value)} 
+                  placeholder={`Nhập ID phiên live ${idx + 1}`}
+                  className="h-9 sm:h-10 text-sm"
+                />
               </div>
             ))}
             <div>
-              <Button type="button" variant="secondary" size="sm" onClick={addLiveId}>
+              <Button type="button" variant="secondary" size="sm" onClick={addLiveId} className="h-8 sm:h-9 text-xs sm:text-sm">
                 Thêm ID
               </Button>
             </div>
@@ -188,17 +203,27 @@ export function QuickReportDialog({ open, onOpenChange, job }: Props) {
 
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="grid gap-1.5">
-              <Label>GMV</Label>
-              <Input value={gmv} onChange={(e) => setGmv(e.target.value)} placeholder="Nhập GMV" />
+              <Label className="text-xs sm:text-sm">GMV</Label>
+              <Input 
+                value={gmv} 
+                onChange={(e) => setGmv(e.target.value)} 
+                placeholder="Nhập GMV"
+                className="h-9 sm:h-10 text-sm"
+              />
             </div>
             <div className="grid gap-1.5">
-              <Label>Start time thực tế</Label>
-              <Input value={startTimeActual} onChange={(e) => setStartTimeActual(e.target.value)} placeholder="HH:MM" />
+              <Label className="text-xs sm:text-sm">Start time thực tế</Label>
+              <Input 
+                value={startTimeActual} 
+                onChange={(e) => setStartTimeActual(e.target.value)} 
+                placeholder="HH:MM"
+                className="h-9 sm:h-10 text-sm"
+              />
             </div>
           </div>
 
           <div className="grid gap-2">
-            <Label>Ảnh dashboard (tùy chọn)</Label>
+            <Label className="text-xs sm:text-sm">Ảnh dashboard (tùy chọn)</Label>
             <input
               ref={fileInputRef}
               type="file"
@@ -207,7 +232,12 @@ export function QuickReportDialog({ open, onOpenChange, job }: Props) {
               className="hidden"
             />
             <div className="flex items-center gap-2">
-              <Button type="button" variant="secondary" onClick={() => fileInputRef.current?.click()}>
+              <Button 
+                type="button" 
+                variant="secondary" 
+                onClick={() => fileInputRef.current?.click()}
+                className="h-9 sm:h-10 text-xs sm:text-sm"
+              >
                 Chọn ảnh
               </Button>
               {imagePreview ? <span className="text-xs text-[var(--color-text-secondary)]">Đã chọn</span> : null}
@@ -216,18 +246,28 @@ export function QuickReportDialog({ open, onOpenChange, job }: Props) {
               <img
                 src={imagePreview}
                 alt="Preview"
-                className="max-h-56 w-full rounded-md border border-[var(--color-border)] object-contain"
+                className="max-h-40 sm:max-h-56 w-full rounded-md border border-[var(--color-border)] object-contain"
                 loading="lazy"
                 decoding="async"
               />
             ) : null}
           </div>
 
-          <DialogFooter>
-            <Button type="button" variant="secondary" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
+          <DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button 
+              type="button" 
+              variant="secondary" 
+              onClick={() => onOpenChange(false)} 
+              disabled={isSubmitting}
+              className="w-full sm:w-auto h-9 sm:h-10 text-xs sm:text-sm"
+            >
               Hủy
             </Button>
-            <Button type="submit" disabled={isSubmitting || !job}>
+            <Button 
+              type="submit" 
+              disabled={isSubmitting || !job}
+              className="w-full sm:w-auto h-9 sm:h-10 text-xs sm:text-sm"
+            >
               {isSubmitting ? "Đang gửi..." : "Gửi report"}
             </Button>
           </DialogFooter>
