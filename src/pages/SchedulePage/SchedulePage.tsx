@@ -23,12 +23,54 @@ export function SchedulePage() {
 
   const jobs = schedule.data?.jobs ?? [];
   const sessions = schedule.data?.sessions ?? [];
+  const uniqueStaffNames = useMemo(() => {
+    const set = new Set<string>();
+    for (const job of jobs) {
+      const candidates = [job["Talent 1"], job["Talent 2"], job["Coordinator 1"], job["Coordinator 2"]];
+      for (const c of candidates) {
+        const val = (c || "").toString().trim();
+        if (val && val !== "nan") set.add(val);
+      }
+    }
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [jobs]);
+
+  const getInitialFilters = (): ScheduleFilters => {
+    const today = new Date();
+    const start = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0);
+    const end = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
+
+    let query = "";
+    try {
+      query = localStorage.getItem("last_search_query") || "";
+    } catch {
+      // ignore
+    }
+
+    // Optional persistence for date range (robust): if user ever clears we store "ALL".
+    try {
+      const raw = localStorage.getItem("last_date_range");
+      if (raw === "ALL") {
+        return { dateFrom: null, dateTo: null, session: "", query };
+      }
+      if (raw) {
+        const parsed = JSON.parse(raw) as { from?: string; to?: string };
+        const from = parsed.from ? new Date(parsed.from) : null;
+        const to = parsed.to ? new Date(parsed.to) : null;
+        if (from && !Number.isNaN(from.getTime())) {
+          return { dateFrom: from, dateTo: to && !Number.isNaN(to.getTime()) ? to : from, session: "", query };
+        }
+      }
+    } catch {
+      // ignore
+    }
+
+    // Default: TODAY
+    return { dateFrom: start, dateTo: end, session: "", query };
+  };
 
   const [filters, setFilters] = useState<ScheduleFilters>(() => ({
-    dateFrom: null,
-    dateTo: null,
-    session: "",
-    query: "",
+    ...getInitialFilters(),
   }));
 
   const jobMetaByRef = useMemo(() => {
@@ -152,19 +194,44 @@ export function SchedulePage() {
   }, []);
 
   return (
-    <div className="-mx-3 -my-3 bg-slate-100 px-3 py-4 sm:-mx-4 sm:-my-4 sm:px-4 sm:py-6 dark:bg-slate-950">
+    <div className="-mx-3 -my-3 bg-gray-100 px-3 py-4 sm:-mx-4 sm:-my-4 sm:px-4 sm:py-6 dark:bg-slate-950">
       <QuickReportDialog open={reportOpen} onOpenChange={setReportOpen} job={reportJob} />
       <div className="grid gap-3">
         <ScheduleToolbar
           query={filters.query}
-          onQueryChange={(value) => setFilters((p) => ({ ...p, query: value }))}
+          onQueryChange={(value) => {
+            try {
+              localStorage.setItem("last_search_query", value);
+            } catch {
+              // ignore
+            }
+            setFilters((p) => ({ ...p, query: value }));
+          }}
+          uniqueStaffNames={uniqueStaffNames}
           session={filters.session}
           onSessionChange={(value) => setFilters((p) => ({ ...p, session: value }))}
           sessionOptions={sessions}
           dateRange={dateRange}
-          onDateRangeChange={(range) =>
-            setFilters((p) => ({ ...p, dateFrom: range?.from ?? null, dateTo: range?.to ?? null }))
-          }
+          onDateRangeChange={(range) => {
+            const from = range?.from ?? null;
+            const to = range?.to ?? null;
+            try {
+              if (!from && !to) {
+                localStorage.setItem("last_date_range", "ALL");
+              } else {
+                localStorage.setItem(
+                  "last_date_range",
+                  JSON.stringify({
+                    from: from ? from.toISOString() : undefined,
+                    to: to ? to.toISOString() : undefined,
+                  }),
+                );
+              }
+            } catch {
+              // ignore
+            }
+            setFilters((p) => ({ ...p, dateFrom: from, dateTo: to || from }));
+          }}
           onExportIcs={onExportICS}
         />
 
@@ -183,7 +250,7 @@ export function SchedulePage() {
         ) : null}
 
         {/* Native CSS Grid (no virtualization to avoid overlap with dynamic heights) */}
-        <div className="grid grid-cols-1 gap-6 pb-20 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-6 pb-20 md:grid-cols-2 xl:grid-cols-3 min-[1600px]:grid-cols-4">
           {jobItems.map((item, index) => {
             const job = item.job;
             const stableKey = `${job["Date livestream"] || "na"}|${job["Time slot"] || "na"}|${job.Store || "na"}|${index}`;
