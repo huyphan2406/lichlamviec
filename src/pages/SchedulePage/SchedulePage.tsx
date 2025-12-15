@@ -1,15 +1,20 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { CalendarPlus, Download, Filter, Link as LinkIcon, MapPin, Search, User } from "lucide-react";
+import { Download, Filter, Search } from "lucide-react";
 import { toast } from "sonner";
 import type { EventAttributes } from "ics";
 import { useGroupsData, useScheduleData } from "@/features/schedule/api";
-import type { GroupLink, Job, ScheduleFilters } from "@/features/schedule/types";
-import { findGroupLink, findHostGroupFromNames } from "@/features/schedule/groupMatching";
+import type { Job, ScheduleFilters } from "@/features/schedule/types";
+import {
+  createGroupIndex,
+  createHostNameIndex,
+  findGroupLinkWithIndex,
+  findHostGroupFromNamesIndex,
+} from "@/features/schedule/groupMatching";
 import { useScheduleFilters } from "@/features/schedule/useScheduleFilters";
 import { combineLocation, combineNames, getTodayDDMMYYYY, isJobActive } from "@/features/schedule/utils";
 import { QuickReportDialog } from "@/components/schedule/QuickReportDialog";
-import { Badge } from "@/components/ui/badge";
+import { JobCard } from "@/components/schedule/JobCard";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -18,19 +23,25 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
-type RowItem =
-  | { id: string; type: "header"; label: string }
-  | {
-      id: string;
-      type: "job";
-      job: Job;
-      isActive: boolean;
-      brandGroup: GroupLink | null;
-      hostGroup: GroupLink | null;
-    };
-
 function getScrollElement() {
   return document.getElementById("app-scroll");
+}
+
+function useGridLanes() {
+  const [lanes, setLanes] = useState(1);
+  useEffect(() => {
+    const md = window.matchMedia("(min-width: 640px)");
+    const lg = window.matchMedia("(min-width: 1024px)");
+    const update = () => setLanes(lg.matches ? 3 : md.matches ? 2 : 1);
+    update();
+    md.addEventListener("change", update);
+    lg.addEventListener("change", update);
+    return () => {
+      md.removeEventListener("change", update);
+      lg.removeEventListener("change", update);
+    };
+  }, []);
+  return lanes;
 }
 
 function FiltersForm({
@@ -133,94 +144,6 @@ function FiltersForm({
   );
 }
 
-function JobCard({
-  job,
-  isActive,
-  brandGroup,
-  hostGroup,
-  onQuickReport,
-}: {
-  job: Job;
-  isActive: boolean;
-  brandGroup: GroupLink | null;
-  hostGroup: GroupLink | null;
-  onQuickReport: (job: Job) => void;
-}) {
-  const time = job["Time slot"] || "N/A";
-  const location = combineLocation(job);
-  const talent = combineNames(job["Talent 1"], job["Talent 2"]);
-  const coord = combineNames(job["Coordinator 1"], job["Coordinator 2"]);
-  const sessionType = (job["Type of session"] || "").trim().toLowerCase();
-
-  return (
-    <Card className="p-3">
-      <div className="flex items-start gap-2">
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <p className="truncate text-sm font-semibold">{job.Store || "Unnamed Job"}</p>
-            {isActive ? <Badge variant="brand">Đang diễn ra</Badge> : null}
-            {sessionType === "ca nối" || sessionType === "ca noi" ? <Badge>Ca nối</Badge> : null}
-          </div>
-          <div className="mt-1 grid gap-1 text-sm text-[var(--color-text-secondary)]">
-            <div className="flex items-center gap-2">
-              <CalendarPlus className="h-4 w-4" />
-              <span className="truncate">{time}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <MapPin className="h-4 w-4" />
-              <span className="truncate">{location}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <User className="h-4 w-4" />
-              <span className="truncate">{talent}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <User className="h-4 w-4 opacity-70" />
-              <span className="truncate">{coord}</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex shrink-0 flex-col gap-2">
-          <Button size="sm" variant="secondary" onClick={() => onQuickReport(job)}>
-            Report
-          </Button>
-          <div className="grid gap-1">
-            <a
-              className="inline-flex items-center gap-1 text-xs text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
-              href={brandGroup?.link || undefined}
-              target={brandGroup ? "_blank" : undefined}
-              rel={brandGroup ? "noopener noreferrer" : undefined}
-              aria-disabled={!brandGroup}
-              onClick={(e) => {
-                if (!brandGroup) e.preventDefault();
-              }}
-              title={brandGroup?.originalName || "Chưa có link"}
-            >
-              <LinkIcon className="h-3.5 w-3.5" />
-              Brand
-            </a>
-            <a
-              className="inline-flex items-center gap-1 text-xs text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
-              href={hostGroup?.link || undefined}
-              target={hostGroup ? "_blank" : undefined}
-              rel={hostGroup ? "noopener noreferrer" : undefined}
-              aria-disabled={!hostGroup}
-              onClick={(e) => {
-                if (!hostGroup) e.preventDefault();
-              }}
-              title={hostGroup?.originalName || "Chưa có link"}
-            >
-              <LinkIcon className="h-3.5 w-3.5" />
-              Host
-            </a>
-          </div>
-        </div>
-      </div>
-    </Card>
-  );
-}
-
 export function SchedulePage() {
   const schedule = useScheduleData();
   const groups = useGroupsData();
@@ -237,41 +160,38 @@ export function SchedulePage() {
     query: "",
   }));
 
-  const { filteredJobs, groupedByTime } = useScheduleFilters(jobs, filters);
+  const { filteredJobs } = useScheduleFilters(jobs, filters);
 
-  const flatRows: RowItem[] = useMemo(() => {
-    const items: RowItem[] = [];
+  const lanes = useGridLanes();
+  const jobItems = useMemo(() => {
     const hostGroups = groups.data?.hostGroups;
     const brandGroups = groups.data?.brandGroups;
+    const brandIndex = createGroupIndex(brandGroups);
+    const hostIndex = createGroupIndex(hostGroups);
+    const hostNameIndex = createHostNameIndex(hostGroups);
 
-    for (const [timeGroup, groupJobs] of groupedByTime.entries()) {
-      items.push({ id: `h_${timeGroup}`, type: "header", label: timeGroup });
-      groupJobs.forEach((job, idx) => {
-        const brandGroup = findGroupLink(job, brandGroups, "brand");
-        const directHostGroup = findGroupLink(job, hostGroups, "host");
-        const talentDisplay = combineNames(job["Talent 1"], job["Talent 2"]);
-        const coordDisplay = combineNames(job["Coordinator 1"], job["Coordinator 2"]);
-        const hostGroup = directHostGroup || findHostGroupFromNames(job, hostGroups, { talentDisplay, coordDisplay });
-
-        items.push({
-          id: `j_${timeGroup}_${idx}`,
-          type: "job",
-          job,
-          isActive: isJobActive(job),
-          brandGroup,
-          hostGroup,
-        });
-      });
-    }
-
-    return items;
-  }, [groupedByTime, groups.data?.hostGroups, groups.data?.brandGroups]);
+    return filteredJobs.map((job) => {
+      const brandGroup = findGroupLinkWithIndex(job, brandIndex, "brand");
+      const directHostGroup = findGroupLinkWithIndex(job, hostIndex, "host");
+      const talentDisplay = combineNames(job["Talent 1"], job["Talent 2"]);
+      const coordDisplay = combineNames(job["Coordinator 1"], job["Coordinator 2"]);
+      const hostGroup =
+        directHostGroup || findHostGroupFromNamesIndex(hostNameIndex, { talentDisplay, coordDisplay });
+      return {
+        job,
+        isActive: isJobActive(job),
+        brandGroup,
+        hostGroup,
+      };
+    });
+  }, [filteredJobs, groups.data?.hostGroups, groups.data?.brandGroups]);
 
   const rowVirtualizer = useVirtualizer({
-    count: flatRows.length,
+    count: jobItems.length,
     getScrollElement,
-    estimateSize: (index) => (flatRows[index]?.type === "header" ? 44 : 148),
+    estimateSize: () => 200,
     overscan: 6,
+    lanes,
   });
 
   const onExportICS = useCallback(async () => {
@@ -345,10 +265,11 @@ export function SchedulePage() {
   }, []);
 
   return (
-    <div className="grid gap-3">
+    <div className="-mx-3 -my-3 bg-slate-50 px-3 py-3 sm:-mx-4 sm:-my-4 sm:px-4 sm:py-4 dark:bg-slate-950">
       <QuickReportDialog open={reportOpen} onOpenChange={setReportOpen} job={reportJob} />
-      {/* Mobile: top actions row */}
-      <div className="flex items-center gap-2 sm:hidden">
+      <div className="grid gap-3">
+        {/* Mobile: top actions row */}
+        <div className="flex items-center gap-2 sm:hidden">
         <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
           <SheetTrigger asChild>
             <Button variant="secondary" className="flex-1">
@@ -384,10 +305,10 @@ export function SchedulePage() {
         <Button variant="secondary" size="icon" onClick={onExportICS} aria-label="Xuất lịch">
           <Download className="h-4 w-4" />
         </Button>
-      </div>
+        </div>
 
-      {/* Desktop/tablet: inline filters */}
-      <div className="hidden sm:block">
+        {/* Desktop/tablet: inline filters */}
+        <div className="hidden sm:block">
         <Card className="p-4">
           <FiltersForm filters={filters} setFilters={setFilters} dates={dates} sessions={sessions} stores={stores} />
           <Separator className="my-4" />
@@ -403,55 +324,52 @@ export function SchedulePage() {
             </div>
           </div>
         </Card>
-      </div>
+        </div>
 
-      {/* Status / Errors */}
-      {schedule.error ? (
+        {/* Status / Errors */}
+        {schedule.error ? (
         <Card className="p-4">
           <p className="text-sm font-medium">Không thể tải lịch.</p>
           <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
             Vui lòng kiểm tra quyền Google Sheet hoặc kết nối mạng.
           </p>
         </Card>
-      ) : null}
+        ) : null}
 
-      {/* Virtualized list */}
-      <div className="relative">
+        {/* Virtualized grid */}
+        <div className="relative">
         <div style={{ height: rowVirtualizer.getTotalSize(), position: "relative" }}>
           {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-            const item = flatRows[virtualRow.index];
+            const item = jobItems[virtualRow.index];
             if (!item) return null;
+
+            const gap = 12;
+            const lane = (virtualRow as unknown as { lane?: number }).lane ?? 0;
+            const left = lanes === 1 ? "0px" : `calc(${lane} * ((100% - ${(lanes - 1) * gap}px) / ${lanes} + ${gap}px))`;
+            const width = lanes === 1 ? "100%" : `calc((100% - ${(lanes - 1) * gap}px) / ${lanes})`;
 
             return (
               <div
-                key={item.id}
+                key={`${virtualRow.index}_${lane}`}
                 style={{
                   position: "absolute",
                   top: 0,
-                  left: 0,
-                  width: "100%",
+                  left,
+                  width,
                   transform: `translateY(${virtualRow.start}px)`,
-                  paddingBottom: 12,
                 }}
               >
-                {item.type === "header" ? (
-                  <div className="px-1 py-2">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)]">
-                      {item.label}
-                    </p>
-                  </div>
-                ) : (
-                  <JobCard
-                    job={item.job}
-                    isActive={item.isActive}
-                    brandGroup={item.brandGroup}
-                    hostGroup={item.hostGroup}
-                    onQuickReport={handleQuickReport}
-                  />
-                )}
+                <JobCard
+                  job={item.job}
+                  isActive={item.isActive}
+                  brandGroup={item.brandGroup}
+                  hostGroup={item.hostGroup}
+                  onQuickReport={handleQuickReport}
+                />
               </div>
             );
           })}
+        </div>
         </div>
       </div>
     </div>

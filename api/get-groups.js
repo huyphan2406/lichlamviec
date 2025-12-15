@@ -4,8 +4,12 @@
 import Papa from 'papaparse';
 
 // Link CSV export từ Google Sheet
-const GROUP_HOST_CSV_URL = 'https://docs.google.com/spreadsheets/d/1sgDT3E2kTsz5Ph6XeuXhZZKpdwtFDb4ncoUm6Q7UEYY/export?format=csv&gid=0';
-const GROUP_BRAND_CSV_URL = 'https://docs.google.com/spreadsheets/d/1sgDT3E2kTsz5Ph6XeuXhZZKpdwtFDb4ncoUm6Q7UEYY/export?format=csv&gid=1406781907';
+// Source (view links):
+// - Host: https://docs.google.com/spreadsheets/d/1a8zFG87DJxToDUk0UjVJsh8S24TW6DVoU9uROn4IpUA/edit?gid=0#gid=0
+// - Brand: https://docs.google.com/spreadsheets/d/1a8zFG87DJxToDUk0UjVJsh8S24TW6DVoU9uROn4IpUA/edit?gid=1486029985#gid=1486029985
+const SHEET_ID = '1a8zFG87DJxToDUk0UjVJsh8S24TW6DVoU9uROn4IpUA';
+const GROUP_HOST_CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
+const GROUP_BRAND_CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=1486029985`;
 // Hàm normalize brand name - xử lý viết tắt và format đặc biệt (GIỐNG HỆT FRONTEND)
 // Xử lý các format: "ADIVA- TIKTOK", "ANESSA - TTS", "JUDYDOLLSHP", "MONDELEZ", "ROHTO - TTS (SC +HB)"
 // "[ MUSTELA - SHP/TTS] TEAM LIVESTREAM INHOUSE" -> "mustela shopee tiktok team livestream inhouse"

@@ -77,8 +77,43 @@ function computeOverlapScore(tokensA: string[], tokensB: string[]) {
   return matches / Math.max(tokensA.length, tokensB.length);
 }
 
+type GroupIndexEntry = {
+  key: string;
+  value: GroupLink;
+  keyTokens: string[];
+  keyCoreTokens: string[];
+  keyCoreName: string;
+};
+
+export type GroupIndex = {
+  groups: Record<string, GroupLink>;
+  entries: GroupIndexEntry[];
+};
+
+export function createGroupIndex(groups: Record<string, GroupLink> | undefined): GroupIndex | null {
+  if (!groups) return null;
+
+  const entries: GroupIndexEntry[] = [];
+  for (const [key, value] of Object.entries(groups)) {
+    if (!key) continue;
+    const { tokens, coreTokens, coreName } = buildCoreTokens(key);
+    entries.push({ key, value, keyTokens: tokens, keyCoreTokens: coreTokens, keyCoreName: coreName });
+  }
+
+  // Heuristic: check longer / more specific keys first to reduce false positives and allow early returns.
+  entries.sort((a, b) => b.keyCoreTokens.length - a.keyCoreTokens.length || b.key.length - a.key.length);
+
+  return { groups, entries };
+}
+
 export function findGroupLink(job: Job, groups: Record<string, GroupLink> | undefined, type: "brand" | "host") {
   if (!job || !groups || Object.keys(groups).length === 0) return null;
+  return findGroupLinkWithIndex(job, createGroupIndex(groups), type);
+}
+
+export function findGroupLinkWithIndex(job: Job, index: GroupIndex | null, type: "brand" | "host") {
+  if (!job || !index) return null;
+  const groups = index.groups;
   const storeName = job.Store || "";
   if (!storeName) return null;
 
@@ -98,54 +133,63 @@ export function findGroupLink(job: Job, groups: Record<string, GroupLink> | unde
   let bestMatch: GroupLink | null = null;
   let bestScore = 0;
 
-  for (const [key, value] of Object.entries(groups)) {
-    if (candidateNames.has(key)) return value;
+  const normalizedStoreTokens = tokenize(normalizedStore);
 
-    const { coreTokens: keyCoreTokens, coreName: keyCoreName } = buildCoreTokens(key);
+  for (const entry of index.entries) {
+    if (candidateNames.has(entry.key)) return entry.value;
 
-    if (coreName && keyCoreName && coreName === keyCoreName) return value;
+    if (coreName && entry.keyCoreName && coreName === entry.keyCoreName) return entry.value;
 
-    if (keyCoreTokens.length > 0) {
-      const normalizedStoreTokens = tokenize(normalizedStore);
-      const allKeyTokensInStore = keyCoreTokens.every((t) => normalizedStoreTokens.includes(t));
-      if (allKeyTokensInStore && keyCoreTokens.length >= 2) return value;
+    if (entry.keyCoreTokens.length > 0) {
+      const allKeyTokensInStore = entry.keyCoreTokens.every((t) => normalizedStoreTokens.includes(t));
+      if (allKeyTokensInStore && entry.keyCoreTokens.length >= 2) return entry.value;
     }
 
     if (coreTokens.length > 0) {
-      const keyTokens = tokenize(key);
-      const allStoreTokensInKey = coreTokens.every((t) => keyTokens.includes(t));
-      if (allStoreTokensInKey && coreTokens.length >= 2) return value;
+      const allStoreTokensInKey = coreTokens.every((t) => entry.keyTokens.includes(t));
+      if (allStoreTokensInKey && coreTokens.length >= 2) return entry.value;
     }
 
-    if (coreName && keyCoreName && (coreName.includes(keyCoreName) || keyCoreName.includes(coreName))) {
-      bestMatch = value;
+    if (coreName && entry.keyCoreName && (coreName.includes(entry.keyCoreName) || entry.keyCoreName.includes(coreName))) {
+      bestMatch = entry.value;
       bestScore = 1;
       break;
     }
 
-    const score = computeOverlapScore(coreTokens, keyCoreTokens);
-    if (score >= 0.85) return value;
+    const score = computeOverlapScore(coreTokens, entry.keyCoreTokens);
+    if (score >= 0.85) return entry.value;
 
     if (score > bestScore && score >= 0.4) {
       bestScore = score;
-      bestMatch = value;
+      bestMatch = entry.value;
     }
   }
 
   return bestMatch;
 }
 
-export function findHostGroupFromNames(
-  job: Job,
-  hostGroups: Record<string, GroupLink> | undefined,
+type HostNameIndex = {
+  entries: Array<{ key: string; value: GroupLink }>;
+};
+
+export function createHostNameIndex(hostGroups: Record<string, GroupLink> | undefined): HostNameIndex | null {
+  if (!hostGroups) return null;
+  const entries = Object.entries(hostGroups)
+    .filter(([k]) => Boolean(k))
+    .map(([key, value]) => ({ key, value }))
+    .sort((a, b) => b.key.length - a.key.length);
+  return { entries };
+}
+
+export function findHostGroupFromNamesIndex(
+  hostIndex: HostNameIndex | null,
   opts?: { talentDisplay?: string; coordDisplay?: string },
 ) {
-  if (!hostGroups) return null;
-
+  if (!hostIndex) return null;
   const namesToCheck = [opts?.talentDisplay, opts?.coordDisplay].filter(Boolean) as string[];
   for (const name of namesToCheck) {
     const normalizedName = normalizeNameForMatch(name);
-    for (const [key, value] of Object.entries(hostGroups)) {
+    for (const { key, value } of hostIndex.entries) {
       if (normalizedName.includes(key) || key.includes(normalizedName)) return value;
     }
   }
