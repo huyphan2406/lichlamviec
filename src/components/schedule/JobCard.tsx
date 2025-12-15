@@ -45,9 +45,9 @@ export function JobCard({ job, isActive, brandGroup, hostGroup, onQuickReport, o
   const hostZaloLink = (job.host_zalo_link || hostGroup?.link || "").toString().trim();
   const brandZaloLink = (job.brand_zalo_link || brandGroup?.link || "").toString().trim();
   
-  // DEBUG MODE: Force check - determine which link to use
-  const activeZaloLink = brandZaloLink || hostZaloLink;
-  const hasLink = !!activeZaloLink && activeZaloLink.length > 0 && activeZaloLink !== "#";
+  // DEBUG MODE: Check links separately for Host and Brand
+  const hasHostLink = !!hostZaloLink && hostZaloLink.length > 0 && hostZaloLink !== "#";
+  const hasBrandLink = !!brandZaloLink && brandZaloLink.length > 0 && brandZaloLink !== "#";
   
   // DEBUG: Detailed console logs
   console.log(`[JobCard Debug] Job: ${title}`, {
@@ -61,8 +61,8 @@ export function JobCard({ job, isActive, brandGroup, hostGroup, onQuickReport, o
     jobBrandZaloLink: job.brand_zalo_link,
     finalHostLink: hostZaloLink,
     finalBrandLink: brandZaloLink,
-    activeZaloLink,
-    hasLink,
+    hasHostLink,
+    hasBrandLink,
   });
 
   return (
@@ -74,30 +74,56 @@ export function JobCard({ job, isActive, brandGroup, hostGroup, onQuickReport, o
             <p className="text-base font-extrabold leading-tight text-slate-900 dark:text-slate-50">
               <span className="block whitespace-normal break-words">{title}</span>
             </p>
-            {/* DEBUG MODE: Always render Zalo button to verify UI */}
+            {/* DEBUG MODE: Always render 2 separate buttons - Host & Brand */}
+            {/* Brand Group Button */}
             <button
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                if (hasLink && activeZaloLink) {
-                  window.open(activeZaloLink, '_blank');
+                if (hasBrandLink && brandZaloLink) {
+                  window.open(brandZaloLink, '_blank');
                 }
               }}
-              disabled={!hasLink}
+              disabled={!hasBrandLink}
               className={`ml-2 inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium transition-colors shrink-0 ${
-                hasLink
+                hasBrandLink
                   ? 'bg-blue-500 text-white hover:bg-blue-600 cursor-pointer shadow-sm'
                   : 'bg-gray-200 text-gray-500 cursor-not-allowed'
               }`}
               title={
-                hasLink
-                  ? `Join Zalo Group${brandGroup?.originalName || hostGroup?.originalName ? `: ${brandGroup?.originalName || hostGroup?.originalName}` : ""}`
-                  : 'No Zalo link available'
+                hasBrandLink
+                  ? `Join Brand Zalo Group${brandGroup?.originalName ? `: ${brandGroup.originalName}` : ""}`
+                  : 'No Brand Zalo link available'
               }
-              aria-label={hasLink ? 'Join Zalo Group' : 'No Zalo link available'}
+              aria-label={hasBrandLink ? 'Join Brand Zalo Group' : 'No Brand Zalo link available'}
             >
               <MessageCircle className="w-3.5 h-3.5" />
-              <span>{hasLink ? 'Zalo' : 'No Link'}</span>
+              <span>{hasBrandLink ? 'Brand' : 'No Link'}</span>
+            </button>
+            {/* Host Group Button */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (hasHostLink && hostZaloLink) {
+                  window.open(hostZaloLink, '_blank');
+                }
+              }}
+              disabled={!hasHostLink}
+              className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium transition-colors shrink-0 ${
+                hasHostLink
+                  ? 'bg-blue-500 text-white hover:bg-blue-600 cursor-pointer shadow-sm'
+                  : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+              }`}
+              title={
+                hasHostLink
+                  ? `Join Host Zalo Group${hostGroup?.originalName ? `: ${hostGroup.originalName}` : ""}`
+                  : 'No Host Zalo link available'
+              }
+              aria-label={hasHostLink ? 'Join Host Zalo Group' : 'No Host Zalo link available'}
+            >
+              <MessageCircle className="w-3.5 h-3.5" />
+              <span>{hasHostLink ? 'Host' : 'No Link'}</span>
             </button>
             {isCaNoi ? (
               <span className="inline-flex h-5 items-center rounded-md border border-slate-600 px-2 text-[10px] font-extrabold uppercase tracking-wide text-slate-700 dark:border-slate-400 dark:text-slate-200 shrink-0">
@@ -196,7 +222,7 @@ export function JobCard({ job, isActive, brandGroup, hostGroup, onQuickReport, o
 
       {/* Optional: ACTIVE status - badge tròn màu xanh */}
       {isActive ? (
-        <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-center">
+        <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-start">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-green-500 px-3 py-1 text-xs font-semibold text-white shadow-sm">
             <span className="relative flex h-2 w-2">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>

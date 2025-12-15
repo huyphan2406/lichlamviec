@@ -132,54 +132,116 @@ async function fetchGroupsData(csvUrl) {
 function createGroupsMap(rawData, type = 'unknown') {
     const groupsMap = new Map();
     
+    // DEBUG: Log tất cả tên cột trong CSV để xác định tên cột thực tế
+    if (rawData && rawData.length > 0) {
+        const allColumns = Object.keys(rawData[0]);
+        console.log(`📋 [${type}] Tên cột trong CSV:`, allColumns);
+    }
+    
     // Tên cột tiềm năng đã được chuẩn hóa (dùng để tìm kiếm)
-    // Lưu ý: Brand sheet dùng "GROUP BRAND" và "LINK", Host sheet có thể dùng tên khác
-    const NAME_KEYS = ['group brand', 'tên host', 'ten host', 'tên brand', 'ten brand', 'name', 'tên', 'mc name', 'brand name', 'ten brand name'];
-    const LINK_KEYS = ['link', 'link dép lào', 'link dep lao', 'link zalo', 'zalo link', 'link zalo group', 'zalo group link'];
+    // Mở rộng danh sách để cover nhiều trường hợp hơn
+    const NAME_KEYS = [
+        'group brand', 'tên host', 'ten host', 'tên brand', 'ten brand', 
+        'name', 'tên', 'mc name', 'brand name', 'ten brand name',
+        'host name', 'hostname', 'group name', 'groupname',
+        'tên nhóm', 'ten nhom', 'nhóm', 'nhom',
+        'brand', 'host', 'mc', 'talent'
+    ];
+    const LINK_KEYS = [
+        'link', 'link dép lào', 'link dep lao', 'link zalo', 'zalo link', 
+        'link zalo group', 'zalo group link', 'zalo', 'link zalo group',
+        'link group', 'group link', 'link nhóm', 'link nhom',
+        'url', 'link zalo group', 'zalo group', 'group zalo link'
+    ];
     
     // Tối ưu: Cache normalized keys để tránh normalize nhiều lần
-    const normalizedNameKeys = new Set(NAME_KEYS);
-    const normalizedLinkKeys = new Set(LINK_KEYS);
+    const normalizedNameKeys = new Set(NAME_KEYS.map(k => normalizeName(k)));
+    const normalizedLinkKeys = new Set(LINK_KEYS.map(k => normalizeName(k)));
     
     // Hàm tìm tên cột khớp (tối ưu với Set lookup)
-    const findMatchingKey = (row, potentialKeysSet) => {
+    const findMatchingKey = (row, potentialKeysSet, debugType = '') => {
         for (const rowKey of Object.keys(row)) {
             const normalizedRowKey = normalizeName(rowKey);
             if (potentialKeysSet.has(normalizedRowKey)) {
+                console.log(`✅ [${type}] Tìm thấy cột "${rowKey}" (normalized: "${normalizedRowKey}") cho ${debugType}`);
                 return row[rowKey];
             }
         }
         return '';
     };
+    
+    // Tìm tên cột name và link từ row đầu tiên (để debug)
+    if (rawData && rawData.length > 0) {
+        const firstRow = rawData[0];
+        const sampleNameKey = findMatchingKey(firstRow, normalizedNameKeys, 'NAME');
+        const sampleLinkKey = findMatchingKey(firstRow, normalizedLinkKeys, 'LINK');
+        
+        if (!sampleNameKey) {
+            console.warn(`⚠️ [${type}] Không tìm thấy cột NAME. Các cột có sẵn:`, Object.keys(firstRow));
+        }
+        if (!sampleLinkKey) {
+            console.warn(`⚠️ [${type}] Không tìm thấy cột LINK. Các cột có sẵn:`, Object.keys(firstRow));
+        }
+    }
 
     // Xử lý dữ liệu - đảm bảo link được trim và validate
+    let processedCount = 0;
+    let skippedCount = 0;
+    
     for (const row of rawData) {
-        const hostName = findMatchingKey(row, normalizedNameKeys);
-        const zaloLink = findMatchingKey(row, normalizedLinkKeys);
+        const hostName = findMatchingKey(row, normalizedNameKeys, 'NAME');
+        const zaloLink = findMatchingKey(row, normalizedLinkKeys, 'LINK');
         
         // Trim và validate link
         const cleanLink = zaloLink ? String(zaloLink).trim() : '';
         const cleanName = hostName ? String(hostName).trim() : '';
         
-        // Chỉ thêm vào map nếu có cả tên và link hợp lệ
-        if (cleanName && cleanLink && cleanLink.length > 0) {
-            const normalizedName = type.toUpperCase() === 'BRAND' 
-                ? normalizeName(normalizeBrandName(cleanName))
-                : normalizeName(cleanName);
-            
-            // Đảm bảo link bắt đầu bằng http:// hoặc https://
-            const validLink = cleanLink.startsWith('http://') || cleanLink.startsWith('https://') 
-                ? cleanLink 
-                : `https://${cleanLink}`;
-            
-            groupsMap.set(normalizedName, {
-                originalName: cleanName,
-                link: validLink
-            });
+        // DEBUG: Log các row không có đủ dữ liệu
+        if (!cleanName || !cleanLink) {
+            skippedCount++;
+            if (skippedCount <= 3) { // Chỉ log 3 row đầu tiên để tránh spam
+                console.log(`⚠️ [${type}] Bỏ qua row: name="${cleanName}", link="${cleanLink}"`);
+            }
+            continue;
         }
+        
+        // Validate link - phải có ít nhất một số ký tự hợp lệ
+        if (cleanLink.length < 5) {
+            skippedCount++;
+            continue;
+        }
+        
+        // Chỉ thêm vào map nếu có cả tên và link hợp lệ
+        const normalizedName = type.toUpperCase() === 'BRAND' 
+            ? normalizeName(normalizeBrandName(cleanName))
+            : normalizeName(cleanName);
+        
+        // Đảm bảo link bắt đầu bằng http:// hoặc https://
+        let validLink = cleanLink;
+        if (!validLink.startsWith('http://') && !validLink.startsWith('https://')) {
+            // Nếu link không bắt đầu bằng http, thêm https://
+            validLink = `https://${validLink}`;
+        }
+        
+        // Validate link format cơ bản
+        try {
+            new URL(validLink); // Validate URL format
+        } catch (e) {
+            console.warn(`⚠️ [${type}] Link không hợp lệ: "${validLink}" cho name: "${cleanName}"`);
+            skippedCount++;
+            continue;
+        }
+        
+        groupsMap.set(normalizedName, {
+            originalName: cleanName,
+            link: validLink
+        });
+        processedCount++;
     }
     
     // Debug log để kiểm tra số lượng groups được tìm thấy
+    console.log(`📊 [${type}] Kết quả: ${groupsMap.size} groups hợp lệ, ${processedCount} processed, ${skippedCount} skipped, ${rawData.length} total rows`);
+    
     if (groupsMap.size > 0) {
         console.log(`✅ Tìm thấy ${groupsMap.size} ${type} groups`);
     } else {
