@@ -31,9 +31,9 @@ export type GroupsResponse = {
 };
 
 export type ScheduleFilters = {
-  date: string;
+  dateFrom: Date | null;
+  dateTo: Date | null;
   session: string;
-  store: string;
   query: string;
 };
 

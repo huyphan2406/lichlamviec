@@ -1,8 +1,8 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { useWindowVirtualizer } from "@tanstack/react-virtual";
+import React, { useCallback, useMemo, useState } from "react";
 import { Download, Filter, Search } from "lucide-react";
 import { toast } from "sonner";
 import type { EventAttributes } from "ics";
+import type { DateRange } from "react-day-picker";
 import { useGroupsData, useScheduleData } from "@/features/schedule/api";
 import type { Job, ScheduleFilters } from "@/features/schedule/types";
 import {
@@ -15,6 +15,7 @@ import { useScheduleFilters } from "@/features/schedule/useScheduleFilters";
 import { combineLocation, combineNames, getTodayDDMMYYYY, isJobActive } from "@/features/schedule/utils";
 import { QuickReportDialog } from "@/components/schedule/QuickReportDialog";
 import { JobCard } from "@/components/schedule/JobCard";
+import { ScheduleToolbar } from "@/components/schedule/ScheduleToolbar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -23,142 +24,26 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
-function useGridLanes() {
-  const [lanes, setLanes] = useState(1);
-  useEffect(() => {
-    const md = window.matchMedia("(min-width: 640px)");
-    const lg = window.matchMedia("(min-width: 1024px)");
-    const update = () => setLanes(lg.matches ? 3 : md.matches ? 2 : 1);
-    update();
-    md.addEventListener("change", update);
-    lg.addEventListener("change", update);
-    return () => {
-      md.removeEventListener("change", update);
-      lg.removeEventListener("change", update);
-    };
-  }, []);
-  return lanes;
-}
-
-function FiltersForm({
-  filters,
-  setFilters,
-  dates,
-  sessions,
-  stores,
-}: {
-  filters: ScheduleFilters;
-  setFilters: React.Dispatch<React.SetStateAction<ScheduleFilters>>;
-  dates: string[];
-  sessions: string[];
-  stores: string[];
-}) {
-  const ALL = "__ALL__";
-  const safeDates = useMemo(() => dates.filter((d) => d && d !== "nan"), [dates]);
-  const safeSessions = useMemo(() => sessions.filter((s) => s && s !== "nan"), [sessions]);
-  const safeStores = useMemo(() => stores.filter((s) => s && s !== "nan"), [stores]);
-
-  return (
-    <div className="grid gap-3">
-      <div className="grid gap-1.5">
-        <Label htmlFor="q">Tìm kiếm</Label>
-        <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-text-secondary)]" />
-          <Input
-            id="q"
-            value={filters.query}
-            onChange={(e) => setFilters((p) => ({ ...p, query: e.target.value }))}
-            className="pl-9"
-            placeholder="Tên, store, địa điểm..."
-            inputMode="search"
-          />
-        </div>
-      </div>
-
-      <div className="grid gap-3 sm:grid-cols-3">
-        <div className="grid gap-1.5">
-          <Label>Ngày</Label>
-          <Select
-            value={filters.date || ALL}
-            onValueChange={(v) => setFilters((p) => ({ ...p, date: v === ALL ? "" : v }))}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Tất cả" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL}>Tất cả</SelectItem>
-              {safeDates.map((d) => (
-                <SelectItem key={d} value={d}>
-                  {d}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="grid gap-1.5">
-          <Label>Loại ca</Label>
-          <Select
-            value={filters.session || ALL}
-            onValueChange={(v) => setFilters((p) => ({ ...p, session: v === ALL ? "" : v }))}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Tất cả" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL}>Tất cả</SelectItem>
-              {safeSessions.map((s) => (
-                <SelectItem key={s} value={s}>
-                  {s}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="grid gap-1.5">
-          <Label>Store</Label>
-          <Select
-            value={filters.store || ALL}
-            onValueChange={(v) => setFilters((p) => ({ ...p, store: v === ALL ? "" : v }))}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Tất cả" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL}>Tất cả</SelectItem>
-              {safeStores.map((s) => (
-                <SelectItem key={s} value={s}>
-                  {s}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export function SchedulePage() {
   const schedule = useScheduleData();
   const groups = useGroupsData();
 
   const jobs = schedule.data?.jobs ?? [];
-  const dates = schedule.data?.dates ?? [];
   const sessions = schedule.data?.sessions ?? [];
-  const stores = schedule.data?.stores ?? [];
 
   const [filters, setFilters] = useState<ScheduleFilters>(() => ({
-    date: getTodayDDMMYYYY(),
+    dateFrom: null,
+    dateTo: null,
     session: "",
-    store: "",
     query: "",
   }));
 
   const { filteredJobs } = useScheduleFilters(jobs, filters);
+  const dateRange: DateRange | undefined = useMemo(() => {
+    if (!filters.dateFrom && !filters.dateTo) return undefined;
+    return { from: filters.dateFrom ?? undefined, to: filters.dateTo ?? undefined };
+  }, [filters.dateFrom, filters.dateTo]);
 
-  const lanes = useGridLanes();
   const jobItems = useMemo(() => {
     const hostGroups = groups.data?.hostGroups;
     const brandGroups = groups.data?.brandGroups;
@@ -181,24 +66,6 @@ export function SchedulePage() {
       };
     });
   }, [filteredJobs, groups.data?.hostGroups, groups.data?.brandGroups]);
-
-  const [scrollMargin, setScrollMargin] = useState(0);
-  useEffect(() => {
-    const el = document.getElementById("schedule-grid-anchor");
-    if (!el) return;
-    const update = () => setScrollMargin(el.getBoundingClientRect().top + window.scrollY);
-    update();
-    window.addEventListener("resize", update);
-    return () => window.removeEventListener("resize", update);
-  }, []);
-
-  const rowVirtualizer = useWindowVirtualizer({
-    count: jobItems.length,
-    estimateSize: () => 200,
-    overscan: 6,
-    lanes,
-    scrollMargin,
-  });
 
   const onExportICS = useCallback(async () => {
     try {
@@ -274,6 +141,19 @@ export function SchedulePage() {
     <div className="-mx-3 -my-3 bg-slate-50 px-3 py-3 sm:-mx-4 sm:-my-4 sm:px-4 sm:py-4 dark:bg-slate-950">
       <QuickReportDialog open={reportOpen} onOpenChange={setReportOpen} job={reportJob} />
       <div className="grid gap-3">
+        <ScheduleToolbar
+          query={filters.query}
+          onQueryChange={(value) => setFilters((p) => ({ ...p, query: value }))}
+          session={filters.session}
+          onSessionChange={(value) => setFilters((p) => ({ ...p, session: value }))}
+          sessionOptions={sessions}
+          dateRange={dateRange}
+          onDateRangeChange={(range) =>
+            setFilters((p) => ({ ...p, dateFrom: range?.from ?? null, dateTo: range?.to ?? null }))
+          }
+          onExportIcs={onExportICS}
+        />
+
         {/* Mobile: top actions row */}
         <div className="flex items-center gap-2 sm:hidden">
         <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
@@ -289,13 +169,12 @@ export function SchedulePage() {
               <SheetDescription>Giữ giao diện gọn, nhưng vẫn đủ mạnh.</SheetDescription>
             </SheetHeader>
             <div className="mt-4">
-              <FiltersForm filters={filters} setFilters={setFilters} dates={dates} sessions={sessions} stores={stores} />
               <div className="mt-4 flex gap-2">
                 <Button
                   variant="secondary"
                   className="flex-1"
                   onClick={() => {
-                    setFilters({ date: getTodayDDMMYYYY(), session: "", store: "", query: "" });
+                    setFilters({ dateFrom: null, dateTo: null, session: "", query: "" });
                   }}
                 >
                   Reset
@@ -316,7 +195,6 @@ export function SchedulePage() {
         {/* Desktop/tablet: inline filters */}
         <div className="hidden sm:block">
         <Card className="p-4">
-          <FiltersForm filters={filters} setFilters={setFilters} dates={dates} sessions={sessions} stores={stores} />
           <Separator className="my-4" />
           <div className="flex items-center justify-between gap-3">
             <p className="text-sm text-[var(--color-text-secondary)]">
@@ -342,40 +220,22 @@ export function SchedulePage() {
         </Card>
         ) : null}
 
-        {/* Virtualized grid */}
-        <div id="schedule-grid-anchor" className="relative">
-        <div style={{ height: rowVirtualizer.getTotalSize(), position: "relative" }}>
-          {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-            const item = jobItems[virtualRow.index];
-            if (!item) return null;
-
-            const gap = 12;
-            const lane = (virtualRow as unknown as { lane?: number }).lane ?? 0;
-            const left = lanes === 1 ? "0px" : `calc(${lane} * ((100% - ${(lanes - 1) * gap}px) / ${lanes} + ${gap}px))`;
-            const width = lanes === 1 ? "100%" : `calc((100% - ${(lanes - 1) * gap}px) / ${lanes})`;
-
+        {/* Native CSS Grid (no virtualization to avoid overlap with dynamic heights) */}
+        <div className="grid grid-cols-1 gap-4 pb-20 md:grid-cols-2 xl:grid-cols-3">
+          {jobItems.map((item, index) => {
+            const job = item.job;
+            const stableKey = `${job["Date livestream"] || "na"}|${job["Time slot"] || "na"}|${job.Store || "na"}|${index}`;
             return (
-              <div
-                key={`${virtualRow.index}_${lane}`}
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  left,
-                  width,
-                  transform: `translateY(${virtualRow.start - scrollMargin}px)`,
-                }}
-              >
-                <JobCard
-                  job={item.job}
-                  isActive={item.isActive}
-                  brandGroup={item.brandGroup}
-                  hostGroup={item.hostGroup}
-                  onQuickReport={handleQuickReport}
-                />
-              </div>
+              <JobCard
+                key={stableKey}
+                job={item.job}
+                isActive={item.isActive}
+                brandGroup={item.brandGroup}
+                hostGroup={item.hostGroup}
+                onQuickReport={handleQuickReport}
+              />
             );
           })}
-        </div>
         </div>
       </div>
     </div>

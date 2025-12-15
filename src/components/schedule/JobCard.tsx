@@ -19,7 +19,7 @@ export function JobCard({ job, isActive, brandGroup, hostGroup, onQuickReport }:
   const standby = combineNames(job["Coordinator 1"], job["Coordinator 2"]);
 
   return (
-    <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm transition-shadow hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
+    <div className="h-full rounded-2xl border border-slate-100 bg-white p-4 shadow-sm transition-shadow hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
       {/* Header row */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2">
