@@ -1,10 +1,9 @@
 import React, { useCallback, useMemo, useState } from "react";
-import { Download, Filter, Search } from "lucide-react";
 import { toast } from "sonner";
 import type { EventAttributes } from "ics";
 import type { DateRange } from "react-day-picker";
 import { useGroupsData, useScheduleData } from "@/features/schedule/api";
-import type { Job, ScheduleFilters } from "@/features/schedule/types";
+import type { GroupLink, Job, ScheduleFilters } from "@/features/schedule/types";
 import {
   createGroupIndex,
   createHostNameIndex,
@@ -12,17 +11,11 @@ import {
   findHostGroupFromNamesIndex,
 } from "@/features/schedule/groupMatching";
 import { useScheduleFilters } from "@/features/schedule/useScheduleFilters";
-import { combineLocation, combineNames, getTodayDDMMYYYY, isJobActive } from "@/features/schedule/utils";
+import { combineLocation, combineNames, isJobActive } from "@/features/schedule/utils";
 import { QuickReportDialog } from "@/components/schedule/QuickReportDialog";
 import { JobCard } from "@/components/schedule/JobCard";
 import { ScheduleToolbar } from "@/components/schedule/ScheduleToolbar";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 export function SchedulePage() {
   const schedule = useScheduleData();
@@ -38,26 +31,46 @@ export function SchedulePage() {
     query: "",
   }));
 
-  const { filteredJobs } = useScheduleFilters(jobs, filters);
-  const dateRange: DateRange | undefined = useMemo(() => {
-    if (!filters.dateFrom && !filters.dateTo) return undefined;
-    return { from: filters.dateFrom ?? undefined, to: filters.dateTo ?? undefined };
-  }, [filters.dateFrom, filters.dateTo]);
-
-  const jobItems = useMemo(() => {
+  const jobMetaByRef = useMemo(() => {
     const hostGroups = groups.data?.hostGroups;
     const brandGroups = groups.data?.brandGroups;
     const brandIndex = createGroupIndex(brandGroups);
     const hostIndex = createGroupIndex(hostGroups);
     const hostNameIndex = createHostNameIndex(hostGroups);
 
-    return filteredJobs.map((job) => {
+    const map = new Map<Job, { brandGroup: GroupLink | null; hostGroup: GroupLink | null }>();
+    for (const job of jobs) {
       const brandGroup = findGroupLinkWithIndex(job, brandIndex, "brand");
       const directHostGroup = findGroupLinkWithIndex(job, hostIndex, "host");
       const talentDisplay = combineNames(job["Talent 1"], job["Talent 2"]);
       const coordDisplay = combineNames(job["Coordinator 1"], job["Coordinator 2"]);
-      const hostGroup =
-        directHostGroup || findHostGroupFromNamesIndex(hostNameIndex, { talentDisplay, coordDisplay });
+      const hostGroup = directHostGroup || findHostGroupFromNamesIndex(hostNameIndex, { talentDisplay, coordDisplay });
+      map.set(job, { brandGroup, hostGroup });
+    }
+    return map;
+  }, [jobs, groups.data?.hostGroups, groups.data?.brandGroups]);
+
+  const getExtraSearchText = useCallback(
+    (job: Job) => {
+      const meta = jobMetaByRef.get(job);
+      const brand = meta?.brandGroup;
+      const host = meta?.hostGroup;
+      return `${brand?.originalName || ""} ${brand?.link || ""} ${host?.originalName || ""} ${host?.link || ""}`;
+    },
+    [jobMetaByRef],
+  );
+
+  const { filteredJobs } = useScheduleFilters(jobs, filters, { getExtraSearchText });
+  const dateRange: DateRange | undefined = useMemo(() => {
+    if (!filters.dateFrom && !filters.dateTo) return undefined;
+    return { from: filters.dateFrom ?? undefined, to: filters.dateTo ?? undefined };
+  }, [filters.dateFrom, filters.dateTo]);
+
+  const jobItems = useMemo(() => {
+    return filteredJobs.map((job) => {
+      const meta = jobMetaByRef.get(job);
+      const brandGroup = meta?.brandGroup ?? null;
+      const hostGroup = meta?.hostGroup ?? null;
       return {
         job,
         isActive: isJobActive(job),
@@ -65,7 +78,7 @@ export function SchedulePage() {
         hostGroup,
       };
     });
-  }, [filteredJobs, groups.data?.hostGroups, groups.data?.brandGroups]);
+  }, [filteredJobs, jobMetaByRef]);
 
   const onExportICS = useCallback(async () => {
     try {
@@ -118,7 +131,10 @@ export function SchedulePage() {
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.setAttribute("download", `Schedule_${(filters.date || "all").replaceAll("/", "-")}.ics`);
+      const fromLabel = filters.dateFrom ? filters.dateFrom.toLocaleDateString("vi-VN").replaceAll("/", "-") : "";
+      const toLabel = filters.dateTo ? filters.dateTo.toLocaleDateString("vi-VN").replaceAll("/", "-") : "";
+      const label = fromLabel || toLabel ? `${fromLabel || "all"}_${toLabel || fromLabel || "all"}` : "all";
+      link.setAttribute("download", `Schedule_${label}.ics`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -127,9 +143,7 @@ export function SchedulePage() {
     } catch {
       toast.error("Không thể xuất lịch.");
     }
-  }, [filteredJobs, filters.date]);
-
-  const [sheetOpen, setSheetOpen] = useState(false);
+  }, [filteredJobs, filters.dateFrom, filters.dateTo]);
   const [reportOpen, setReportOpen] = useState(false);
   const [reportJob, setReportJob] = useState<Job | null>(null);
   const handleQuickReport = useCallback((job: Job) => {
@@ -154,60 +168,8 @@ export function SchedulePage() {
           onExportIcs={onExportICS}
         />
 
-        {/* Mobile: top actions row */}
-        <div className="flex items-center gap-2 sm:hidden">
-        <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-          <SheetTrigger asChild>
-            <Button variant="secondary" className="flex-1">
-              <Filter className="h-4 w-4" />
-              Lọc
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="bottom" className="rounded-t-xl">
-            <SheetHeader>
-              <SheetTitle>Bộ lọc</SheetTitle>
-              <SheetDescription>Giữ giao diện gọn, nhưng vẫn đủ mạnh.</SheetDescription>
-            </SheetHeader>
-            <div className="mt-4">
-              <div className="mt-4 flex gap-2">
-                <Button
-                  variant="secondary"
-                  className="flex-1"
-                  onClick={() => {
-                    setFilters({ dateFrom: null, dateTo: null, session: "", query: "" });
-                  }}
-                >
-                  Reset
-                </Button>
-                <Button className="flex-1" onClick={() => setSheetOpen(false)}>
-                  Xong
-                </Button>
-              </div>
-            </div>
-          </SheetContent>
-        </Sheet>
-
-        <Button variant="secondary" size="icon" onClick={onExportICS} aria-label="Xuất lịch">
-          <Download className="h-4 w-4" />
-        </Button>
-        </div>
-
-        {/* Desktop/tablet: inline filters */}
-        <div className="hidden sm:block">
-        <Card className="p-4">
-          <Separator className="my-4" />
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-sm text-[var(--color-text-secondary)]">
-              {schedule.isLoading ? "Đang tải..." : `Tìm thấy ${filteredJobs.length} công việc`}
-            </p>
-            <div className="flex items-center gap-2">
-              <Button variant="secondary" onClick={onExportICS}>
-                <Download className="h-4 w-4" />
-                Xuất .ics
-              </Button>
-            </div>
-          </div>
-        </Card>
+        <div className="px-1 text-sm text-[var(--color-text-secondary)]">
+          {schedule.isLoading ? "Đang tải..." : `Tìm thấy ${filteredJobs.length} công việc`}
         </div>
 
         {/* Status / Errors */}

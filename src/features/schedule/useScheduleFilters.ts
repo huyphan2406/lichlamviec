@@ -8,7 +8,11 @@ function parseDDMMYYYY(dateStr: string) {
   return isValid(parsed) ? parsed : null;
 }
 
-export function useScheduleFilters(jobs: Job[], filters: ScheduleFilters) {
+export type ScheduleFilterOptions = {
+  getExtraSearchText?: (job: Job) => string;
+};
+
+export function useScheduleFilters(jobs: Job[], filters: ScheduleFilters, options?: ScheduleFilterOptions) {
   const filteredJobs = useMemo(() => {
     if (!jobs.length) return [];
 
@@ -16,11 +20,16 @@ export function useScheduleFilters(jobs: Job[], filters: ScheduleFilters) {
 
     const normQuery = filters.query ? removeAccents(filters.query.toLowerCase().trim()) : "";
     if (normQuery) {
+      const cache = new WeakMap<Job, string>();
       list = list.filter((job) => {
-        const jobStr = `${job["Talent 1"] || ""} ${job["Talent 2"] || ""} ${job["Coordinator 1"] || ""} ${
-          job["Coordinator 2"] || ""
-        } ${job.Store || ""} ${job.Address || ""} ${job["Studio/Room"] || ""}`;
-        return removeAccents(jobStr.toLowerCase()).includes(normQuery);
+        let haystack = cache.get(job);
+        if (!haystack) {
+          const base = Object.values(job).map((v) => (v ?? "").toString()).join(" ");
+          const extra = options?.getExtraSearchText?.(job) ?? "";
+          haystack = removeAccents(`${base} ${extra}`.toLowerCase());
+          cache.set(job, haystack);
+        }
+        return haystack.includes(normQuery);
       });
       if (!list.length) return [];
     }
@@ -48,7 +57,7 @@ export function useScheduleFilters(jobs: Job[], filters: ScheduleFilters) {
     }
 
     return list;
-  }, [jobs, filters.query, filters.dateFrom, filters.dateTo, filters.session]);
+  }, [jobs, filters.query, filters.dateFrom, filters.dateTo, filters.session, options?.getExtraSearchText]);
 
   const groupedByTime = useMemo(() => {
     const map = new Map<string, Job[]>();
