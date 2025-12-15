@@ -40,8 +40,25 @@ export function JobCard({ job, isActive, brandGroup, hostGroup, onQuickReport, o
   const standby = combineNames(job["Coordinator 1"], job["Coordinator 2"]);
   const sessionType = (job["Type of session"] || "").trim().toLowerCase();
   const isCaNoi = sessionType === "ca nối" || sessionType === "ca noi";
+  
+  // Get Zalo links with fallback logic
   const hostZaloLink = (job.host_zalo_link || hostGroup?.link || "").toString().trim();
   const brandZaloLink = (job.brand_zalo_link || brandGroup?.link || "").toString().trim();
+  
+  // DEBUG: Log để kiểm tra data (có thể comment lại sau)
+  if (process.env.NODE_ENV === 'development') {
+    if (hostGroup || brandGroup) {
+      console.log('[JobCard Debug]', {
+        jobTitle: title,
+        hasHostGroup: !!hostGroup,
+        hostGroupLink: hostGroup?.link,
+        hasBrandGroup: !!brandGroup,
+        brandGroupLink: brandGroup?.link,
+        hostZaloLink,
+        brandZaloLink,
+      });
+    }
+  }
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 h-full flex flex-col transition-all duration-200 hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
@@ -49,21 +66,42 @@ export function JobCard({ job, isActive, brandGroup, hostGroup, onQuickReport, o
       <div className="flex items-start justify-between gap-3 mb-4">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="text-base font-normal leading-tight text-slate-900 dark:text-slate-50">
+            <p className="text-base font-extrabold leading-tight text-slate-900 dark:text-slate-50">
               <span className="block whitespace-normal break-words">{title}</span>
             </p>
-            {/* Brand Zalo button next to title */}
+            {/* Zalo buttons next to title - Brand và Host */}
             {brandZaloLink && (
               <a
                 href={brandZaloLink}
                 target="_blank"
-                rel="noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors shrink-0"
-                title="Join Brand Zalo Group"
+                rel="noopener noreferrer"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  window.open(brandZaloLink, '_blank');
+                }}
+                className="inline-flex items-center gap-1 rounded-full bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 text-xs font-medium transition-colors shrink-0 shadow-sm"
+                title={`Join Brand Zalo Group${brandGroup?.originalName ? `: ${brandGroup.originalName}` : ""}`}
                 aria-label="Join Brand Zalo Group"
               >
                 <MessageCircle className="w-3.5 h-3.5" />
+                <span>Zalo</span>
+              </a>
+            )}
+            {hostZaloLink && !brandZaloLink && (
+              <a
+                href={hostZaloLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  window.open(hostZaloLink, '_blank');
+                }}
+                className="inline-flex items-center gap-1 rounded-full bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 text-xs font-medium transition-colors shrink-0 shadow-sm"
+                title={`Join Host Zalo Group${hostGroup?.originalName ? `: ${hostGroup.originalName}` : ""}`}
+                aria-label="Join Host Zalo Group"
+              >
+                <MessageCircle className="w-3.5 h-3.5" />
+                <span>Zalo</span>
               </a>
             )}
             {isCaNoi ? (
@@ -161,10 +199,16 @@ export function JobCard({ job, isActive, brandGroup, hostGroup, onQuickReport, o
         </div>
       </div>
 
-      {/* Optional: ACTIVE status, subtle */}
+      {/* Optional: ACTIVE status - badge tròn màu xanh */}
       {isActive ? (
-        <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 text-xs font-semibold text-slate-500 dark:text-slate-400">
-          ACTIVE
+        <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-center">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-green-500 px-3 py-1 text-xs font-semibold text-white shadow-sm">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-green-300"></span>
+            </span>
+            ACTIVE
+          </span>
         </div>
       ) : null}
     </div>
