@@ -41,28 +41,12 @@ export function JobCard({ job, isActive, brandGroup, hostGroup, onQuickReport, o
   const sessionType = (job["Type of session"] || "").trim().toLowerCase();
   const isCaNoi = sessionType === "ca nối" || sessionType === "ca noi";
   
-  // Get brand name for header display - chỉ lấy originalName gốc từ brandGroup
+  // Chỉ lấy brand name gốc từ brandGroup - đây là tên duy nhất hiển thị
   const brandName = brandGroup?.originalName?.trim() || "";
   
-  // Kiểm tra xem title có trùng với brandName không để tránh duplicate
-  // So sánh đơn giản: normalize và so sánh
-  const normalizeForCompare = (str: string) => {
-    if (!str) return '';
-    return str
-      .toLowerCase()
-      .trim()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "") // Bỏ dấu
-      .replace(/đ/g, "d")
-      .replace(/Đ/g, "D")
-      .replace(/[^a-z0-9]/g, '') // Chỉ giữ chữ và số
-      .replace(/\s+/g, ''); // Xóa tất cả khoảng trắng
-  };
-  
-  const titleNormalized = normalizeForCompare(title);
-  const brandNameNormalized = brandName ? normalizeForCompare(brandName) : '';
-  // Chỉ hiển thị brand name nếu khác với title (không duplicate)
-  const shouldShowBrandName = brandName && brandNameNormalized !== titleNormalized && brandNameNormalized.length > 0;
+  // Chỉ hiển thị brand name gốc, không hiển thị title nếu có brand name
+  // Nếu không có brand name thì mới hiển thị title
+  const displayName = brandName || title;
   
   // Get Zalo links with fallback logic
   const hostZaloLink = (job.host_zalo_link || hostGroup?.link || "").toString().trim();
@@ -94,19 +78,14 @@ export function JobCard({ job, isActive, brandGroup, hostGroup, onQuickReport, o
       <div className="flex items-start justify-between gap-3 mb-4">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="text-base font-extrabold leading-tight text-slate-900 dark:text-slate-50">
-              <span className="block whitespace-normal break-words">{title}</span>
+            {/* Chỉ hiển thị 1 tên gốc duy nhất - ưu tiên brand name từ file gốc */}
+            <p 
+              className="text-base font-extrabold leading-tight text-slate-900 dark:text-slate-50 cursor-pointer hover:underline transition-all"
+              onClick={() => onQuickReport(job)}
+              title={brandName ? "Click để điền report" : ""}
+            >
+              <span className="block whitespace-normal break-words">{displayName}</span>
             </p>
-            {/* Brand name gốc (in đậm) - click để mở report */}
-            {shouldShowBrandName && (
-              <span 
-                onClick={() => onQuickReport(job)}
-                className="ml-2 text-base font-extrabold text-slate-900 dark:text-slate-50 cursor-pointer hover:underline transition-all"
-                title="Click để điền report"
-              >
-                {brandName}
-              </span>
-            )}
             {/* CA NỐI badge - bên phải Brand name */}
             {isCaNoi ? (
               <span className="inline-flex h-5 items-center rounded-md border border-slate-600 px-2 text-[10px] font-extrabold uppercase tracking-wide text-slate-700 dark:border-slate-400 dark:text-slate-200 shrink-0">
