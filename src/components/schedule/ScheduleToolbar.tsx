@@ -114,9 +114,9 @@ export function ScheduleToolbar({
   }, [normalizedQuery, safeStaffNames]);
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      {/* Search (left / grow) */}
-      <div className="relative flex h-10 flex-1 min-w-0 items-center">
+    <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:flex-row sm:items-center sm:justify-between">
+      {/* Search - full width on mobile, flex-1 on desktop */}
+      <div className="relative flex h-10 w-full items-center sm:flex-1 sm:min-w-0">
         <Search className="pointer-events-none absolute left-3.5 h-4 w-4 text-slate-400" />
         <Input
           ref={inputRef}
@@ -180,8 +180,8 @@ export function ScheduleToolbar({
         ) : null}
       </div>
 
-      {/* Right controls */}
-      <div className="flex flex-wrap items-center gap-2.5">
+      {/* Right controls - full width on mobile, auto on desktop */}
+      <div className="flex w-full items-center gap-2.5 sm:w-auto sm:flex-wrap">
         <Select
           value={getDateValue(dateRange, availableDates)}
           onValueChange={(value) => {
@@ -197,7 +197,7 @@ export function ScheduleToolbar({
             }
           }}
         >
-          <SelectTrigger className="h-10 w-[160px] rounded-xl border-slate-200 bg-white text-sm shadow-none dark:border-slate-700 dark:bg-slate-900">
+          <SelectTrigger className="h-10 flex-1 rounded-xl border-slate-200 bg-white text-sm shadow-none dark:border-slate-700 dark:bg-slate-900 sm:w-[160px] sm:flex-none">
             <SelectValue placeholder="Chọn ngày">
               {fmtRange(dateRange, availableDates)}
             </SelectValue>
@@ -213,7 +213,7 @@ export function ScheduleToolbar({
         </Select>
 
         <Select value={session || ALL} onValueChange={(v) => onSessionChange(v === ALL ? "" : v)}>
-          <SelectTrigger className="h-10 w-[150px] rounded-xl border-slate-200 bg-white text-sm shadow-none dark:border-slate-700 dark:bg-slate-900">
+          <SelectTrigger className="h-10 flex-1 rounded-xl border-slate-200 bg-white text-sm shadow-none dark:border-slate-700 dark:bg-slate-900 sm:w-[150px] sm:flex-none">
             <SelectValue placeholder="Tất cả ca" />
           </SelectTrigger>
           <SelectContent>
