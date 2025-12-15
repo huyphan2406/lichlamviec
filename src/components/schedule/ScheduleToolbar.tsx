@@ -43,6 +43,7 @@ export function ScheduleToolbar({
 }: Props) {
   const [draft, setDraft] = useState(query);
   const [focused, setFocused] = useState(false);
+  const inputRef = React.useRef<HTMLInputElement | null>(null);
   useEffect(() => setDraft(query), [query]);
 
   useEffect(() => {
@@ -72,6 +73,7 @@ export function ScheduleToolbar({
       <div className="relative flex h-9 flex-1 items-center">
         <Search className="pointer-events-none absolute left-3 h-4 w-4 text-slate-400" />
         <Input
+          ref={inputRef}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           placeholder="Tìm theo tên, cửa hàng, địa điểm..."
@@ -108,6 +110,8 @@ export function ScheduleToolbar({
                   onClick={() => {
                     setDraft(name);
                     onQueryChange(name);
+                    setFocused(false);
+                    inputRef.current?.blur();
                     try {
                       localStorage.setItem("last_search_query", name);
                     } catch {

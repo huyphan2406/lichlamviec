@@ -57,4 +57,40 @@ export function isJobActive(job: Job) {
   }
 }
 
+function parseStartMinutesFromTimeSlot(slot: string) {
+  // Common formats:
+  // - "08:00 - 12:00"
+  // - "08:00-12:00"
+  // - "08:00"
+  const m = slot.match(/(\d{1,2})\s*:\s*(\d{2})/);
+  if (!m) return Number.POSITIVE_INFINITY;
+  const h = Number(m[1]);
+  const min = Number(m[2]);
+  if (Number.isNaN(h) || Number.isNaN(min)) return Number.POSITIVE_INFINITY;
+  return h * 60 + min;
+}
+
+export function groupJobsByTime<T>(
+  items: T[],
+  getTimeSlot: (item: T) => string | undefined,
+): Array<{ timeSlot: string; items: T[] }> {
+  const map = new Map<string, T[]>();
+  for (const item of items) {
+    const raw = (getTimeSlot(item) || "N/A").toString().trim();
+    const key = raw || "N/A";
+    const arr = map.get(key);
+    if (arr) arr.push(item);
+    else map.set(key, [item]);
+  }
+
+  const out = Array.from(map.entries()).map(([timeSlot, grouped]) => ({ timeSlot, items: grouped }));
+  out.sort((a, b) => {
+    const am = parseStartMinutesFromTimeSlot(a.timeSlot);
+    const bm = parseStartMinutesFromTimeSlot(b.timeSlot);
+    if (am !== bm) return am - bm;
+    return a.timeSlot.localeCompare(b.timeSlot);
+  });
+  return out;
+}
+
 

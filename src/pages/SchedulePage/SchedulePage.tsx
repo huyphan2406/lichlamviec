@@ -11,7 +11,7 @@ import {
   findHostGroupFromNamesIndex,
 } from "@/features/schedule/groupMatching";
 import { useScheduleFilters } from "@/features/schedule/useScheduleFilters";
-import { combineLocation, combineNames, isJobActive } from "@/features/schedule/utils";
+import { combineLocation, combineNames, groupJobsByTime, isJobActive } from "@/features/schedule/utils";
 import { QuickReportDialog } from "@/components/schedule/QuickReportDialog";
 import { JobCard } from "@/components/schedule/JobCard";
 import { ScheduleToolbar } from "@/components/schedule/ScheduleToolbar";
@@ -122,6 +122,10 @@ export function SchedulePage() {
     });
   }, [filteredJobs, jobMetaByRef]);
 
+  const grouped = useMemo(() => {
+    return groupJobsByTime(jobItems, (it) => it.job["Time slot"]);
+  }, [jobItems]);
+
   const onExportICS = useCallback(async () => {
     try {
       const ics = (await import("ics")) as unknown as {
@@ -193,6 +197,15 @@ export function SchedulePage() {
     setReportOpen(true);
   }, []);
 
+  const applySearch = useCallback((q: string) => {
+    try {
+      localStorage.setItem("last_search_query", q);
+    } catch {
+      // ignore
+    }
+    setFilters((p) => ({ ...p, query: q }));
+  }, []);
+
   return (
     <div className="-mx-3 -my-3 bg-gray-100 px-3 py-4 sm:-mx-4 sm:-my-4 sm:px-4 sm:py-6 dark:bg-slate-950">
       <QuickReportDialog open={reportOpen} onOpenChange={setReportOpen} job={reportJob} />
@@ -249,22 +262,33 @@ export function SchedulePage() {
         </Card>
         ) : null}
 
-        {/* Native CSS Grid (no virtualization to avoid overlap with dynamic heights) */}
-        <div className="grid grid-cols-1 gap-6 pb-20 md:grid-cols-2 xl:grid-cols-3 min-[1600px]:grid-cols-4">
-          {jobItems.map((item, index) => {
-            const job = item.job;
-            const stableKey = `${job["Date livestream"] || "na"}|${job["Time slot"] || "na"}|${job.Store || "na"}|${index}`;
-            return (
-              <JobCard
-                key={stableKey}
-                job={item.job}
-                isActive={item.isActive}
-                brandGroup={item.brandGroup}
-                hostGroup={item.hostGroup}
-                onQuickReport={handleQuickReport}
-              />
-            );
-          })}
+        {/* Time-blocked grouped layout */}
+        <div className="pb-20">
+          {grouped.map((group) => (
+            <section key={group.timeSlot} className="mt-8 first:mt-2">
+              <div className="sticky top-12 z-10 -mx-3 bg-gray-100/95 px-3 py-2 backdrop-blur sm:top-14 sm:-mx-4 sm:px-4 dark:bg-slate-950/85">
+                <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">{group.timeSlot}</h2>
+              </div>
+
+              <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3 min-[1600px]:grid-cols-4">
+                {group.items.map((item, index) => {
+                  const job = item.job;
+                  const stableKey = `${group.timeSlot}|${job["Date livestream"] || "na"}|${job.Store || "na"}|${index}`;
+                  return (
+                    <JobCard
+                      key={stableKey}
+                      job={item.job}
+                      isActive={item.isActive}
+                      brandGroup={item.brandGroup}
+                      hostGroup={item.hostGroup}
+                      onQuickReport={handleQuickReport}
+                      onApplySearch={applySearch}
+                    />
+                  );
+                })}
+              </div>
+            </section>
+          ))}
         </div>
       </div>
     </div>
