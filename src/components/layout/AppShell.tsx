@@ -57,11 +57,8 @@ export function AppShell({ title = "Lịch làm việc", className }: AppShellPr
         </div>
       </header>
 
-      {/* Main scroll container (important for virtualization in legacy schedule page) */}
-      <main
-        id="app-scroll"
-        className="mx-auto h-[calc(100dvh-3rem)] max-w-3xl overflow-y-auto px-3 py-3 sm:h-[calc(100dvh-3.5rem)] sm:px-4 sm:py-4"
-      >
+      {/* Let the browser window (document) handle scrolling */}
+      <main className="mx-auto max-w-3xl px-3 py-3 sm:px-4 sm:py-4">
         <Outlet />
       </main>
     </div>

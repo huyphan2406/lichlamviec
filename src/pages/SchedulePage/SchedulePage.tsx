@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { useVirtualizer } from "@tanstack/react-virtual";
+import { useWindowVirtualizer } from "@tanstack/react-virtual";
 import { Download, Filter, Search } from "lucide-react";
 import { toast } from "sonner";
 import type { EventAttributes } from "ics";
@@ -22,10 +22,6 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-
-function getScrollElement() {
-  return document.getElementById("app-scroll");
-}
 
 function useGridLanes() {
   const [lanes, setLanes] = useState(1);
@@ -186,12 +182,22 @@ export function SchedulePage() {
     });
   }, [filteredJobs, groups.data?.hostGroups, groups.data?.brandGroups]);
 
-  const rowVirtualizer = useVirtualizer({
+  const [scrollMargin, setScrollMargin] = useState(0);
+  useEffect(() => {
+    const el = document.getElementById("schedule-grid-anchor");
+    if (!el) return;
+    const update = () => setScrollMargin(el.getBoundingClientRect().top + window.scrollY);
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
+
+  const rowVirtualizer = useWindowVirtualizer({
     count: jobItems.length,
-    getScrollElement,
     estimateSize: () => 200,
     overscan: 6,
     lanes,
+    scrollMargin,
   });
 
   const onExportICS = useCallback(async () => {
@@ -337,7 +343,7 @@ export function SchedulePage() {
         ) : null}
 
         {/* Virtualized grid */}
-        <div className="relative">
+        <div id="schedule-grid-anchor" className="relative">
         <div style={{ height: rowVirtualizer.getTotalSize(), position: "relative" }}>
           {rowVirtualizer.getVirtualItems().map((virtualRow) => {
             const item = jobItems[virtualRow.index];
@@ -356,7 +362,7 @@ export function SchedulePage() {
                   top: 0,
                   left,
                   width,
-                  transform: `translateY(${virtualRow.start}px)`,
+                  transform: `translateY(${virtualRow.start - scrollMargin}px)`,
                 }}
               >
                 <JobCard
