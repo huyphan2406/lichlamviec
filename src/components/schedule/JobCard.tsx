@@ -44,6 +44,11 @@ export function JobCard({ job, isActive, brandGroup, hostGroup, onQuickReport, o
   // Get brand name for header display
   const brandName = (job.brand_name || brandGroup?.originalName || "").trim();
   
+  // Kiểm tra xem title có trùng với brandName không để tránh duplicate
+  const titleNormalized = title.toLowerCase().trim();
+  const brandNameNormalized = brandName.toLowerCase().trim();
+  const isTitleSameAsBrand = brandName && titleNormalized === brandNameNormalized;
+  
   // Get Zalo links with fallback logic
   const hostZaloLink = (job.host_zalo_link || hostGroup?.link || "").toString().trim();
   const brandZaloLink = (job.brand_zalo_link || brandGroup?.link || "").toString().trim();
@@ -77,8 +82,8 @@ export function JobCard({ job, isActive, brandGroup, hostGroup, onQuickReport, o
             <p className="text-base font-extrabold leading-tight text-slate-900 dark:text-slate-50">
               <span className="block whitespace-normal break-words">{title}</span>
             </p>
-            {/* Brand name (in đậm) - chỉ hiển thị nếu có */}
-            {brandName && (
+            {/* Brand name (in đậm) - chỉ hiển thị nếu có và không trùng với title */}
+            {brandName && !isTitleSameAsBrand && (
               <span className="ml-2 text-base font-extrabold text-slate-900 dark:text-slate-50">
                 {brandName}
               </span>
