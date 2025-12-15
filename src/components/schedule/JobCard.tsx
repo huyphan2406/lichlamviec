@@ -111,25 +111,6 @@ export function JobCard({ job, isActive, brandGroup, hostGroup, onQuickReport, o
             <p className="flex-1 whitespace-normal break-words text-sm font-normal text-slate-700 dark:text-slate-200 leading-relaxed">
               {locationName}
             </p>
-            {/* Join Host Zalo Group Button - bên cạnh address */}
-            {(hostZaloLink || hostGroup?.link) && (
-              <a
-                href={hostZaloLink || hostGroup?.link || "#"}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (!hostZaloLink && !hostGroup?.link) {
-                    e.preventDefault();
-                  }
-                }}
-                className="ml-auto inline-flex items-center justify-center w-7 h-7 rounded-full bg-blue-500 text-white hover:bg-blue-600 transition-all shrink-0 shadow-md hover:shadow-lg"
-                title={`Join Host Zalo Group${hostGroup?.originalName ? `: ${hostGroup.originalName}` : ""}`}
-                aria-label="Join Host Zalo Group"
-              >
-                <MessageCircle className="w-4 h-4" />
-              </a>
-            )}
           </div>
         )}
         
@@ -149,25 +130,6 @@ export function JobCard({ job, isActive, brandGroup, hostGroup, onQuickReport, o
           <span className="flex-1 text-sm font-normal text-slate-700 dark:text-slate-200" title="Nhân sự">
             {staff}
           </span>
-          {/* Join Host Zalo Group Button - lấy link từ get-groups.js hoặc job */}
-          {(hostZaloLink || hostGroup?.link) && (
-            <a
-              href={hostZaloLink || hostGroup?.link || "#"}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => {
-                e.stopPropagation();
-                if (!hostZaloLink && !hostGroup?.link) {
-                  e.preventDefault();
-                }
-              }}
-              className="ml-1 inline-flex items-center justify-center w-7 h-7 rounded-full bg-blue-500 text-white hover:bg-blue-600 transition-all shrink-0 shadow-md hover:shadow-lg"
-              title={`Join Host Zalo Group${hostGroup?.originalName ? `: ${hostGroup.originalName}` : ""}`}
-              aria-label="Join Host Zalo Group"
-            >
-              <MessageCircle className="w-4 h-4" />
-            </a>
-          )}
         </div>
 
         {/* Status/Standby */}
