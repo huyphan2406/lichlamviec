@@ -19,12 +19,12 @@ export function JobCard({ job, isActive, brandGroup, hostGroup, onQuickReport, o
   const standby = combineNames(job["Coordinator 1"], job["Coordinator 2"]);
   const sessionType = (job["Type of session"] || "").trim().toLowerCase();
   const isCaNoi = sessionType === "ca nối" || sessionType === "ca noi";
-  const hostZaloLink = (job.host_zalo_link || hostGroup?.link || "").toString().trim();
-  const brandZaloLink = (job.brand_zalo_link || brandGroup?.link || "").toString().trim();
+  const hostZaloLink = (job.host_zalo_link || "").toString().trim();
+  const brandZaloLink = (job.brand_zalo_link || "").toString().trim();
   const brandName = brandGroup?.originalName || title;
 
   return (
-    <div className="h-full rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 h-full transition-all duration-200 hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
       <div className="flex h-full flex-col justify-between gap-4">
         {/* Header: title + badge + report */}
         <div className="flex items-start justify-between gap-3">
@@ -59,64 +59,61 @@ export function JobCard({ job, isActive, brandGroup, hostGroup, onQuickReport, o
           </div>
 
           {/* Host */}
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex min-w-0 items-start gap-2">
-              <User className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
-              <button
-                type="button"
-                className="text-left text-sm font-medium text-slate-700 hover:text-slate-900 hover:underline dark:text-slate-200 dark:hover:text-white"
-                onClick={() => {
-                  const q = staff === "..." ? "" : staff;
-                  if (q) onApplySearch?.(q);
-                }}
-                title="Lọc theo nhân sự"
-              >
-                {staff}
-              </button>
-            </div>
-            {hostZaloLink ? (
+          <div className="flex items-center gap-2">
+            <User className="w-4 h-4 text-slate-400" />
+            <span
+              className="text-sm font-medium text-slate-700 hover:text-blue-600 cursor-pointer transition-colors"
+              onClick={() => {
+                const q = staff === "..." ? "" : staff;
+                if (q) onApplySearch?.(q);
+              }}
+              title="Lọc theo nhân sự"
+            >
+              {staff}
+            </span>
+
+            {/* FORCE RENDER ZALO BUTTON FOR HOST */}
+            {hostZaloLink && (
               <a
                 href={hostZaloLink}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
-                className="p-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-700 transition-colors"
-                title={hostGroup?.originalName || "Zalo Host"}
-                aria-label="Mở Zalo Host"
+                className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all ml-1"
+                title="Join Host Zalo Group"
               >
                 <MessageCircle className="w-3.5 h-3.5" />
               </a>
-            ) : null}
+            )}
           </div>
 
           {/* Brand */}
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex min-w-0 items-start gap-2">
-              <Building2 className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
-              <button
-                type="button"
-                className="text-left text-sm font-medium text-slate-700 hover:text-slate-900 hover:underline dark:text-slate-200 dark:hover:text-white"
-                onClick={() => {
-                  if (brandGroup?.originalName) onApplySearch?.(brandGroup.originalName);
-                }}
-                title="Lọc theo brand"
-              >
-                {brandName}
-              </button>
-            </div>
-            {brandZaloLink ? (
+          <div className="flex items-center gap-2">
+            <Building2 className="w-4 h-4 text-slate-400" />
+            <span
+              className="text-sm font-medium text-slate-700 hover:text-blue-600 cursor-pointer transition-colors"
+              onClick={() => {
+                const q = brandGroup?.originalName || brandName;
+                if (q) onApplySearch?.(q);
+              }}
+              title="Lọc theo brand"
+            >
+              {brandName}
+            </span>
+
+            {/* FORCE RENDER ZALO BUTTON FOR BRAND */}
+            {brandZaloLink && (
               <a
                 href={brandZaloLink}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
-                className="p-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-700 transition-colors"
-                title={brandGroup?.originalName || "Zalo Brand"}
-                aria-label="Mở Zalo Brand"
+                className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all ml-1"
+                title="Join Brand Zalo Group"
               >
                 <MessageCircle className="w-3.5 h-3.5" />
               </a>
-            ) : null}
+            )}
           </div>
 
           {/* Status/Standby */}

@@ -87,6 +87,12 @@ export function SchedulePage() {
       const talentDisplay = combineNames(job["Talent 1"], job["Talent 2"]);
       const coordDisplay = combineNames(job["Coordinator 1"], job["Coordinator 2"]);
       const hostGroup = directHostGroup || findHostGroupFromNamesIndex(hostNameIndex, { talentDisplay, coordDisplay });
+
+      // Ensure quick-access links exist on the Job object (so JobCard can rely on job.host_zalo_link/job.brand_zalo_link).
+      // This keeps behavior stable even if the schedule sheet doesn't include these fields explicitly.
+      if (!job.host_zalo_link && hostGroup?.link) job.host_zalo_link = hostGroup.link;
+      if (!job.brand_zalo_link && brandGroup?.link) job.brand_zalo_link = brandGroup.link;
+
       map.set(job, { brandGroup, hostGroup });
     }
     return map;
