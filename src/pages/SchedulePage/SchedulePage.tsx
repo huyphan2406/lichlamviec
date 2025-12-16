@@ -222,7 +222,7 @@ export function SchedulePage() {
                 <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 sm:text-xl">{group.timeSlot}</h2>
               </div>
 
-              <div className="mt-4 grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              <div className="mt-4 grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {group.items.map((item, index) => {
                   const job = item.job;
                   const stableKey = `${group.timeSlot}|${job["Date livestream"] || "na"}|${job.Store || "na"}|${index}`;
