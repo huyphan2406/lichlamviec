@@ -25,8 +25,20 @@ export function QuickReportDialog({ open, onOpenChange, job }: Props) {
   const [liveIds, setLiveIds] = useState<string[]>([""]);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Lazy mount để tránh render form khi dialog chưa mở
+  useEffect(() => {
+    if (open) {
+      // Delay nhỏ để animation chạy mượt hơn
+      const timer = setTimeout(() => setIsMounted(true), 50);
+      return () => clearTimeout(timer);
+    } else {
+      setIsMounted(false);
+    }
+  }, [open]);
 
   // Memoize computed values to avoid recalculation on every render
   const keyLivestream = useMemo(() => {
@@ -146,7 +158,14 @@ export function QuickReportDialog({ open, onOpenChange, job }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto p-4 sm:p-6" onOpenAutoFocus={(e) => e.preventDefault()}>
+      <DialogContent 
+        className="max-w-xl max-h-[90vh] overflow-y-auto p-4 sm:p-6" 
+        onOpenAutoFocus={(e) => e.preventDefault()}
+        onInteractOutside={(e) => {
+          // Prevent closing on outside click during submission
+          if (isSubmitting) e.preventDefault();
+        }}
+      >
         <DialogHeader className="space-y-2">
           <DialogTitle className="truncate text-base sm:text-lg">{title}</DialogTitle>
           <DialogDescription className="line-clamp-2 text-xs sm:text-sm">{subtitle}</DialogDescription>
@@ -160,7 +179,8 @@ export function QuickReportDialog({ open, onOpenChange, job }: Props) {
 
         <Separator />
 
-        <form className="grid gap-3 sm:gap-4" onSubmit={onSubmit}>
+        {isMounted ? (
+          <form className="grid gap-3 sm:gap-4" onSubmit={onSubmit}>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="grid gap-1.5">
               <Label className="text-xs sm:text-sm">Email *</Label>
@@ -287,6 +307,11 @@ export function QuickReportDialog({ open, onOpenChange, job }: Props) {
             </Button>
           </DialogFooter>
         </form>
+        ) : (
+          <div className="grid gap-3 sm:gap-4 min-h-[200px] items-center justify-center">
+            <div className="text-sm text-[var(--color-text-secondary)]">Đang tải...</div>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

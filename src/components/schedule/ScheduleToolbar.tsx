@@ -72,45 +72,57 @@ export function ScheduleToolbar({
   
   // Normalize query for matching (remove accents, lowercase, remove leading numbers_)
   const normalizedQuery = useMemo(() => {
-    const cleaned = cleanStaffName(draft);
+    if (!draft || !draft.trim()) return "";
+    const cleaned = cleanStaffName(draft.trim());
     return removeVietnameseTones(cleaned);
   }, [draft]);
   
-  // Optimize suggestions calculation - limit to first 50 names for performance
+  // Optimize suggestions calculation - tìm kiếm chính xác theo tên đầy đủ
   const staffSuggestions = useMemo(() => {
     if (!normalizedQuery || normalizedQuery.length < 1) return [];
     
-    // Limit search to first 50 names for better performance on mobile
-    const searchLimit = 50;
-    const limitedNames = safeStaffNames.slice(0, searchLimit);
+    // Tìm kiếm trong tất cả tên, không giới hạn
+    const matches: Array<{ display: string; original: string; normalized: string }> = [];
     
-    // Create map of cleaned name -> original name for display (optimized)
-    const nameMap = new Map<string, { display: string; original: string }>();
-    for (const originalName of limitedNames) {
+    for (const originalName of safeStaffNames) {
+      if (!originalName || originalName === "nan") continue;
+      
+      // Clean và normalize tên gốc
       const cleaned = cleanStaffName(originalName);
       const normalized = removeVietnameseTones(cleaned);
+      
+      // Tìm kiếm chính xác: tên phải chứa query (substring match)
+      // Ưu tiên tên bắt đầu với query
       if (normalized.includes(normalizedQuery)) {
-        // Only store if it matches query
-        const existing = nameMap.get(normalized);
-        if (!existing || cleaned.length < existing.display.length) {
-          nameMap.set(normalized, { display: cleaned, original: originalName });
-        }
+        const startsWith = normalized.startsWith(normalizedQuery);
+        matches.push({
+          display: cleaned, // Hiển thị tên đã clean (không có số_)
+          original: originalName, // Tên gốc để search
+          normalized: normalized,
+        });
       }
     }
     
-    // Convert to array and sort
-    const matches = Array.from(nameMap.values());
-    
-    // Sort by relevance (exact match first, then by length)
+    // Sort by relevance:
+    // 1. Tên bắt đầu với query (startsWith) xếp trước
+    // 2. Sau đó sort theo độ dài (tên ngắn hơn = chính xác hơn)
     matches.sort((a, b) => {
-      const aStarts = a.display.toLowerCase().startsWith(normalizedQuery);
-      const bStarts = b.display.toLowerCase().startsWith(normalizedQuery);
+      const aStarts = a.normalized.startsWith(normalizedQuery);
+      const bStarts = b.normalized.startsWith(normalizedQuery);
+      
+      // Ưu tiên startsWith
       if (aStarts && !bStarts) return -1;
       if (!aStarts && bStarts) return 1;
-      return a.display.length - b.display.length;
+      
+      // Nếu cùng startsWith hoặc cùng không startsWith, sort theo độ dài
+      return a.normalized.length - b.normalized.length;
     });
     
-    return matches.slice(0, 8);
+    // Giới hạn 8 kết quả
+    return matches.slice(0, 8).map(m => ({
+      display: m.display,
+      original: m.original,
+    }));
   }, [normalizedQuery, safeStaffNames]);
 
   return (
@@ -160,13 +172,15 @@ export function ScheduleToolbar({
                   onMouseDown={(e) => e.preventDefault()}
                   onTouchStart={(e) => e.preventDefault()}
                   onClick={() => {
-                    // Use cleaned name for search (without numbers_)
-                    setDraft(item.display);
-                    onQueryChange(item.display);
+                    // Sử dụng tên gốc (original) để search - đảm bảo match chính xác
+                    // Nhưng hiển thị tên đã clean (display) trong input
+                    const searchValue = item.original;
+                    setDraft(searchValue);
+                    onQueryChange(searchValue);
                     setFocused(false);
                     inputRef.current?.blur();
                     try {
-                      localStorage.setItem("last_search_query", item.display);
+                      localStorage.setItem("last_search_query", searchValue);
                     } catch {
                       // ignore
                     }

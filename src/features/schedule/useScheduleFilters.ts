@@ -74,6 +74,7 @@ export function useScheduleFilters(jobs: Job[], filters: ScheduleFilters, option
         if (jobName && matchesField(jobName, "Store")) return true;
         
         // 2. Staff names (Host/KOL) - second most common
+        // Tìm kiếm cả tên gốc (có số_) và tên đã clean (không có số_)
         const staffFields = [
           { val: job["Talent 1"], key: "Talent1" },
           { val: job["Talent 2"], key: "Talent2" },
@@ -84,8 +85,12 @@ export function useScheduleFilters(jobs: Job[], filters: ScheduleFilters, option
         
         for (const { val, key } of staffFields) {
           if (!val) continue;
-          const cleaned = safeField(val).replace(/^\d+_/, "").trim();
-          if (cleaned && matchesField(cleaned, key)) return true;
+          const originalName = safeField(val);
+          // Tìm kiếm với tên gốc (có thể có số_ ở đầu) - ưu tiên
+          if (originalName && matchesField(originalName, key)) return true;
+          // Tìm kiếm với tên đã clean (không có số_) - fallback
+          const cleaned = originalName.replace(/^\d+_/, "").trim();
+          if (cleaned && cleaned !== originalName && matchesField(cleaned, `${key}_cleaned`)) return true;
         }
         
         // 3. Original Brand name
