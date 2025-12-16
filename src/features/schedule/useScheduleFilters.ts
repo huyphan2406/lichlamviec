@@ -33,13 +33,20 @@ export function useScheduleFilters(jobs: Job[], filters: ScheduleFilters, option
           // Construct search document from ALL relevant fields
           const searchableFields: string[] = [];
           
-          // 1. Store/Title
-          const store = (job.Store || "").toString().trim();
-          if (store && store !== "nan") searchableFields.push(store);
+          // Helper to safely extract and normalize field values
+          const safeField = (value: string | undefined | null): string => {
+            if (!value) return "";
+            const str = String(value).trim();
+            return str && str !== "nan" ? str : "";
+          };
           
-          // 2. Brand name
-          const brandName = (job.brand_name || "").toString().trim();
-          if (brandName && brandName !== "nan") searchableFields.push(brandName);
+          // 1. Job name (Title/Store)
+          const jobName = safeField(job.Store);
+          if (jobName) searchableFields.push(jobName);
+          
+          // 2. Original Brand name (CRITICAL - preserve original from job source)
+          const brandName = safeField(job.brand_name);
+          if (brandName) searchableFields.push(brandName);
           
           // 3. Staff names (Host/KOL) - normalize to remove numbers and special chars
           const staffFields = [
@@ -50,8 +57,8 @@ export function useScheduleFilters(jobs: Job[], filters: ScheduleFilters, option
             job.staff_name,
           ]
             .filter(Boolean)
-            .map((v) => String(v).trim())
-            .filter((v) => v && v !== "nan");
+            .map((v) => safeField(v))
+            .filter(Boolean);
           
           // Normalize staff names: remove leading numbers_underscore, keep only letters and spaces
           const normalizedStaffNames = staffFields.map((name) => {
@@ -64,26 +71,30 @@ export function useScheduleFilters(jobs: Job[], filters: ScheduleFilters, option
           searchableFields.push(...normalizedStaffNames.filter(Boolean));
           
           // 4. Location (Address)
-          const address = (job.Address || "").toString().trim();
-          if (address && address !== "nan") searchableFields.push(address);
+          const location = safeField(job.Address);
+          if (location) searchableFields.push(location);
           
           // 5. Room
-          const room = (job["Studio/Room"] || "").toString().trim();
-          if (room && room !== "nan") searchableFields.push(room);
+          const room = safeField(job["Studio/Room"]);
+          if (room) searchableFields.push(room);
           
-          // 6. Type of session
-          const sessionType = (job["Type of session"] || "").toString().trim();
-          if (sessionType && sessionType !== "nan") searchableFields.push(sessionType);
+          // 6. Group Zalo links (if available)
+          const groupZaloLink = safeField(job.group_zalo_link || job.brand_zalo_link || job.host_zalo_link);
+          if (groupZaloLink) searchableFields.push(groupZaloLink);
           
-          // 7. Date livestream (as string for search)
-          const dateLivestream = (job["Date livestream"] || "").toString().trim();
-          if (dateLivestream && dateLivestream !== "nan") searchableFields.push(dateLivestream);
+          // 7. Type of session
+          const sessionType = safeField(job["Type of session"]);
+          if (sessionType) searchableFields.push(sessionType);
           
-          // 8. Time slot
-          const timeSlot = (job["Time slot"] || "").toString().trim();
-          if (timeSlot && timeSlot !== "nan") searchableFields.push(timeSlot);
+          // 8. Date livestream (as string for search)
+          const dateLivestream = safeField(job["Date livestream"]);
+          if (dateLivestream) searchableFields.push(dateLivestream);
           
-          // 9. Extra search text (e.g., group names from getExtraSearchText)
+          // 9. Time slot
+          const timeSlot = safeField(job["Time slot"]);
+          if (timeSlot) searchableFields.push(timeSlot);
+          
+          // 10. Extra search text (e.g., group names from getExtraSearchText)
           const extra = options?.getExtraSearchText?.(job) || "";
           if (extra) searchableFields.push(extra);
           

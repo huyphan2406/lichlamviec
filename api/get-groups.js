@@ -45,11 +45,13 @@ const normalizeBrandName = (name) => {
     return normalized;
 };
 
-// Hàm normalize tên để so sánh
+// Hàm normalize tên để so sánh - đảm bảo trim và toLowerCase
 const normalizeName = (name) => {
     if (!name) return '';
     
     let str = String(name);
+    // Normalize first, then trim, then lowercase for consistent matching
+    str = str.trim();
     str = str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     str = str.replace(/đ/g, "d").replace(/Đ/g, "D");
     str = str.toLowerCase();
@@ -313,9 +315,11 @@ function createGroupsMap(rawData, type = 'unknown') {
         }
         
         // Normalize name để dùng làm key (chỉ để match, không ảnh hưởng originalName)
+        // Đảm bảo trim trước khi normalize để tránh mismatch do spaces
+        const trimmedName = String(originalName).trim();
         const normalizedName = type.toUpperCase() === 'BRAND' 
-            ? normalizeName(normalizeBrandName(originalName.trim()))
-            : normalizeName(originalName.trim());
+            ? normalizeName(normalizeBrandName(trimmedName))
+            : normalizeName(trimmedName);
         
         if (!normalizedName) {
             skippedCount++;

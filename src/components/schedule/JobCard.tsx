@@ -43,10 +43,13 @@ function JobCardComponent({ job, isActive, brandGroup, hostGroup, onQuickReport,
     const sessionType = (job["Type of session"] || "").trim().toLowerCase();
     const isCaNoiValue = sessionType === "ca nối" || sessionType === "ca noi";
     
-    // Chỉ lấy brand name gốc từ brandGroup - giữ nguyên 100% từ CSV, không trim
-    const brandName = brandGroup?.originalName || "";
+    // CRITICAL FIX: Lấy brand name GỐC từ job data (job.brand_name), KHÔNG phải từ brandGroup
+    // brandGroup chỉ dùng để tìm Zalo link, KHÔNG dùng để hiển thị tên
+    // Đảm bảo hiển thị tên gốc từ nguồn dữ liệu job, không bị overwrite bởi group name
+    const originalBrandName = (job.brand_name || "").toString().trim();
+    const brandName = originalBrandName || "";
     
-    // Chỉ hiển thị brand name gốc, không hiển thị title nếu có brand name
+    // Chỉ hiển thị brand name gốc từ job source, không hiển thị title nếu có brand name
     // Nếu không có brand name thì mới hiển thị title
     const displayNameValue = brandName || titleValue;
     
