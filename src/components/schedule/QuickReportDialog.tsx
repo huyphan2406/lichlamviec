@@ -28,12 +28,23 @@ export function QuickReportDialog({ open, onOpenChange, job }: Props) {
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  // Memoize computed values to avoid recalculation on every render
   const keyLivestream = useMemo(() => {
     if (!job) return "";
     const date = (job["Date livestream"] || "").replaceAll("/", "");
     const store = (job.Store || "").replace(/\s+/g, "").substring(0, 10);
     const time = (job["Time slot"] || "").split(" - ")[0].replaceAll(":", "");
     return `${date}_${store}_${time}`.toUpperCase();
+  }, [job]);
+
+  const title = useMemo(() => job?.Store || "Điền report", [job?.Store]);
+  const subtitle = useMemo(() => {
+    if (!job) return "";
+    return `${job["Date livestream"] || "N/A"} • ${job["Time slot"] || "N/A"} • ${combineLocation(job)}`;
+  }, [job]);
+  const people = useMemo(() => {
+    if (!job) return "";
+    return `${combineNames(job["Talent 1"], job["Talent 2"])} • ${combineNames(job["Coordinator 1"], job["Coordinator 2"])}`;
   }, [job]);
 
   useEffect(() => {
@@ -63,19 +74,24 @@ export function QuickReportDialog({ open, onOpenChange, job }: Props) {
     if (!file) return;
     if (!file.type.startsWith("image/")) {
       toast.error("Vui lòng chọn file ảnh hợp lệ.");
+      e.target.value = "";
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
       toast.error("Kích thước ảnh không được vượt quá 5MB.");
+      e.target.value = "";
       return;
     }
-    const url = URL.createObjectURL(file);
-    setImagePreview((prev) => {
-      revokeBlobUrl(prev);
-      return url;
+    // Use requestAnimationFrame to prevent blocking UI
+    requestAnimationFrame(() => {
+      const url = URL.createObjectURL(file);
+      setImagePreview((prev) => {
+        revokeBlobUrl(prev);
+        return url;
+      });
+      e.target.value = "";
+      toast.message("Ảnh đã tải lên", { description: "Bạn có thể nhập thông tin thủ công từ ảnh." });
     });
-    e.target.value = "";
-    toast.message("Ảnh đã tải lên", { description: "Bạn có thể nhập thông tin thủ công từ ảnh." });
   }, []);
 
   const addLiveId = useCallback(() => setLiveIds((p) => [...p, ""]), []);
@@ -127,15 +143,10 @@ export function QuickReportDialog({ open, onOpenChange, job }: Props) {
     [email, gmv, startTimeActual, liveIds, keyLivestream, job, onOpenChange],
   );
 
-  const title = job?.Store || "Điền report";
-  const subtitle = job
-    ? `${job["Date livestream"] || "N/A"} • ${job["Time slot"] || "N/A"} • ${combineLocation(job)}`
-    : "";
-  const people = job ? `${combineNames(job["Talent 1"], job["Talent 2"])} • ${combineNames(job["Coordinator 1"], job["Coordinator 2"])}` : "";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+      <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto p-4 sm:p-6" onOpenAutoFocus={(e) => e.preventDefault()}>
         <DialogHeader className="space-y-2">
           <DialogTitle className="truncate text-base sm:text-lg">{title}</DialogTitle>
           <DialogDescription className="line-clamp-2 text-xs sm:text-sm">{subtitle}</DialogDescription>
@@ -159,6 +170,7 @@ export function QuickReportDialog({ open, onOpenChange, job }: Props) {
                 placeholder="your.email@example.com" 
                 type="email"
                 className="h-9 sm:h-10 text-sm"
+                autoComplete="email"
               />
             </div>
             <div className="grid gap-1.5">
@@ -191,6 +203,7 @@ export function QuickReportDialog({ open, onOpenChange, job }: Props) {
                   onChange={(e) => updateLiveId(idx, e.target.value)} 
                   placeholder={`Nhập ID phiên live ${idx + 1}`}
                   className="h-9 sm:h-10 text-sm"
+                  autoComplete="off"
                 />
               </div>
             ))}
@@ -209,6 +222,7 @@ export function QuickReportDialog({ open, onOpenChange, job }: Props) {
                 onChange={(e) => setGmv(e.target.value)} 
                 placeholder="Nhập GMV"
                 className="h-9 sm:h-10 text-sm"
+                autoComplete="off"
               />
             </div>
             <div className="grid gap-1.5">
@@ -218,6 +232,7 @@ export function QuickReportDialog({ open, onOpenChange, job }: Props) {
                 onChange={(e) => setStartTimeActual(e.target.value)} 
                 placeholder="HH:MM"
                 className="h-9 sm:h-10 text-sm"
+                autoComplete="off"
               />
             </div>
           </div>
