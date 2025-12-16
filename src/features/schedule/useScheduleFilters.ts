@@ -19,95 +19,109 @@ export function useScheduleFilters(jobs: Job[], filters: ScheduleFilters, option
     let list = jobs;
 
     // Step A: Prepare the Query
-    const normalizedQuery = filters.query ? removeVietnameseTones(filters.query) : "";
+    const query = filters.query ? filters.query.trim() : "";
     
-    if (normalizedQuery) {
-      // Cache normalized search documents for performance
-      const searchDocCache = new WeakMap<Job, string>();
+    if (query) {
+      // Normalize query once for comparison (cache this)
+      const normalizedQuery = removeVietnameseTones(query);
       
-      // Step B: Filter with robust search
-      list = list.filter((job) => {
-        // Get or create search document for this job
-        let searchDoc = searchDocCache.get(job);
-        if (!searchDoc) {
-          // Construct search document from ALL relevant fields
-          const searchableFields: string[] = [];
-          
-          // Helper to safely extract and normalize field values
-          const safeField = (value: string | undefined | null): string => {
-            if (!value) return "";
-            const str = String(value).trim();
-            return str && str !== "nan" ? str : "";
-          };
-          
-          // 1. Job name (Title/Store)
-          const jobName = safeField(job.Store);
-          if (jobName) searchableFields.push(jobName);
-          
-          // 2. Original Brand name (CRITICAL - preserve original from job source)
-          const brandName = safeField(job.brand_name);
-          if (brandName) searchableFields.push(brandName);
-          
-          // 3. Staff names (Host/KOL) - normalize to remove numbers and special chars
-          const staffFields = [
-            job["Talent 1"],
-            job["Talent 2"],
-            job["Coordinator 1"],
-            job["Coordinator 2"],
-            job.staff_name,
-          ]
-            .filter(Boolean)
-            .map((v) => safeField(v))
-            .filter(Boolean);
-          
-          // Normalize staff names: remove leading numbers_underscore, keep only letters and spaces
-          const normalizedStaffNames = staffFields.map((name) => {
-            return removeVietnameseTones(name)
-              .replace(/^\d+_/, "") // Remove leading numbers and underscore (e.g., "123_An Lữ" → "An Lữ")
-              .replace(/[^a-z0-9\s]/g, "") // Keep only letters, numbers, and spaces
-              .replace(/\s+/g, " ") // Normalize whitespace
-              .trim();
-          });
-          searchableFields.push(...normalizedStaffNames.filter(Boolean));
-          
-          // 4. Location (Address)
-          const location = safeField(job.Address);
-          if (location) searchableFields.push(location);
-          
-          // 5. Room
-          const room = safeField(job["Studio/Room"]);
-          if (room) searchableFields.push(room);
-          
-          // 6. Group Zalo links (if available)
-          const groupZaloLink = safeField(job.group_zalo_link || job.brand_zalo_link || job.host_zalo_link);
-          if (groupZaloLink) searchableFields.push(groupZaloLink);
-          
-          // 7. Type of session
-          const sessionType = safeField(job["Type of session"]);
-          if (sessionType) searchableFields.push(sessionType);
-          
-          // 8. Date livestream (as string for search)
-          const dateLivestream = safeField(job["Date livestream"]);
-          if (dateLivestream) searchableFields.push(dateLivestream);
-          
-          // 9. Time slot
-          const timeSlot = safeField(job["Time slot"]);
-          if (timeSlot) searchableFields.push(timeSlot);
-          
-          // 10. Extra search text (e.g., group names from getExtraSearchText)
-          const extra = options?.getExtraSearchText?.(job) || "";
-          if (extra) searchableFields.push(extra);
-          
-          // Combine all fields and normalize the entire document
-          const fullSearchString = searchableFields.join(" ");
-          searchDoc = removeVietnameseTones(fullSearchString);
-          
-          // Cache for performance
-          searchDocCache.set(job, searchDoc);
+      // Cache normalized field values to avoid repeated calculations
+      const normalizedCache = new WeakMap<Job, Map<string, string>>();
+      
+      const getNormalizedField = (job: Job, fieldKey: string, fieldValue: string | undefined | null): string => {
+        if (!fieldValue) return "";
+        const str = String(fieldValue).trim();
+        if (!str || str === "nan") return "";
+        
+        // Check cache first
+        let jobCache = normalizedCache.get(job);
+        if (!jobCache) {
+          jobCache = new Map();
+          normalizedCache.set(job, jobCache);
         }
         
-        // Step C: Check if normalized query is included in normalized document
-        return searchDoc.includes(normalizedQuery);
+        const cacheKey = `${fieldKey}:${str}`;
+        if (jobCache.has(cacheKey)) {
+          return jobCache.get(cacheKey)!;
+        }
+        
+        const normalized = removeVietnameseTones(str);
+        jobCache.set(cacheKey, normalized);
+        return normalized;
+      };
+      
+      // Step B: Filter with field-by-field search (optimized with caching)
+      list = list.filter((job) => {
+        // Helper to safely extract field values
+        const safeField = (value: string | undefined | null): string => {
+          if (!value) return "";
+          const str = String(value).trim();
+          return str && str !== "nan" ? str : "";
+        };
+        
+        // Helper để tìm kiếm chính xác trong một field (tìm theo chuỗi đầy đủ, không word-by-word)
+        const matchesField = (fieldValue: string, fieldKey: string): boolean => {
+          if (!fieldValue) return false;
+          const normalizedField = getNormalizedField(job, fieldKey, fieldValue);
+          // Tìm kiếm theo chuỗi đầy đủ trong field đó (substring match, không phải word-by-word)
+          return normalizedField.includes(normalizedQuery);
+        };
+        
+        // Early return pattern - check most common fields first
+        
+        // 1. Job name (Title/Store) - most common search
+        const jobName = safeField(job.Store);
+        if (jobName && matchesField(jobName, "Store")) return true;
+        
+        // 2. Staff names (Host/KOL) - second most common
+        const staffFields = [
+          { val: job["Talent 1"], key: "Talent1" },
+          { val: job["Talent 2"], key: "Talent2" },
+          { val: job["Coordinator 1"], key: "Coord1" },
+          { val: job["Coordinator 2"], key: "Coord2" },
+          { val: job.staff_name, key: "staff_name" },
+        ];
+        
+        for (const { val, key } of staffFields) {
+          if (!val) continue;
+          const cleaned = safeField(val).replace(/^\d+_/, "").trim();
+          if (cleaned && matchesField(cleaned, key)) return true;
+        }
+        
+        // 3. Original Brand name
+        const brandName = safeField(job.brand_name);
+        if (brandName && matchesField(brandName, "brand_name")) return true;
+        
+        // 4. Location (Address)
+        const location = safeField(job.Address);
+        if (location && matchesField(location, "Address")) return true;
+        
+        // 5. Room
+        const room = safeField(job["Studio/Room"]);
+        if (room && matchesField(room, "Room")) return true;
+        
+        // 6. Group Zalo links (if available)
+        const groupZaloLink = safeField(job.group_zalo_link || job.brand_zalo_link || job.host_zalo_link);
+        if (groupZaloLink && matchesField(groupZaloLink, "zalo_link")) return true;
+        
+        // 7. Type of session
+        const sessionType = safeField(job["Type of session"]);
+        if (sessionType && matchesField(sessionType, "session")) return true;
+        
+        // 8. Date livestream (as string for search)
+        const dateLivestream = safeField(job["Date livestream"]);
+        if (dateLivestream && matchesField(dateLivestream, "date")) return true;
+        
+        // 9. Time slot
+        const timeSlot = safeField(job["Time slot"]);
+        if (timeSlot && matchesField(timeSlot, "time")) return true;
+        
+        // 10. Extra search text (e.g., group names from getExtraSearchText)
+        const extra = options?.getExtraSearchText?.(job) || "";
+        if (extra && matchesField(extra, "extra")) return true;
+        
+        // Không match với field nào
+        return false;
       });
       
       if (!list.length) return [];

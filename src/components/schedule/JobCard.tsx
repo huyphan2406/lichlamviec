@@ -96,14 +96,14 @@ function JobCardComponent({ job, isActive, brandGroup, hostGroup, onQuickReport,
   }, [job, onQuickReport]);
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 h-full flex flex-col transition-all duration-200 hover:shadow-md hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700">
+    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 h-full flex flex-col transition-all duration-200 hover:shadow-md hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700">
       {/* Header: title + badge */}
       <div className="flex items-start justify-between gap-3 mb-4">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             {/* Chỉ hiển thị 1 tên gốc duy nhất - ưu tiên brand name từ file gốc */}
             <p 
-              className="text-base font-extrabold leading-tight text-slate-900 dark:text-slate-50 cursor-pointer hover:underline transition-all"
+              className="text-sm sm:text-base font-extrabold leading-tight text-slate-900 dark:text-slate-50 cursor-pointer hover:underline transition-all"
               onClick={handleReportClick}
               title="Click để điền report"
             >
@@ -120,7 +120,7 @@ function JobCardComponent({ job, isActive, brandGroup, hostGroup, onQuickReport,
       </div>
 
       {/* Details stack - căn chỉnh đều */}
-      <div className="flex flex-col gap-3.5 border-t border-slate-100 dark:border-slate-800 pt-4 flex-1">
+      <div className="flex flex-col gap-2.5 sm:gap-3.5 border-t border-slate-100 dark:border-slate-800 pt-3 sm:pt-4 flex-1">
         {/* Location - Dòng 1 */}
         {locationName && (
           <div className="flex items-start gap-2.5">
@@ -159,7 +159,7 @@ function JobCardComponent({ job, isActive, brandGroup, hostGroup, onQuickReport,
       </div>
 
       {/* Status section - ACTIVE hoặc INACTIVE + Zalo buttons luôn hiển thị */}
-      <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
+      <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2 sm:gap-3">
         {/* ACTIVE hoặc INACTIVE badge */}
         {isActive ? (
           <span className="inline-flex items-center gap-1.5 rounded-full bg-green-500 px-3 py-1 text-xs font-semibold text-white shadow-sm">
@@ -178,13 +178,13 @@ function JobCardComponent({ job, isActive, brandGroup, hostGroup, onQuickReport,
           </span>
         )}
         {/* 2 Zalo buttons - luôn luôn hiển thị */}
-        <div className="flex items-center gap-1.5 flex-shrink-0">
+        <div className="flex items-center gap-1 sm:gap-1.5 flex-shrink-0">
           {/* Brand Group Button */}
           <button
             type="button"
             onClick={handleBrandClick}
             disabled={!hasBrandLink}
-            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all shrink-0 ${
+            className={`inline-flex items-center gap-1 sm:gap-1.5 rounded-full px-2.5 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs font-medium transition-all shrink-0 ${
               hasBrandLink
                 ? 'bg-blue-500 text-white hover:bg-blue-600 cursor-pointer shadow-sm hover:shadow-md'
                 : 'bg-gray-200 text-gray-500 cursor-not-allowed dark:bg-gray-700 dark:text-gray-400'
@@ -204,7 +204,7 @@ function JobCardComponent({ job, isActive, brandGroup, hostGroup, onQuickReport,
             type="button"
             onClick={handleHostClick}
             disabled={!hasHostLink}
-            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all shrink-0 ${
+            className={`inline-flex items-center gap-1 sm:gap-1.5 rounded-full px-2.5 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs font-medium transition-all shrink-0 ${
               hasHostLink
                 ? 'bg-blue-500 text-white hover:bg-blue-600 cursor-pointer shadow-sm hover:shadow-md'
                 : 'bg-gray-200 text-gray-500 cursor-not-allowed dark:bg-gray-700 dark:text-gray-400'
@@ -226,10 +226,31 @@ function JobCardComponent({ job, isActive, brandGroup, hostGroup, onQuickReport,
 }
 
 // Memoize component to prevent unnecessary re-renders
+// Use shallow comparison for better performance
 export const JobCard = React.memo(JobCardComponent, (prevProps, nextProps) => {
-  // Custom comparison function for better performance
+  // Fast path: if references are the same, skip deep comparison
+  if (prevProps.job === nextProps.job &&
+      prevProps.isActive === nextProps.isActive &&
+      prevProps.brandGroup === nextProps.brandGroup &&
+      prevProps.hostGroup === nextProps.hostGroup &&
+      prevProps.onQuickReport === nextProps.onQuickReport &&
+      prevProps.onApplySearch === nextProps.onApplySearch) {
+    return true; // Props are equal, skip re-render
+  }
+  
+  // Deep comparison for job object (only if reference changed but might be same data)
+  if (prevProps.job !== nextProps.job) {
+    // Quick check: compare key fields that affect rendering
+    const keyFields = ['Store', 'brand_name', 'Address', 'Studio/Room', 'Talent 1', 'Talent 2', 'Coordinator 1', 'Coordinator 2', 'Date livestream', 'Time slot'];
+    for (const field of keyFields) {
+      if (prevProps.job[field] !== nextProps.job[field]) {
+        return false; // Props changed, need re-render
+      }
+    }
+  }
+  
+  // All other props comparison
   return (
-    prevProps.job === nextProps.job &&
     prevProps.isActive === nextProps.isActive &&
     prevProps.brandGroup === nextProps.brandGroup &&
     prevProps.hostGroup === nextProps.hostGroup &&

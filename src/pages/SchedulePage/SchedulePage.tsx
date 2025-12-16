@@ -54,12 +54,19 @@ export function SchedulePage() {
     ...getInitialFilters(),
   }));
 
-  const jobMetaByRef = useMemo(() => {
+  // Memoize group indices separately to avoid recreating them
+  const groupIndices = useMemo(() => {
     const hostGroups = groups.data?.hostGroups;
     const brandGroups = groups.data?.brandGroups;
-    const brandIndex = createGroupIndex(brandGroups);
-    const hostIndex = createGroupIndex(hostGroups);
-    const hostNameIndex = createHostNameIndex(hostGroups);
+    return {
+      brandIndex: createGroupIndex(brandGroups),
+      hostIndex: createGroupIndex(hostGroups),
+      hostNameIndex: createHostNameIndex(hostGroups),
+    };
+  }, [groups.data?.hostGroups, groups.data?.brandGroups]);
+
+  const jobMetaByRef = useMemo(() => {
+    const { brandIndex, hostIndex, hostNameIndex } = groupIndices;
 
     const map = new Map<Job, { brandGroup: GroupLink | null; hostGroup: GroupLink | null }>();
     for (const job of jobs) {
@@ -77,7 +84,7 @@ export function SchedulePage() {
       map.set(job, { brandGroup, hostGroup });
     }
     return map;
-  }, [jobs, groups.data?.hostGroups, groups.data?.brandGroups]);
+  }, [jobs, groupIndices]);
 
   const getExtraSearchText = useCallback(
     (job: Job) => {
@@ -95,19 +102,33 @@ export function SchedulePage() {
     return { from: filters.dateFrom ?? undefined, to: filters.dateTo ?? undefined };
   }, [filters.dateFrom, filters.dateTo]);
 
+  // Cache isActive calculations to avoid recomputing
+  const activeStatusCache = useMemo(() => {
+    const cache = new WeakMap<Job, boolean>();
+    return cache;
+  }, []);
+
   const jobItems = useMemo(() => {
     return filteredJobs.map((job) => {
       const meta = jobMetaByRef.get(job);
       const brandGroup = meta?.brandGroup ?? null;
       const hostGroup = meta?.hostGroup ?? null;
+      
+      // Cache isActive calculation
+      let isActiveValue = activeStatusCache.get(job);
+      if (isActiveValue === undefined) {
+        isActiveValue = isJobActive(job);
+        activeStatusCache.set(job, isActiveValue);
+      }
+      
       return {
         job,
-        isActive: isJobActive(job),
+        isActive: isActiveValue,
         brandGroup,
         hostGroup,
       };
     });
-  }, [filteredJobs, jobMetaByRef]);
+  }, [filteredJobs, jobMetaByRef, activeStatusCache]);
 
   const grouped = useMemo(() => {
     return groupJobsByTime(jobItems, (it) => it.job["Time slot"]);
@@ -164,7 +185,7 @@ export function SchedulePage() {
   }, []);
 
   return (
-    <div className="-mx-3 -my-3 bg-slate-50 px-3 py-4 sm:-mx-4 sm:-my-4 sm:px-4 sm:py-6 dark:bg-slate-950">
+    <div className="-mx-3 -my-3 bg-white px-3 py-4 sm:-mx-4 sm:-my-4 sm:px-4 sm:py-6 dark:bg-slate-950">
       <QuickReportDialog open={reportOpen} onOpenChange={setReportOpen} job={reportJob} />
       <div className="grid gap-3">
         <ScheduleToolbar
@@ -197,11 +218,11 @@ export function SchedulePage() {
         <div className="pb-20">
           {grouped.map((group) => (
             <section key={group.timeSlot} className="mt-8 first:mt-4">
-              <div className="sticky top-12 z-10 -mx-3 bg-slate-50/95 px-3 py-3 backdrop-blur-sm sm:top-14 sm:-mx-4 sm:px-4 dark:bg-slate-950/95">
+              <div className="sticky top-12 z-10 -mx-3 bg-white/95 px-3 py-3 backdrop-blur-sm sm:top-14 sm:-mx-4 sm:px-4 dark:bg-slate-950/95">
                 <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 sm:text-xl">{group.timeSlot}</h2>
               </div>
 
-              <div className="mt-4 grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-2 lg:grid-cols-3">
+              <div className="mt-4 grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {group.items.map((item, index) => {
                   const job = item.job;
                   const stableKey = `${group.timeSlot}|${job["Date livestream"] || "na"}|${job.Store || "na"}|${index}`;

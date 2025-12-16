@@ -123,7 +123,7 @@ export function ScheduleToolbar({
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           placeholder="Tìm theo tên, cửa hàng, địa điểm..."
-          className="h-10 rounded-xl border-slate-200 bg-slate-50 pl-10 pr-11 text-sm shadow-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-700 dark:bg-slate-800"
+          className="h-10 rounded-xl border-slate-200 bg-white pl-10 pr-11 text-sm shadow-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-700 dark:bg-slate-800"
           onFocus={() => setFocused(true)}
           onBlur={() => {
             // Increase delay for mobile to allow tap events to register
@@ -181,7 +181,7 @@ export function ScheduleToolbar({
       </div>
 
       {/* Right controls - full width on mobile, auto on desktop */}
-      <div className="flex w-full items-center gap-2.5 sm:w-auto sm:flex-wrap">
+      <div className="flex w-full flex-col gap-2.5 sm:flex-row sm:items-center sm:w-auto">
         <Select
           value={getDateValue(dateRange, availableDates)}
           onValueChange={(value) => {
@@ -197,7 +197,7 @@ export function ScheduleToolbar({
             }
           }}
         >
-          <SelectTrigger className="h-10 flex-1 rounded-xl border-slate-200 bg-white text-sm shadow-none dark:border-slate-700 dark:bg-slate-900 sm:w-[160px] sm:flex-none">
+          <SelectTrigger className="h-10 w-full rounded-xl border-slate-200 bg-white text-sm shadow-none dark:border-slate-700 dark:bg-slate-900 sm:w-[160px]">
             <SelectValue placeholder="Chọn ngày">
               {fmtRange(dateRange, availableDates)}
             </SelectValue>
@@ -213,7 +213,7 @@ export function ScheduleToolbar({
         </Select>
 
         <Select value={session || ALL} onValueChange={(v) => onSessionChange(v === ALL ? "" : v)}>
-          <SelectTrigger className="h-10 flex-1 rounded-xl border-slate-200 bg-white text-sm shadow-none dark:border-slate-700 dark:bg-slate-900 sm:w-[150px] sm:flex-none">
+          <SelectTrigger className="h-10 w-full rounded-xl border-slate-200 bg-white text-sm shadow-none dark:border-slate-700 dark:bg-slate-900 sm:w-[150px]">
             <SelectValue placeholder="Tất cả ca" />
           </SelectTrigger>
           <SelectContent>

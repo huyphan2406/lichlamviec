@@ -58,7 +58,7 @@ export function AppShell({ title = "Lịch làm việc", className }: AppShellPr
       </header>
 
       {/* Let the browser window (document) handle scrolling */}
-      <main className="mx-auto max-w-7xl px-3 py-3 sm:px-4 sm:py-4">
+      <main className="mx-auto max-w-7xl px-2 py-2 sm:px-3 sm:py-3 md:px-4 md:py-4">
         <Outlet />
       </main>
     </div>
