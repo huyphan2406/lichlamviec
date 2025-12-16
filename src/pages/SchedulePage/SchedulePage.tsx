@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState, useDeferredValue } from "react";
 import type { DateRange } from "react-day-picker";
 import { useGroupsData, useScheduleData } from "@/features/schedule/api";
 import type { GroupLink, Job, ScheduleFilters } from "@/features/schedule/types";
@@ -53,6 +53,11 @@ export function SchedulePage() {
   const [filters, setFilters] = useState<ScheduleFilters>(() => ({
     ...getInitialFilters(),
   }));
+  const deferredQuery = useDeferredValue(filters.query);
+  const filtersForSearch = useMemo(
+    () => ({ ...filters, query: deferredQuery }),
+    [filters, deferredQuery],
+  );
 
   // Memoize group indices separately to avoid recreating them
   const groupIndices = useMemo(() => {
@@ -96,7 +101,7 @@ export function SchedulePage() {
     [jobMetaByRef],
   );
 
-  const { filteredJobs } = useScheduleFilters(jobs, filters, { getExtraSearchText });
+  const { filteredJobs } = useScheduleFilters(jobs, filtersForSearch, { getExtraSearchText });
   const dateRange: DateRange | undefined = useMemo(() => {
     if (!filters.dateFrom && !filters.dateTo) return undefined;
     return { from: filters.dateFrom ?? undefined, to: filters.dateTo ?? undefined };
